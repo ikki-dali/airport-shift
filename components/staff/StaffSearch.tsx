@@ -46,7 +46,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       const matchesSearch =
         !search ||
         s.name.toLowerCase().includes(searchLower) ||
-        s.employee_id?.toLowerCase().includes(searchLower) ||
+        s.employee_number?.toLowerCase().includes(searchLower) ||
         s.email?.toLowerCase().includes(searchLower)
 
       // 役職フィルタ
