@@ -144,8 +144,8 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
             ) : (
               filteredStaff.map((s) => {
                 const role = roles.find((r) => r.id === s.role_id)
-                const staffTags = s.tag_ids
-                  ? tags.filter((t) => s.tag_ids?.includes(t.id))
+                const staffTags = s.tags
+                  ? tags.filter((t) => s.tags?.includes(t.id))
                   : []
 
                 return (
@@ -158,7 +158,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                         href={`/staff/${s.id}`}
                         className="font-mono text-blue-600 hover:underline"
                       >
-                        {s.employee_id}
+                        {s.employee_number}
                       </Link>
                     </TableCell>
                     <TableCell className="font-medium">{s.name}</TableCell>
