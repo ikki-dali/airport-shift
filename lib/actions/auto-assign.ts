@@ -7,6 +7,8 @@ import { optimizeShiftAssignments, type OptimizationResult } from '@/lib/ai/shif
 import { type PositionRequirement } from '@/lib/ai/constraint-solver'
 import type { StaffWithRole } from '@/lib/actions/staff'
 import type { DutyCode } from '@/lib/actions/duty-codes'
+import type { Location } from '@/lib/actions/locations'
+import type { Shift } from '@/lib/actions/shifts'
 import type { Database } from '@/types/database'
 
 type LocationRequirement = Database['public']['Tables']['location_requirements']['Row']
@@ -54,6 +56,7 @@ async function generateMonthlyRequirements(
 
   const { data: locations, error: locationsError } = await locationsQuery
   if (locationsError) throw locationsError
+  if (!locations) throw new Error('Locations not found')
 
   // 全ての場所要件を取得
   const { data: requirements, error: reqError } = await supabase
@@ -71,6 +74,7 @@ async function generateMonthlyRequirements(
     .in('location_id', locations.map((l) => l.id))
 
   if (reqError) throw reqError
+  if (!requirements) throw new Error('Requirements not found')
 
   // 日付×場所×勤務コードの組み合わせを生成
   const positionRequirements: PositionRequirement[] = []

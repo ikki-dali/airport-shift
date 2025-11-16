@@ -270,6 +270,88 @@ export interface Database {
           updated_by?: string | null
         }
       }
+      monthly_payroll: {
+        Row: {
+          id: string
+          staff_id: string
+          year_month: string
+          total_hours: number
+          regular_hours: number
+          night_hours: number
+          regular_pay: number
+          night_pay: number
+          total_pay: number
+          shift_count: number
+          calculated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          staff_id: string
+          year_month: string
+          total_hours: number
+          regular_hours: number
+          night_hours: number
+          regular_pay: number
+          night_pay: number
+          total_pay: number
+          shift_count: number
+          calculated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          staff_id?: string
+          year_month?: string
+          total_hours?: number
+          regular_hours?: number
+          night_hours?: number
+          regular_pay?: number
+          night_pay?: number
+          total_pay?: number
+          shift_count?: number
+          calculated_at?: string
+          created_at?: string
+        }
+      }
+      annual_payroll_summary: {
+        Row: {
+          id: string
+          staff_id: string
+          year: number
+          total_hours: number
+          total_pay: number
+          limit_amount: number
+          remaining_amount: number
+          warning_level: string
+          last_calculated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          staff_id: string
+          year: number
+          total_hours: number
+          total_pay: number
+          limit_amount: number
+          remaining_amount: number
+          warning_level: string
+          last_calculated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          staff_id?: string
+          year?: number
+          total_hours?: number
+          total_pay?: number
+          limit_amount?: number
+          remaining_amount?: number
+          warning_level?: string
+          last_calculated_at?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
