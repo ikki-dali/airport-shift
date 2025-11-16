@@ -45,9 +45,9 @@ export function StaffPayrollTable({
   }
 
   // 警告レベル順にソート（exceeded → warning → caution → safe）
-  const levelOrder = { exceeded: 0, warning: 1, caution: 2, safe: 3 }
+  const levelOrder: Record<WarningLevel, number> = { exceeded: 0, warning: 1, caution: 2, safe: 3 }
   filteredData.sort(
-    (a, b) => levelOrder[a.warning_level] - levelOrder[b.warning_level]
+    (a, b) => levelOrder[a.warning_level as WarningLevel] - levelOrder[b.warning_level as WarningLevel]
   )
 
   return (
