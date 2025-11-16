@@ -7,12 +7,22 @@ import { getLocations } from '@/lib/actions/locations'
 import { getDutyCodes } from '@/lib/actions/duty-codes'
 
 export default async function HomePage() {
-  // 実際のデータを取得
-  const [staff, locations, dutyCodes] = await Promise.all([
-    getStaff(),
-    getLocations(),
-    getDutyCodes(),
-  ])
+  let staff, locations, dutyCodes
+  let error = null
+
+  try {
+    // 実際のデータを取得
+    ;[staff, locations, dutyCodes] = await Promise.all([
+      getStaff(),
+      getLocations(),
+      getDutyCodes(),
+    ])
+  } catch (e: any) {
+    error = e.message
+    staff = []
+    locations = []
+    dutyCodes = []
+  }
 
   const activeStaff = staff.filter((s) => s.is_active)
   const activeLocations = locations.filter((l) => l.is_active)
@@ -32,6 +42,21 @@ export default async function HomePage() {
         <h1 className="text-3xl font-bold">ダッシュボード</h1>
         <p className="text-gray-600 mt-1">シフト管理の概要</p>
       </div>
+
+      {/* エラー表示 */}
+      {error && (
+        <Card className="border-red-300 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-700">データベース接続エラー</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-600">{error}</p>
+            <p className="text-sm text-gray-600 mt-2">
+              環境変数が正しく設定されているか確認してください。
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 概要カード（3列） */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
