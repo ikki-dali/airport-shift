@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import type { Staff } from '@/lib/actions/staff'
+import type { StaffWithRole } from '@/lib/actions/staff'
 import type { Location } from '@/lib/actions/locations'
 import type { DutyCode } from '@/lib/actions/duty-codes'
 import type { Shift } from '@/lib/actions/shifts'
@@ -23,7 +23,7 @@ import { ShiftRequestsPanel } from './ShiftRequestsPanel'
 import { AutoAssignButton } from './AutoAssignButton'
 
 interface ShiftCreationBoardProps {
-  staff: Staff[]
+  staff: StaffWithRole[]
   locations: Location[]
   dutyCodes: DutyCode[]
   initialShifts: Shift[]
@@ -43,7 +43,7 @@ export function ShiftCreationBoard({
 }: ShiftCreationBoardProps) {
   const [selectedMonth, setSelectedMonth] = useState(new Date())
   const [shifts, setShifts] = useState<Shift[]>(initialShifts)
-  const [activeStaff, setActiveStaff] = useState<Staff | null>(null)
+  const [activeStaff, setActiveStaff] = useState<StaffWithRole | null>(null)
   const [dutyCodeDialogOpen, setDutyCodeDialogOpen] = useState(false)
   const [pendingDrop, setPendingDrop] = useState<DragData | null>(null)
   const [violations, setViolations] = useState<ConstraintViolation[]>([])
@@ -250,7 +250,7 @@ export function ShiftCreationBoard({
         {activeStaff ? (
           <Card className="p-3 bg-blue-50 border-blue-300 shadow-lg">
             <div className="font-medium text-sm">{activeStaff.name}</div>
-            <div className="text-xs text-gray-500">{activeStaff.employee_id}</div>
+            <div className="text-xs text-gray-500">{activeStaff.employee_number}</div>
           </Card>
         ) : null}
       </DragOverlay>

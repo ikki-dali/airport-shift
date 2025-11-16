@@ -4,7 +4,7 @@ import { format, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import type { Location } from '@/lib/actions/locations'
 import type { Shift } from '@/lib/actions/shifts'
-import type { Staff } from '@/lib/actions/staff'
+import type { StaffWithRole } from '@/lib/actions/staff'
 import type { DutyCode } from '@/lib/actions/duty-codes'
 import { Card } from '@/components/ui/card'
 import { ShiftCell } from './ShiftCell'
@@ -13,7 +13,7 @@ interface ShiftCalendarProps {
   days: Date[]
   locations: Location[]
   shifts: Shift[]
-  staff: Staff[]
+  staff: StaffWithRole[]
   dutyCodes: DutyCode[]
   onDeleteShift: (shiftId: string) => void
   onDateClick?: (date: Date) => void

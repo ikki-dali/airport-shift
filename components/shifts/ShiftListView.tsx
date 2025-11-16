@@ -3,13 +3,13 @@
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import type { Shift } from '@/lib/actions/shifts'
-import type { Staff } from '@/lib/actions/staff'
+import type { StaffWithRole } from '@/lib/actions/staff'
 import type { Location } from '@/lib/actions/locations'
 import type { DutyCode } from '@/lib/actions/duty-codes'
 
 interface ShiftListViewProps {
   shifts: Shift[]
-  staff: Staff[]
+  staff: StaffWithRole[]
   locations: Location[]
   dutyCodes: DutyCode[]
   daysInMonth: Date[]

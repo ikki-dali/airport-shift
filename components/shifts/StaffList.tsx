@@ -1,7 +1,7 @@
 'use client'
 
 import { useDraggable } from '@dnd-kit/core'
-import type { Staff } from '@/lib/actions/staff'
+import type { StaffWithRole } from '@/lib/actions/staff'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StaffFilter, type StaffFilterState } from './StaffFilter'
 import { useState } from 'react'
@@ -12,12 +12,12 @@ interface Role {
 }
 
 interface StaffListProps {
-  staff: Staff[]
+  staff: StaffWithRole[]
   roles?: Role[]
   allTags?: string[]
 }
 
-function DraggableStaffItem({ staff, compact }: { staff: Staff; compact: boolean }) {
+function DraggableStaffItem({ staff, compact }: { staff: StaffWithRole; compact: boolean }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: staff.id,
   })

@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getShiftRequests } from '@/lib/actions/shift-requests'
-import type { Staff } from '@/lib/actions/staff'
+import type { StaffWithRole } from '@/lib/actions/staff'
 import { useDraggable } from '@dnd-kit/core'
 import { Calendar, X } from 'lucide-react'
 
@@ -24,7 +24,7 @@ interface ShiftRequest {
 
 interface ShiftRequestsPanelProps {
   selectedDate: Date | null
-  staff: Staff[]
+  staff: StaffWithRole[]
   onClose: () => void
 }
 
@@ -33,7 +33,7 @@ function DraggableRequestStaffItem({
   staff,
   requestType
 }: {
-  staff: Staff
+  staff: StaffWithRole
   requestType: string
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
