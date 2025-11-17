@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DutyCodeFormDialog } from './DutyCodeFormDialog'
+import { DeleteDutyCodeDialog } from './DeleteDutyCodeDialog'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 
 type DutyCode = Database['public']['Tables']['duty_codes']['Row']
 
@@ -20,6 +23,12 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('code')
+
+  // ダイアログの状態管理
+  const [formDialogOpen, setFormDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [editingDutyCode, setEditingDutyCode] = useState<DutyCode | undefined>()
+  const [deletingDutyCode, setDeletingDutyCode] = useState<DutyCode | null>(null)
 
   const categories = useMemo(() => {
     const cats = new Set(dutyCodes.map((dc) => dc.category))
@@ -164,12 +173,27 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
 
       {/* ツールバー */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <p className="text-sm text-gray-600">
-          表示中: <span className="font-semibold text-gray-900">{filteredDutyCodes.length}</span> 件
-          {selectedCategory !== 'all' || searchQuery ? (
-            <span> / 全 {dutyCodes.length} 件</span>
-          ) : null}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-gray-600">
+            表示中: <span className="font-semibold text-gray-900">{filteredDutyCodes.length}</span> 件
+            {selectedCategory !== 'all' || searchQuery ? (
+              <span> / 全 {dutyCodes.length} 件</span>
+            ) : null}
+          </p>
+
+          {/* 新規追加ボタン */}
+          <Button
+            onClick={() => {
+              setEditingDutyCode(undefined)
+              setFormDialogOpen(true)
+            }}
+            size="sm"
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            新規追加
+          </Button>
+        </div>
 
         <div className="flex items-center gap-2">
           {/* ソート */}
@@ -232,7 +256,7 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <Badge variant="outline" className="mb-2">
                         {dutyCode.category}
                       </Badge>
@@ -240,9 +264,36 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
                         {dutyCode.code}
                       </CardTitle>
                     </div>
-                    {parsed.isOvernight && (
-                      <Badge variant="secondary">日またぎ</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {parsed.isOvernight && (
+                        <Badge variant="secondary">日またぎ</Badge>
+                      )}
+                      {/* 編集・削除ボタン */}
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingDutyCode(dutyCode)
+                            setFormDialogOpen(true)
+                          }}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDeletingDutyCode(dutyCode)
+                            setDeleteDialogOpen(true)
+                          }}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -290,6 +341,20 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
           })}
         </div>
       )}
+
+      {/* ダイアログ */}
+      <DutyCodeFormDialog
+        open={formDialogOpen}
+        onOpenChange={setFormDialogOpen}
+        dutyCode={editingDutyCode}
+        mode={editingDutyCode ? 'edit' : 'create'}
+      />
+
+      <DeleteDutyCodeDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        dutyCode={deletingDutyCode}
+      />
     </div>
   )
 }
