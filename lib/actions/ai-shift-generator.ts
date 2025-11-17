@@ -24,6 +24,18 @@ interface ShiftRequestData {
   request_type: string
 }
 
+interface LocationRequirement {
+  location_id: string
+  duty_code_id: string
+  required_staff_count: number
+  required_responsible_count: number
+  required_tags: string[] | null
+  day_of_week: number | null
+  specific_date: string | null
+  locations?: { location_name: string }
+  duty_codes?: { code: string }
+}
+
 export async function generateWeeklyShifts(
   weekStartStr: string,
   weekEndStr: string,
@@ -31,7 +43,8 @@ export async function generateWeeklyShifts(
   locations: Location[],
   dutyCodes: DutyCode[],
   existingShifts: ShiftAssignment[] = [],
-  shiftRequests: ShiftRequestData[] = []
+  shiftRequests: ShiftRequestData[] = [],
+  locationRequirements: LocationRequirement[] = []
 ): Promise<{ success: boolean; message: string; shifts?: ShiftAssignment[] }> {
   try {
     // OpenAI APIキーのチェック
@@ -58,8 +71,20 @@ ${staff.map((s) => `スタッフ名: ${s.name}
   役職: ${s.roles?.name || 'なし'}`).join('\n\n')}
 
 【配属箇所】
-${locations.map((l) => `配属箇所名: ${l.location_name}
-  UUID: ${l.id}`).join('\n\n')}
+${locations.map((l) => {
+  // この配置箇所の要件を取得
+  const reqs = locationRequirements.filter(r => r.location_id === l.id)
+  const reqInfo = reqs.length > 0
+    ? reqs.map(r => {
+        const dutyCode = dutyCodes.find(dc => dc.id === r.duty_code_id)
+        return `  - ${dutyCode?.code || '不明'}: ${r.required_staff_count}人必要（責任者${r.required_responsible_count}人）`
+      }).join('\n')
+    : '  （要件未設定）'
+
+  return `配属箇所名: ${l.location_name}
+  UUID: ${l.id}
+${reqInfo}`
+}).join('\n\n')}
 
 【勤務記号】
 ${dutyCodes.map((dc) => `勤務記号コード: ${dc.code}
@@ -91,9 +116,12 @@ ${shiftRequests.length > 0
    - 「休」希望の日にはそのスタッフを絶対にシフトに入れない
    - 「◯」希望の日にはできるだけそのスタッフをシフトに入れる
    - 「早朝」「早番」「遅番」「夜勤」希望の場合は、該当する時間帯の勤務記号を割り当てる
-3. 連続勤務は最大6日まで
-4. 週40時間を超えないように配分
-5. 各配属箇所に毎日最低1人は配置
+3. **配置箇所の必要人数を必ず満たすこと**：
+   - 各配置箇所・各勤務記号ごとに指定された人数を配置する
+   - 責任者が必要な場合は、責任者役職のスタッフを含める
+   - 例：「バス案内 06A6AA: 2人必要」なら、その時間帯に2人配置する
+4. 連続勤務は最大6日まで
+5. 週40時間を超えないように配分
 6. できるだけ公平に勤務を配分
 
 【重要事項】

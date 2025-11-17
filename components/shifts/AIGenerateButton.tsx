@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { generateWeeklyShifts, createAIGeneratedShifts } from '@/lib/actions/ai-shift-generator'
 import { getShiftRequests } from '@/lib/actions/shift-requests'
+import { getAllLocationRequirements } from '@/lib/actions/location-requirements'
 import type { StaffWithRole } from '@/lib/actions/staff'
 import type { Location } from '@/lib/actions/locations'
 import type { DutyCode } from '@/lib/actions/duty-codes'
@@ -61,6 +62,9 @@ export function AIGenerateButton({
         (r) => r.date >= weekStartDate && r.date <= weekEndDate
       )
 
+      // 配置箇所の必要人数を取得
+      const locationRequirements = await getAllLocationRequirements()
+
       // AI でシフトを生成
       const generateResult = await generateWeeklyShifts(
         weekStartStr,
@@ -69,7 +73,8 @@ export function AIGenerateButton({
         locations,
         dutyCodes,
         existingWeekShifts,
-        weekShiftRequests
+        weekShiftRequests,
+        locationRequirements
       )
 
       if (!generateResult.success || !generateResult.shifts) {

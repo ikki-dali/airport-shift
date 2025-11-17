@@ -37,6 +37,31 @@ export async function getLocationRequirements(locationId: string) {
   return data as LocationRequirementWithDutyCode[]
 }
 
+export async function getAllLocationRequirements() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('location_requirements')
+    .select(`
+      *,
+      duty_codes (
+        id,
+        code,
+        start_time,
+        end_time,
+        category
+      ),
+      locations (
+        id,
+        location_name
+      )
+    `)
+    .order('location_id')
+
+  if (error) throw error
+  return data
+}
+
 export async function getLocationRequirement(id: string) {
   const supabase = await createClient()
 
