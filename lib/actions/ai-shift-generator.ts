@@ -91,14 +91,18 @@ ${dutyCodes.map((dc) => `勤務記号コード: ${dc.code}
   UUID: ${dc.id}
   時間: ${dc.start_time}-${dc.end_time} (${dc.duration_hours}時間${dc.duration_minutes}分)`).join('\n\n')}
 
-【既存のシフト（この週で既に登録済み）】
+【⚠️ 既存のシフト - 絶対に重複させないこと！】
 ${existingShifts.length > 0
-  ? existingShifts.map((s) => {
+  ? `以下のスタッフ・日付の組み合わせは既にシフトが登録されています。
+これらのスタッフには、同じ日に新しいシフトを割り当ててはいけません：
+
+` + existingShifts.map((s) => {
       const staffName = staff.find(st => st.id === s.staff_id)?.name || '不明'
       const locationName = locations.find(l => l.id === s.location_id)?.location_name || '不明'
-      return `- ${s.date}: ${staffName} を ${locationName} に配置済み`
+      const dutyCode = dutyCodes.find(dc => dc.id === s.duty_code_id)?.code || '不明'
+      return `❌ ${s.date}: ${staffName}（${locationName} ${dutyCode}で配置済み）`
     }).join('\n')
-  : '（既存シフトなし）'
+  : '（既存シフトなし - 全スタッフが利用可能）'
 }
 
 【スタッフの希望（メール等で受け取った希望）】
@@ -110,8 +114,11 @@ ${shiftRequests.length > 0
   : '（希望なし）'
 }
 
-【制約条件】
-1. 各スタッフは1日1シフトまで（既存シフトも含めて重複不可）
+【制約条件 - 必ず守ること】
+1. ⚠️ **既存シフトとの重複は絶対禁止**：
+   - 上記【既存のシフト】に記載されたスタッフ・日付の組み合わせには、絶対に新しいシフトを割り当てない
+   - 各スタッフは1日1シフトまで
+   - 例：山田太郎が2025-11-17に既存シフトがある場合、2025-11-17には山田太郎を使わない
 2. スタッフの希望を最優先に考慮すること：
    - 「休」希望の日にはそのスタッフを絶対にシフトに入れない
    - 「◯」希望の日にはできるだけそのスタッフをシフトに入れる
@@ -149,7 +156,12 @@ ${shiftRequests.length > 0
       messages: [
         {
           role: 'system',
-          content: 'あなたはシフト作成の専門家です。与えられた条件に基づいて、最適なシフトをJSON形式で出力します。',
+          content: `あなたはシフト作成の専門家です。与えられた条件に基づいて、最適なシフトをJSON形式で出力します。
+
+重要な注意事項：
+- 既存のシフトとの重複は絶対に避けてください
+- 同じスタッフが同じ日に複数のシフトに入ることはできません
+- 既存シフトに記載されているスタッフ・日付の組み合わせは使用禁止です`,
         },
         {
           role: 'user',
