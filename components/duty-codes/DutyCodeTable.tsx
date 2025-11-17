@@ -14,9 +14,12 @@ interface DutyCodeTableProps {
   dutyCodes: DutyCode[]
 }
 
+type SortOption = 'code' | 'start_time' | 'duration' | 'category'
+
 export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('code')
 
   const categories = useMemo(() => {
     const cats = new Set(dutyCodes.map((dc) => dc.category))
@@ -41,8 +44,26 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
       )
     }
 
-    return filtered
-  }, [dutyCodes, selectedCategory, searchQuery])
+    // ソート
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'code':
+          return a.code.localeCompare(b.code)
+        case 'start_time':
+          return a.start_time.localeCompare(b.start_time)
+        case 'duration':
+          const aDuration = a.duration_hours * 60 + a.duration_minutes
+          const bDuration = b.duration_hours * 60 + b.duration_minutes
+          return bDuration - aDuration
+        case 'category':
+          return a.category.localeCompare(b.category)
+        default:
+          return 0
+      }
+    })
+
+    return sorted
+  }, [dutyCodes, selectedCategory, searchQuery, sortBy])
 
   // 勤務時間をフォーマット
   const formatDuration = (hours: number, minutes: number) => {
@@ -59,6 +80,30 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
       return mins === 0 ? `${hours}時間` : `${hours}時間${mins}分`
     }
     return `${minutes}分`
+  }
+
+  // CSVエクスポート
+  const exportToCSV = () => {
+    const headers = ['コード', 'カテゴリ', '開始時刻', '終了時刻', '勤務時間', '休憩時間']
+    const rows = filteredDutyCodes.map((dc) => [
+      dc.code,
+      dc.category,
+      dc.start_time,
+      dc.end_time,
+      `${dc.duration_hours}:${dc.duration_minutes.toString().padStart(2, '0')}`,
+      dc.break_minutes.toString(),
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.join(',')),
+    ].join('\n')
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `勤務記号_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
   }
 
   return (
@@ -117,14 +162,51 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
         </CardContent>
       </Card>
 
-      {/* 統計情報 */}
-      <div className="flex items-center justify-between">
+      {/* ツールバー */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <p className="text-sm text-gray-600">
           表示中: <span className="font-semibold text-gray-900">{filteredDutyCodes.length}</span> 件
           {selectedCategory !== 'all' || searchQuery ? (
             <span> / 全 {dutyCodes.length} 件</span>
           ) : null}
         </p>
+
+        <div className="flex items-center gap-2">
+          {/* ソート */}
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="code">コード順</option>
+            <option value="start_time">開始時刻順</option>
+            <option value="duration">勤務時間順</option>
+            <option value="category">カテゴリ順</option>
+          </select>
+
+          {/* エクスポート */}
+          <Button
+            onClick={exportToCSV}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            CSV出力
+          </Button>
+        </div>
       </div>
 
       {/* カードグリッド */}
