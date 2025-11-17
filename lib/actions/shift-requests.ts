@@ -134,6 +134,54 @@ export async function deleteShiftRequestsByYearMonth(yearMonth: string) {
   revalidatePath('/requests')
 }
 
+export async function bulkUpsertShiftRequests(
+  requests: Array<{
+    staff_id: string
+    date: string
+    request_type: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤'
+    note?: string
+  }>
+) {
+  const supabase = await createClient()
+
+  // 年月を計算（最初のリクエストから）
+  const yearMonth = requests[0]?.date.substring(0, 7)
+
+  // データに year_month を追加
+  const requestsWithYearMonth = requests.map((req) => ({
+    ...req,
+    year_month: req.date.substring(0, 7),
+  }))
+
+  // upsert（存在すれば更新、なければ挿入）
+  const { data, error } = await supabase
+    .from('shift_requests')
+    .upsert(requestsWithYearMonth, {
+      onConflict: 'staff_id,date',
+      ignoreDuplicates: false,
+    })
+    .select()
+
+  if (error) throw error
+
+  revalidatePath('/shifts/create')
+  return data
+}
+
+export async function deleteShiftRequest(staffId: string, date: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('shift_requests')
+    .delete()
+    .eq('staff_id', staffId)
+    .eq('date', date)
+
+  if (error) throw error
+
+  revalidatePath('/shifts/create')
+}
+
 export async function getShiftRequestsGroupedByYearMonth() {
   const supabase = await createClient()
 

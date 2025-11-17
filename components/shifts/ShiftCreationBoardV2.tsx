@@ -9,10 +9,13 @@ import type { Shift } from '@/lib/actions/shifts'
 import { WeekSelector } from './WeekSelector'
 import { ShiftCalendarV2 } from './ShiftCalendarV2'
 import { StaffSearchModal } from './StaffSearchModal'
-import { createShift, deleteShift } from '@/lib/actions/shifts'
+import { AIGenerateButton } from './AIGenerateButton'
+import { createShift, deleteShift, getShifts } from '@/lib/actions/shifts'
 import { validateNewShift, type ConstraintViolation } from '@/lib/validators/shift-validator'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Calendar } from 'lucide-react'
+import { ShiftRequestModal } from './ShiftRequestModal'
+import { Button } from '@/components/ui/button'
 
 interface ShiftCreationBoardV2Props {
   staff: StaffWithRole[]
@@ -38,6 +41,7 @@ export function ShiftCreationBoardV2({
   const [staffSearchModalOpen, setStaffSearchModalOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState<PendingAdd | null>(null)
   const [violations, setViolations] = useState<ConstraintViolation[]>([])
+  const [requestModalOpen, setRequestModalOpen] = useState(false)
 
   // 選択週の日付一覧を生成（月曜始まり）
   const weekStart = startOfWeek(selectedWeek, { weekStartsOn: 1 })
@@ -111,11 +115,40 @@ export function ShiftCreationBoardV2({
     }
   }, [])
 
+  // AI生成成功後のシフト再読み込み
+  const handleAISuccess = useCallback(async () => {
+    try {
+      const updatedShifts = await getShifts()
+      setShifts(updatedShifts)
+    } catch (error) {
+      console.error('Error reloading shifts:', error)
+    }
+  }, [])
+
   return (
     <div className="space-y-4">
       {/* ヘッダー：週選択 */}
       <div className="flex items-center justify-between">
         <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setRequestModalOpen(true)}
+            className="gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            希望設定
+          </Button>
+          <AIGenerateButton
+            weekStart={weekStart}
+            weekEnd={weekEnd}
+            staff={staff}
+            locations={locations}
+            dutyCodes={dutyCodes}
+            currentShifts={shifts}
+            onSuccess={handleAISuccess}
+          />
+        </div>
       </div>
 
       {/* 制約違反の表示 */}
@@ -157,6 +190,15 @@ export function ShiftCreationBoardV2({
         locationName={pendingAdd?.locationName}
         date={pendingAdd?.date}
         shifts={shifts}
+      />
+
+      {/* 希望設定モーダル */}
+      <ShiftRequestModal
+        open={requestModalOpen}
+        onOpenChange={setRequestModalOpen}
+        weekDays={daysInWeek}
+        staff={staff}
+        onSuccess={handleAISuccess}
       />
     </div>
   )

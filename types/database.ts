@@ -20,6 +20,7 @@ export interface Database {
           phone: string | null
           role_id: string | null
           tags: string[] | null
+          request_token: string | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -32,6 +33,7 @@ export interface Database {
           phone?: string | null
           role_id?: string | null
           tags?: string[] | null
+          request_token?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -44,6 +46,7 @@ export interface Database {
           phone?: string | null
           role_id?: string | null
           tags?: string[] | null
+          request_token?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string

@@ -19,7 +19,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Search, X, Edit } from 'lucide-react'
+import { Search, X, Edit, Link as LinkIcon, Copy, Check } from 'lucide-react'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
 
@@ -37,6 +37,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [copiedId, setCopiedId] = useState<string | null>(null)
 
   // フィルタリング処理
   const filteredStaff = useMemo(() => {
@@ -66,6 +67,25 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
     setSearch('')
     setRoleFilter('all')
     setStatusFilter('all')
+  }
+
+  const copyTokenUrl = async (staffId: string, token: string | null) => {
+    if (!token) {
+      alert('このスタッフにはトークンが発行されていません')
+      return
+    }
+
+    const baseUrl = window.location.origin
+    const url = `${baseUrl}/shift-request/${token}`
+    
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopiedId(staffId)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch (error) {
+      console.error('Failed to copy:', error)
+      alert('URLのコピーに失敗しました')
+    }
   }
 
   return (
@@ -131,13 +151,14 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
               <TableHead>役職</TableHead>
               <TableHead>タグ</TableHead>
               <TableHead className="w-24">状態</TableHead>
+              <TableHead className="w-40">シフト希望URL</TableHead>
               <TableHead className="w-20 text-right">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredStaff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-12 text-gray-500">
                   該当するスタッフが見つかりません
                 </TableCell>
               </TableRow>
@@ -191,6 +212,30 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                       <Badge variant={s.is_active ? 'default' : 'secondary'}>
                         {s.is_active ? '在籍中' : '退職'}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {s.request_token ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyTokenUrl(s.id, s.request_token)}
+                          className="gap-2"
+                        >
+                          {copiedId === s.id ? (
+                            <>
+                              <Check className="h-4 w-4 text-green-600" />
+                              <span className="text-green-600">コピー済み</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-4 w-4" />
+                              <span>URLコピー</span>
+                            </>
+                          )}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-gray-400">未発行</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/staff/${s.id}/edit`}>
