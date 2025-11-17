@@ -156,6 +156,7 @@ export function ShiftCreationBoardV2({
         onSelect={handleStaffSelect}
         locationName={pendingAdd?.locationName}
         date={pendingAdd?.date}
+        shifts={shifts}
       />
     </div>
   )

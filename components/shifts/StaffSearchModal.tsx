@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import type { StaffWithRole } from '@/lib/actions/staff'
 import type { DutyCode } from '@/lib/actions/duty-codes'
+import type { Shift } from '@/lib/actions/shifts'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ interface StaffSearchModalProps {
   onSelect: (staffId: string, dutyCodeId: string) => void
   locationName?: string
   date?: string
+  shifts: Shift[] // 全シフト情報
 }
 
 export function StaffSearchModal({
@@ -33,23 +35,40 @@ export function StaffSearchModal({
   onSelect,
   locationName,
   date,
+  shifts,
 }: StaffSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null)
   const [selectedDutyCodeId, setSelectedDutyCodeId] = useState<string | null>(null)
 
+  // その日にすでにシフトが入っているスタッフIDのセット
+  const staffWithShiftOnDate = useMemo(() => {
+    if (!date) return new Set<string>()
+
+    return new Set(
+      shifts
+        .filter((shift) => shift.date === date)
+        .map((shift) => shift.staff_id)
+    )
+  }, [shifts, date])
+
+  // シフトが入っていないスタッフのみをフィルター
+  const availableStaff = useMemo(() => {
+    return staff.filter((s) => !staffWithShiftOnDate.has(s.id))
+  }, [staff, staffWithShiftOnDate])
+
   // スタッフを検索
   const filteredStaff = useMemo(() => {
-    if (!searchQuery.trim()) return staff
+    if (!searchQuery.trim()) return availableStaff
 
     const query = searchQuery.toLowerCase()
-    return staff.filter(
+    return availableStaff.filter(
       (s) =>
         s.name.toLowerCase().includes(query) ||
         s.employee_number?.toLowerCase().includes(query) ||
         s.roles?.name.toLowerCase().includes(query)
     )
-  }, [staff, searchQuery])
+  }, [availableStaff, searchQuery])
 
   // 勤務記号をカテゴリ別にグループ化
   const dutyCodesByCategory = useMemo(() => {
