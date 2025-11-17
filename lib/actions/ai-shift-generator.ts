@@ -203,58 +203,75 @@ ${shiftRequests.length > 0
       existingShiftMap.set(`${s.staff_id}_${s.date}`, true)
     })
 
-    // 各シフトのIDをバリデーション
-    const invalidShifts: string[] = []
-    const generatedShiftMap = new Map<string, number>() // 生成されたシフト内での重複チェック
+    // 有効なシフトと無効なシフトを分離
+    const validShifts: ShiftAssignment[] = []
+    const skippedShifts: string[] = []
+    const generatedShiftMap = new Map<string, boolean>() // 生成されたシフト内での重複チェック
+
     for (let i = 0; i < shifts.length; i++) {
       const shift = shifts[i]
-      const errors: string[] = []
       const shiftKey = `${shift.staff_id}_${shift.date}`
+      let shouldSkip = false
+      const skipReasons: string[] = []
 
       // 既存シフトとの重複チェック
       if (existingShiftMap.has(shiftKey)) {
         const staffName = staff.find(s => s.id === shift.staff_id)?.name || shift.staff_id
-        errors.push(`${staffName} は ${shift.date} に既にシフトが登録されています`)
+        skipReasons.push(`${staffName} は ${shift.date} に既にシフト登録済み`)
+        shouldSkip = true
       }
 
       // 生成されたシフト内での重複チェック
       if (generatedShiftMap.has(shiftKey)) {
         const staffName = staff.find(s => s.id === shift.staff_id)?.name || shift.staff_id
-        const prevIndex = generatedShiftMap.get(shiftKey)!
-        errors.push(`${staffName} の ${shift.date} のシフトが重複（シフト${prevIndex + 1}と重複）`)
-      } else {
-        generatedShiftMap.set(shiftKey, i)
+        skipReasons.push(`${staffName} の ${shift.date} が重複`)
+        shouldSkip = true
       }
 
+      // 無効なIDチェック
       if (!validStaffIds.has(shift.staff_id)) {
-        errors.push(`無効なスタッフID: ${shift.staff_id}`)
+        skipReasons.push(`無効なスタッフID`)
+        shouldSkip = true
       }
       if (!validLocationIds.has(shift.location_id)) {
-        errors.push(`無効な配属箇所ID: ${shift.location_id}`)
+        skipReasons.push(`無効な配属箇所ID`)
+        shouldSkip = true
       }
       if (!validDutyCodeIds.has(shift.duty_code_id)) {
-        errors.push(`無効な勤務記号ID: ${shift.duty_code_id}`)
+        skipReasons.push(`無効な勤務記号ID`)
+        shouldSkip = true
       }
 
-      if (errors.length > 0) {
-        invalidShifts.push(`シフト${i + 1}: ${errors.join(', ')}`)
+      if (shouldSkip) {
+        skippedShifts.push(`シフト${i + 1}: ${skipReasons.join(', ')}`)
+      } else {
+        validShifts.push(shift)
+        generatedShiftMap.set(shiftKey, true)
       }
     }
 
-    if (invalidShifts.length > 0) {
-      console.error('Invalid shifts detected:', invalidShifts)
+    // 有効なシフトが1つもない場合はエラー
+    if (validShifts.length === 0) {
+      console.error('No valid shifts generated. All skipped:', skippedShifts)
       return {
         success: false,
-        message: `AIが生成したシフトに無効なIDが含まれています:\n${invalidShifts.join('\n')}`,
+        message: `生成された全てのシフトが無効でした:\n${skippedShifts.slice(0, 5).join('\n')}${skippedShifts.length > 5 ? '\n...' : ''}`,
       }
     }
 
-    console.log('AI generated shifts validation passed:', shifts.length, 'shifts')
+    // スキップしたシフトがあればログに出力
+    if (skippedShifts.length > 0) {
+      console.log(`Skipped ${skippedShifts.length} invalid/duplicate shifts:`, skippedShifts)
+    }
+
+    console.log(`AI generated ${validShifts.length} valid shifts (skipped ${skippedShifts.length} duplicates/invalid)`)
 
     return {
       success: true,
-      message: `${shifts.length}件のシフトを生成しました。`,
-      shifts,
+      message: skippedShifts.length > 0
+        ? `${validShifts.length}件の有効なシフトを生成しました（${skippedShifts.length}件の重複/無効シフトをスキップ）`
+        : `${validShifts.length}件のシフトを生成しました`,
+      shifts: validShifts,
     }
   } catch (error: any) {
     console.error('AI shift generation error:', error)
