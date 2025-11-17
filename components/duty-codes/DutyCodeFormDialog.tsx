@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createDutyCode, updateDutyCode, type DutyCode, type DutyCodeInput } from '@/lib/actions/duty-codes'
+import { parseDutyCode } from '@/lib/duty-code-parser'
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,25 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
     duration_minutes: dutyCode?.duration_minutes || 0,
     break_minutes: dutyCode?.break_minutes || 0,
   })
+
+  // コード入力時に自動パース
+  useEffect(() => {
+    if (formData.code && mode === 'create') {
+      try {
+        const parsed = parseDutyCode(formData.code)
+        setFormData(prev => ({
+          ...prev,
+          start_time: parsed.startTime,
+          end_time: parsed.endTime,
+          duration_hours: parsed.durationHours,
+          duration_minutes: parsed.durationMinutes,
+          break_minutes: parsed.breakMinutes,
+        }))
+      } catch (error) {
+        // パースエラーは無視（不完全な入力中の可能性があるため）
+      }
+    }
+  }, [formData.code, mode])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,14 +107,18 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
               <Label htmlFor="code" className="text-right">
                 コード<span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="col-span-3"
-                required
-                placeholder="例: A01"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="code"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  required
+                  placeholder="例: A01"
+                />
+                {mode === 'create' && (
+                  <p className="text-xs text-gray-500">コードを入力すると勤務時間が自動で反映されます</p>
+                )}
+              </div>
             </div>
 
             {/* カテゴリ */}
