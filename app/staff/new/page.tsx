@@ -2,6 +2,8 @@ import { getRoles } from '@/lib/actions/roles'
 import { getTags } from '@/lib/actions/tags'
 import { StaffForm } from '@/components/staff/StaffForm'
 
+export const dynamic = 'force-dynamic'
+
 export default async function NewStaffPage() {
   const [roles, tags] = await Promise.all([getRoles(), getTags()])
 

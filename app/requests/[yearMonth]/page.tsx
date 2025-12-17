@@ -4,6 +4,8 @@ import { RequestsView } from '@/components/requests/RequestsView'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 interface RequestsDetailPageProps {
   params: {
     yearMonth: string

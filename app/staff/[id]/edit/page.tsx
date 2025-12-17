@@ -4,6 +4,8 @@ import { getTags } from '@/lib/actions/tags'
 import { StaffForm } from '@/components/staff/StaffForm'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditStaffPage({
   params,
 }: {

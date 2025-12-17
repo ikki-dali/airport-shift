@@ -2,6 +2,8 @@ import { getRole } from '@/lib/actions/roles'
 import { RoleForm } from '@/components/roles/RoleForm'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditRolePage({
   params,
 }: {

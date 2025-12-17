@@ -2,6 +2,8 @@ import { getTag } from '@/lib/actions/tags'
 import { TagForm } from '@/components/tags/TagForm'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditTagPage({
   params,
 }: {

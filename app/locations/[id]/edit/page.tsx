@@ -2,6 +2,8 @@ import { getLocation } from '@/lib/actions/locations'
 import { LocationForm } from '@/components/locations/LocationForm'
 import { notFound } from 'next/navigation'
 
+export const dynamic = 'force-dynamic'
+
 export default async function EditLocationPage({
   params,
 }: {
