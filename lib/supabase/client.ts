@@ -2,8 +2,16 @@ import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
 
 export function createClient() {
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key) {
+    throw new Error(
+      'Your project\'s URL and Key are required to create a Supabase client! ' +
+      'Check your Supabase project\'s API settings to find these values: ' +
+      'https://supabase.com/dashboard/project/_/settings/api'
+    )
+  }
+
+  return createBrowserClient<Database>(url, key)
 }

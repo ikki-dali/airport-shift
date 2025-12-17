@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -12,12 +12,15 @@ import {
   DollarSign,
   BarChart3,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getUnreadCount } from '@/lib/actions/notifications'
 
 const navigation = [
   { name: 'ホーム', href: '/', icon: Home },
+  { name: '通知', href: '/notifications', icon: Bell },
   { name: 'スタッフ管理', href: '/staff', icon: Users },
   { name: '配属箇所管理', href: '/locations', icon: MapPin },
   { name: '勤務記号管理', href: '/duty-codes', icon: Hash },
@@ -29,26 +32,57 @@ const navigation = [
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    loadUnreadCount()
+    // 30秒ごとに未読数を更新
+    const interval = setInterval(loadUnreadCount, 30000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadUnreadCount = async () => {
+    try {
+      // 管理者は全スタッフの未読通知数を表示
+      const count = await getUnreadCount()
+      setUnreadCount(count)
+    } catch (error) {
+      console.error('Failed to load unread count:', error)
+    }
+  }
 
   return (
     <>
       {/* モバイルヘッダー */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-            <Calendar className="h-6 w-6 text-white" />
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <Calendar className="h-5 w-5" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">シフト管理</h1>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-gray-900">シフト管理</span>
+            <span className="text-xs text-gray-500">Airport Shift Manager</span>
           </div>
         </Link>
 
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
-        >
-          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* 通知アイコン（モバイルヘッダー用） */}
+          <Link href="/notifications" className="relative p-2">
+            <Bell className="h-6 w-6 text-gray-600" />
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Link>
+
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+          >
+            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* モバイルメニュー（オーバーレイ） */}
@@ -64,13 +98,13 @@ export function MobileNav() {
           <aside className="md:hidden fixed left-0 top-0 z-50 h-screen w-64 border-r border-gray-200 bg-white">
             {/* Logo */}
             <div className="flex h-16 items-center border-b border-gray-200 px-6">
-              <Link href="/" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
-                  <Calendar className="h-6 w-6 text-white" />
+              <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
+                  <Calendar className="h-6 w-6" />
                 </div>
-                <div>
-                  <h1 className="text-lg font-bold text-gray-900">シフト管理</h1>
-                  <p className="text-xs text-gray-500">Airport Shift Manager</p>
+                <div className="flex flex-col">
+                  <span className="text-base font-bold text-gray-900">シフト管理</span>
+                  <span className="text-xs text-gray-500">Airport Shift Manager</span>
                 </div>
               </Link>
             </div>
@@ -79,13 +113,15 @@ export function MobileNav() {
             <nav className="flex-1 space-y-1 px-3 py-4">
               {navigation.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                const isNotifications = item.href === '/notifications'
+
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors relative',
                       isActive
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
@@ -98,6 +134,11 @@ export function MobileNav() {
                       )}
                     />
                     {item.name}
+                    {isNotifications && unreadCount > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 )
               })}
