@@ -2,7 +2,13 @@
 
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    return null
+  }
+  return new Resend(apiKey)
+}
 
 interface SendShiftConfirmationEmailParams {
   to: string
@@ -17,14 +23,15 @@ export async function sendShiftConfirmationEmail({
   token,
   shiftCount,
 }: SendShiftConfirmationEmailParams) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn('RESEND_API_KEY is not set. Email sending is disabled.')
-    return { success: false, error: 'Email sending is not configured' }
-  }
-
   if (!to) {
     console.warn('No email address provided for staff')
     return { success: false, error: 'No email address' }
+  }
+
+  const resend = getResend()
+  if (!resend) {
+    console.warn('RESEND_API_KEY is not set. Email sending is disabled.')
+    return { success: false, error: 'Email sending is not configured' }
   }
 
   const shiftViewUrl = `${process.env.NEXT_PUBLIC_APP_URL}/staff/shifts?token=${token}`
