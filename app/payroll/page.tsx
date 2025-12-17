@@ -8,6 +8,8 @@ interface PayrollPageProps {
   }>
 }
 
+export const dynamic = 'force-dynamic'
+
 export default async function PayrollPage({ searchParams }: PayrollPageProps) {
   const params = await searchParams
   const yearMonth = params.yearMonth || format(new Date(), 'yyyy-MM')

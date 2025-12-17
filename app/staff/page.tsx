@@ -7,6 +7,8 @@ import { getTags } from '@/lib/actions/tags'
 import { StaffSearch } from '@/components/staff/StaffSearch'
 import { Plus } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function StaffPage() {
   // 実際のデータを取得
   const [staff, roles, tags] = await Promise.all([

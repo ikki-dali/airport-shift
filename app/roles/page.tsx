@@ -2,6 +2,8 @@ import { getRoles } from '@/lib/actions/roles'
 import { RoleTable } from '@/components/roles/RoleTable'
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default async function RolesPage() {
   const roles = await getRoles()
 
