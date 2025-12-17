@@ -7,6 +7,7 @@ import { Sparkles, Loader2 } from 'lucide-react'
 import { generateWeeklyShifts, createAIGeneratedShifts } from '@/lib/actions/ai-shift-generator'
 import { getShiftRequests } from '@/lib/actions/shift-requests'
 import { getAllLocationRequirements } from '@/lib/actions/location-requirements'
+import { toast } from 'sonner'
 import type { StaffWithRole } from '@/lib/actions/staff'
 import type { Location } from '@/lib/actions/locations'
 import type { DutyCode } from '@/lib/actions/duty-codes'
@@ -78,27 +79,42 @@ export function AIGenerateButton({
       )
 
       if (!generateResult.success || !generateResult.shifts) {
-        // エラーメッセージを改行で分割して表示
-        const errorLines = generateResult.message.split('\n')
-        const errorMessage = errorLines.length > 3 
-          ? errorLines.slice(0, 3).join('\n') + '\n...'
-          : generateResult.message
-        alert(`❌ シフト生成に失敗しました\n\n${errorMessage}`)
+        toast.error('シフト生成に失敗しました', {
+          description: generateResult.message,
+          duration: 5000,
+        })
         return
       }
+
+      // 生成中のトーストを表示（ページ遷移しても継続）
+      const savingToast = toast.loading(
+        `${generateResult.shifts.length}件のシフトをデータベースに保存中...`
+      )
 
       // 生成されたシフトをDBに保存
       const createResult = await createAIGeneratedShifts(generateResult.shifts)
 
+      // 保存中トーストを閉じる
+      toast.dismiss(savingToast)
+
       if (createResult.success) {
-        alert(`✨ AIが${generateResult.shifts.length}件のシフトを自動生成しました！`)
+        toast.success('AIシフト生成完了！', {
+          description: `${generateResult.shifts.length}件のシフトを自動生成しました`,
+          duration: 5000,
+        })
         onSuccess()
       } else {
-        alert(`❌ シフトの保存に失敗しました\n\n${createResult.message}\n\n生成されたシフトは保存されませんでした。`)
+        toast.error('シフトの保存に失敗しました', {
+          description: createResult.message,
+          duration: 5000,
+        })
       }
     } catch (error: any) {
       console.error('AI generation error:', error)
-      alert(`エラーが発生しました: ${error.message}`)
+      toast.error('エラーが発生しました', {
+        description: error.message,
+        duration: 5000,
+      })
     } finally {
       setLoading(false)
     }

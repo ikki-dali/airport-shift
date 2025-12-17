@@ -19,9 +19,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Search, X, Edit, Link as LinkIcon, Copy, Check } from 'lucide-react'
+import { Search, X, Edit, Link as LinkIcon, Copy, Check, Mail, Send } from 'lucide-react'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
+import { sendShiftRequestEmail, sendBulkShiftRequestEmails } from '@/lib/actions/staff-tokens'
+import { toast } from 'sonner'
+import { Checkbox } from '@/components/ui/checkbox'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 type Role = Database['public']['Tables']['roles']['Row']
@@ -38,6 +41,9 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null)
+  const [selectedStaffIds, setSelectedStaffIds] = useState<Set<string>>(new Set())
+  const [isBulkSending, setIsBulkSending] = useState(false)
 
   // フィルタリング処理
   const filteredStaff = useMemo(() => {
@@ -77,7 +83,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
 
     const baseUrl = window.location.origin
     const url = `${baseUrl}/shift-request/${token}`
-    
+
     try {
       await navigator.clipboard.writeText(url)
       setCopiedId(staffId)
@@ -85,6 +91,71 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
     } catch (error) {
       console.error('Failed to copy:', error)
       alert('URLのコピーに失敗しました')
+    }
+  }
+
+  const sendEmail = async (staffId: string, staffName: string) => {
+    setSendingEmailId(staffId)
+    try {
+      const result = await sendShiftRequestEmail(staffId)
+      if (result.success) {
+        toast.success(`${staffName} さんにメールを送信しました`)
+      } else {
+        toast.error(result.error || 'メール送信に失敗しました')
+      }
+    } catch (error) {
+      console.error('Failed to send email:', error)
+      toast.error('メール送信に失敗しました')
+    } finally {
+      setSendingEmailId(null)
+    }
+  }
+
+  const toggleStaffSelection = (staffId: string) => {
+    setSelectedStaffIds((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(staffId)) {
+        newSet.delete(staffId)
+      } else {
+        newSet.add(staffId)
+      }
+      return newSet
+    })
+  }
+
+  const toggleAllSelection = () => {
+    if (selectedStaffIds.size === eligibleStaff.length) {
+      setSelectedStaffIds(new Set())
+    } else {
+      setSelectedStaffIds(new Set(eligibleStaff.map((s) => s.id)))
+    }
+  }
+
+  // メール送信可能なスタッフ（在籍中 & メールアドレスあり）
+  const eligibleStaff = useMemo(() => {
+    return filteredStaff.filter((s) => s.is_active && s.email)
+  }, [filteredStaff])
+
+  const sendBulkEmails = async () => {
+    if (selectedStaffIds.size === 0) {
+      toast.error('スタッフを選択してください')
+      return
+    }
+
+    setIsBulkSending(true)
+    try {
+      const result = await sendBulkShiftRequestEmails(Array.from(selectedStaffIds))
+      if (result.success) {
+        toast.success(`${result.successCount}件のメールを送信しました`)
+        setSelectedStaffIds(new Set())
+      } else {
+        toast.error(`${result.successCount}件成功、${result.failCount}件失敗しました`)
+      }
+    } catch (error) {
+      console.error('Failed to send bulk emails:', error)
+      toast.error('一括送信に失敗しました')
+    } finally {
+      setIsBulkSending(false)
     }
   }
 
@@ -135,10 +206,42 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
         )}
       </div>
 
-      {/* 検索結果サマリー */}
-      <div className="text-sm text-gray-600">
-        {filteredStaff.length} 件 / 全 {staff.length} 件のスタッフ（在籍中:{' '}
-        {filteredStaff.filter((s) => s.is_active).length} 名）
+      {/* 検索結果サマリーと一括操作 */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          {filteredStaff.length} 件 / 全 {staff.length} 件のスタッフ（在籍中:{' '}
+          {filteredStaff.filter((s) => s.is_active).length} 名）
+          {selectedStaffIds.size > 0 && (
+            <span className="ml-4 text-blue-600 font-medium">
+              {selectedStaffIds.size} 名選択中
+            </span>
+          )}
+        </div>
+
+        {eligibleStaff.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleAllSelection}
+              disabled={isBulkSending}
+            >
+              {selectedStaffIds.size === eligibleStaff.length ? '全解除' : '全選択'}
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={sendBulkEmails}
+              disabled={selectedStaffIds.size === 0 || isBulkSending}
+              className="gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {isBulkSending
+                ? '送信中...'
+                : `選択したスタッフに一括送信 (${selectedStaffIds.size})`}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* スタッフテーブル */}
@@ -146,19 +249,27 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={selectedStaffIds.size === eligibleStaff.length && eligibleStaff.length > 0}
+                  onCheckedChange={toggleAllSelection}
+                  disabled={isBulkSending || eligibleStaff.length === 0}
+                />
+              </TableHead>
               <TableHead className="w-32">社員番号</TableHead>
               <TableHead>氏名</TableHead>
               <TableHead>役職</TableHead>
               <TableHead>タグ</TableHead>
               <TableHead className="w-24">状態</TableHead>
               <TableHead className="w-40">シフト希望URL</TableHead>
+              <TableHead className="w-32">メール送信</TableHead>
               <TableHead className="w-20 text-right">操作</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredStaff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                <TableCell colSpan={9} className="text-center py-12 text-gray-500">
                   該当するスタッフが見つかりません
                 </TableCell>
               </TableRow>
@@ -168,12 +279,20 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                 const staffTags = s.tags
                   ? tags.filter((t) => s.tags?.includes(t.id))
                   : []
+                const isEligible = s.is_active && !!s.email
 
                 return (
                   <TableRow
                     key={s.id}
                     className={`hover:bg-gray-50 ${!s.is_active ? 'opacity-60' : ''}`}
                   >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedStaffIds.has(s.id)}
+                        onCheckedChange={() => toggleStaffSelection(s.id)}
+                        disabled={!isEligible || isBulkSending}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Link
                         href={`/staff/${s.id}`}
@@ -235,6 +354,22 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                         </Button>
                       ) : (
                         <span className="text-xs text-gray-400">未発行</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {s.email ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => sendEmail(s.id, s.name)}
+                          disabled={sendingEmailId === s.id || !s.is_active}
+                          className="gap-2"
+                        >
+                          <Mail className="h-4 w-4" />
+                          {sendingEmailId === s.id ? '送信中...' : 'メール送信'}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-gray-400">メールアドレス未登録</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">

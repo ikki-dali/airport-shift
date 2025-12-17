@@ -42,6 +42,12 @@ export function ShiftRequestModal({
   staff,
   onSuccess,
 }: ShiftRequestModalProps) {
+  console.log('🎯 ShiftRequestModal render', {
+    open,
+    staffCount: staff.length,
+    weekDaysCount: weekDays.length
+  })
+
   const [requests, setRequests] = useState<
     Record<string, RequestType>
   >({})
@@ -49,29 +55,57 @@ export function ShiftRequestModal({
 
   // 既存の希望を読み込み
   useEffect(() => {
+    console.log('🔵 useEffect fired', { open, weekDaysLength: weekDays.length })
     if (open && weekDays.length > 0) {
+      console.log('🟢 Calling loadExistingRequests')
       loadExistingRequests()
+    } else {
+      console.log('🔴 Not loading', { open, weekDaysLength: weekDays.length })
     }
-  }, [open, weekDays])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const loadExistingRequests = async () => {
     try {
+      console.log('=== Starting to load existing shift requests ===')
+
+      if (!weekDays || weekDays.length === 0) {
+        console.log('No weekDays available')
+        return
+      }
+
       // 週の最初の日から年月を取得
       const yearMonth = format(weekDays[0], 'yyyy-MM')
-      
+
+      console.log('Year-Month:', yearMonth)
+      console.log('Week days:', weekDays.map(d => format(d, 'yyyy-MM-dd')))
+
       // その月の全希望データを取得
+      console.log('Fetching shift requests...')
       const existingRequests = await getShiftRequests({ yearMonth })
-      
+      console.log('Fetch complete!')
+
+      console.log('Existing requests count:', existingRequests.length)
+      if (existingRequests.length > 0) {
+        console.log('Sample requests:', existingRequests.slice(0, 3))
+      }
+
       // requests state に反映
       const newRequests: Record<string, RequestType> = {}
       existingRequests.forEach((request) => {
         const key = `${request.staff_id}_${request.date}`
         newRequests[key] = request.request_type as RequestType
       })
-      
+
+      console.log('Total requests loaded:', Object.keys(newRequests).length)
+      console.log('Setting state...')
       setRequests(newRequests)
+      console.log('State set complete!')
+      console.log('======================================')
+
     } catch (error) {
-      console.error('Failed to load existing requests:', error)
+      console.error('❌ Failed to load existing requests:', error)
+      console.error('Error details:', error instanceof Error ? error.message : String(error))
     }
   }
 

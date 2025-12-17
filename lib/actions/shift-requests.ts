@@ -7,11 +7,19 @@ import type { ParsedRequest } from '@/lib/parsers/excel-parser'
 
 type ShiftRequest = Database['public']['Tables']['shift_requests']['Row']
 
+export type ShiftRequestWithStaff = ShiftRequest & {
+  staff: {
+    id: string
+    employee_number: string
+    name: string
+  } | null
+}
+
 export async function getShiftRequests(filters?: {
   yearMonth?: string
   staffId?: string
   date?: string
-}) {
+}): Promise<ShiftRequestWithStaff[]> {
   const supabase = await createClient()
 
   let query = supabase
@@ -48,7 +56,7 @@ export async function getShiftRequests(filters?: {
   const { data, error } = await query
 
   if (error) throw error
-  return data
+  return data as ShiftRequestWithStaff[]
 }
 
 export async function importShiftRequests(

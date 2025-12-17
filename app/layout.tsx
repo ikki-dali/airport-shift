@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
-import { AppSidebar } from '@/components/layout/AppSidebar'
-import { MobileNav } from '@/components/layout/MobileNav'
+import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
+import { Toaster } from 'sonner'
 
 const notoSansJP = Noto_Sans_JP({
   subsets: ['latin'],
@@ -30,22 +30,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="font-sans antialiased">
-        <div className="flex h-screen overflow-hidden bg-gray-50">
-          {/* Desktop Sidebar */}
-          <AppSidebar />
-
-          {/* Mobile Navigation */}
-          <MobileNav />
-
-          {/* Main Content */}
-          <div className="flex flex-1 flex-col overflow-hidden md:pl-64">
-            <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
-              <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-                {children}
-              </div>
-            </main>
-          </div>
-        </div>
+        <Toaster position="top-center" richColors />
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   )
