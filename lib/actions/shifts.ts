@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { format, endOfMonth } from 'date-fns'
+import { ja } from 'date-fns/locale'
+import { createBulkNotifications } from './notifications'
+import { sendShiftConfirmationEmail } from '@/lib/email/send-shift-confirmation'
 
 /**
  * 現在のユーザーIDを取得
@@ -82,30 +85,89 @@ export async function getShiftsByDateRange(
 }
 
 /**
- * シフトを作成
+ * シフトを作成（オーバーロード対応）
  */
+export async function createShift(
+  data: {
+    staff_id: string
+    location_id: string
+    duty_code_id: string
+    date: string
+    note?: string
+  }
+): Promise<Shift>
 export async function createShift(
   staffId: string,
   locationId: string,
   dutyCodeId: string,
   date: string,
   note?: string
+): Promise<Shift>
+export async function createShift(
+  staffIdOrData: string | {
+    staff_id: string
+    location_id: string
+    duty_code_id: string
+    date: string
+    note?: string
+  },
+  locationId?: string,
+  dutyCodeId?: string,
+  date?: string,
+  note?: string
 ): Promise<Shift> {
   const supabase = await createClient()
   const userId = await getCurrentUserId()
 
-  const { data, error } = await supabase
-    .from('shifts')
-    .insert({
-      staff_id: staffId,
-      location_id: locationId,
-      duty_code_id: dutyCodeId,
-      date,
+  let insertData: {
+    staff_id: string
+    location_id: string
+    duty_code_id: string
+    date: string
+    note: string | null
+    status: string
+    created_by: string | null
+    updated_by: string | null
+  }
+
+  if (typeof staffIdOrData === 'object') {
+    // オブジェクト形式で呼び出された場合
+    insertData = {
+      staff_id: staffIdOrData.staff_id,
+      location_id: staffIdOrData.location_id,
+      duty_code_id: staffIdOrData.duty_code_id,
+      date: staffIdOrData.date,
+      status: '予定',
+      note: staffIdOrData.note || null,
+      created_by: userId,
+      updated_by: userId,
+    }
+  } else {
+    // 個別引数形式で呼び出された場合
+    insertData = {
+      staff_id: staffIdOrData,
+      location_id: locationId!,
+      duty_code_id: dutyCodeId!,
+      date: date!,
       status: '予定',
       note: note || null,
       created_by: userId,
       updated_by: userId,
-    })
+    }
+  }
+
+  // 既存のシフトをチェック
+  const existingShift = await getStaffShiftByDate(insertData.staff_id, insertData.date)
+  
+  // 既に同じスタッフが同じ日にシフトを持っている場合は、既存のシフトを返す
+  if (existingShift) {
+    console.log(`Shift already exists for staff ${insertData.staff_id} on ${insertData.date}, returning existing shift`)
+    return existingShift
+  }
+
+  const { data: result, error } = await supabase
+    .from('shifts')
+    .insert(insertData)
     .select()
     .single()
 
@@ -115,7 +177,7 @@ export async function createShift(
   }
 
   revalidatePath('/shifts/create')
-  return data as Shift
+  return result as Shift
 }
 
 /**
@@ -124,6 +186,7 @@ export async function createShift(
 export async function updateShift(
   shiftId: string,
   updates: {
+    staff_id?: string
     location_id?: string
     duty_code_id?: string
     date?: string
@@ -167,6 +230,33 @@ export async function deleteShift(shiftId: string): Promise<void> {
   }
 
   revalidatePath('/shifts/create')
+}
+
+/**
+ * 指定期間のスタッフのシフトを一括削除
+ */
+export async function deleteStaffShiftsByDateRange(
+  staffId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ deletedCount: number }> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('shifts')
+    .delete()
+    .eq('staff_id', staffId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .select()
+
+  if (error) {
+    console.error('Error deleting shifts:', error)
+    throw new Error(`シフト一括削除エラー: ${error.message}`)
+  }
+
+  revalidatePath('/shifts/create')
+  return { deletedCount: data?.length || 0 }
 }
 
 /**
@@ -319,6 +409,70 @@ export async function confirmShifts(
 
   if (updateError) throw updateError
 
+  // 通知を作成
+  try {
+    const staffIds = [...new Set(shifts.map((s: any) => s.staff_id))]
+    await createBulkNotifications(staffIds, {
+      type: 'shift_confirmed',
+      title: 'シフトが確定されました',
+      message: `${shifts.length}件のシフトが確定されました。確認してください。`,
+    })
+  } catch (notificationError) {
+    console.error('Notification error:', notificationError)
+    // 通知エラーは確定処理を失敗させない
+  }
+
+  // メール送信
+  try {
+    // スタッフごとにグループ化してメール送信
+    const staffGroups = shifts.reduce((acc: any, shift: any) => {
+      const staffId = shift.staff_id
+      if (!acc[staffId]) {
+        acc[staffId] = {
+          staff: shift.staff,
+          count: 0,
+        }
+      }
+      acc[staffId].count++
+      return acc
+    }, {})
+
+    // 各スタッフに順次メール送信（レート制限対策：1秒に2リクエストまで）
+    let sentCount = 0
+    let errorCount = 0
+    
+    for (const [, data] of Object.entries(staffGroups)) {
+      const staff = (data as any).staff
+      const count = (data as any).count
+      
+      if (staff.email && staff.request_token) {
+        try {
+          await sendShiftConfirmationEmail({
+            to: staff.email,
+            staffName: staff.name,
+            token: staff.request_token,
+            shiftCount: count,
+          })
+          sentCount++
+          console.log(`Email sent to ${staff.name} (${staff.email})`)
+          
+          // レート制限対策：500ms待機（1秒に2リクエストまで）
+          await new Promise(resolve => setTimeout(resolve, 500))
+        } catch (error: any) {
+          errorCount++
+          console.error(`Failed to send email to ${staff.name}:`, error?.message || error)
+        }
+      } else {
+        console.log(`Skipped ${staff.name}: no email or token`)
+      }
+    }
+    
+    console.log(`Email sending completed: ${sentCount} sent, ${errorCount} failed`)
+  } catch (emailError) {
+    console.error('Email error:', emailError)
+    // メール送信エラーは確定処理を失敗させない
+  }
+
   revalidatePath('/shifts')
   revalidatePath('/shifts/create')
 
@@ -331,19 +485,25 @@ export async function confirmShifts(
 export async function confirmMonthShifts(yearMonth: string) {
   const supabase = await createClient()
 
+  // 対象月の開始日と終了日を計算
+  const [year, month] = yearMonth.split('-')
+  const startDate = `${yearMonth}-01`
+  const lastDay = endOfMonth(new Date(parseInt(year), parseInt(month) - 1))
+  const endDate = format(lastDay, 'yyyy-MM-dd')
+
   // 対象月の予定ステータスの全シフトIDを取得
   const { data: shifts } = await supabase
     .from('shifts')
     .select('id')
-    .gte('date', `${yearMonth}-01`)
-    .lt('date', `${yearMonth}-32`)
+    .gte('date', startDate)
+    .lte('date', endDate)
     .eq('status', '予定')
 
   if (!shifts || shifts.length === 0) {
     throw new Error('確定対象のシフトがありません')
   }
 
-  const shiftIds = shifts.map((s) => s.id)
+  const shiftIds = shifts.map((s: { id: string }) => s.id)
 
   return confirmShifts(shiftIds)
 }
