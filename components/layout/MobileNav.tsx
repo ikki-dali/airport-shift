@@ -10,7 +10,6 @@ import {
   Hash,
   Calendar,
   DollarSign,
-  BarChart3,
   Menu,
   X,
   Bell
@@ -26,7 +25,6 @@ const navigation = [
   { name: '勤務記号管理', href: '/duty-codes', icon: Hash },
   { name: 'シフト作成', href: '/shifts/create', icon: Calendar },
   { name: '給与管理', href: '/payroll', icon: DollarSign },
-  { name: 'レポート', href: '/reports', icon: BarChart3 },
 ]
 
 export function MobileNav() {
