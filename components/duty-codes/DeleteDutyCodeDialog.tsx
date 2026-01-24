@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface DeleteDutyCodeDialogProps {
   open: boolean
@@ -32,7 +33,7 @@ export function DeleteDutyCodeDialog({ open, onOpenChange, dutyCode }: DeleteDut
       router.refresh()
       onOpenChange(false)
     } catch (error: any) {
-      alert(`削除エラー: ${error.message}`)
+      toast.error(`削除エラー: ${error.message}`)
     } finally {
       setLoading(false)
     }

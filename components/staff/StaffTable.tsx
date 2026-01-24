@@ -5,6 +5,7 @@ import { deleteStaff, toggleStaffActive } from '@/lib/actions/staff'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
+import { toast } from 'sonner'
 
 type Staff = Database['public']['Tables']['staff']['Row'] & {
   roles: {
@@ -31,7 +32,7 @@ export function StaffTable({ staff }: StaffTableProps) {
       await deleteStaff(id)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : '削除に失敗しました')
+      toast.error(error instanceof Error ? error.message : '削除に失敗しました')
     } finally {
       setDeleting(null)
     }
@@ -46,7 +47,7 @@ export function StaffTable({ staff }: StaffTableProps) {
       await toggleStaffActive(id, !currentStatus)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : '変更に失敗しました')
+      toast.error(error instanceof Error ? error.message : '変更に失敗しました')
     } finally {
       setToggling(null)
     }

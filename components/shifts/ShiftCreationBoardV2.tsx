@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Calendar } from 'lucide-react'
 import { ShiftRequestModal } from './ShiftRequestModal'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface ShiftCreationBoardV2Props {
   staff: StaffWithRole[]
@@ -95,7 +96,7 @@ export function ShiftCreationBoardV2({
         console.log('シフトを作成しました')
       } catch (error) {
         console.error('Error creating shift:', error)
-        alert(error instanceof Error ? error.message : 'シフト作成に失敗しました')
+        toast.error(error instanceof Error ? error.message : 'シフト作成に失敗しました')
       } finally {
         setPendingAdd(null)
       }
@@ -111,7 +112,7 @@ export function ShiftCreationBoardV2({
       console.log('シフトを削除しました')
     } catch (error) {
       console.error('Error deleting shift:', error)
-      alert(error instanceof Error ? error.message : 'シフト削除に失敗しました')
+      toast.error(error instanceof Error ? error.message : 'シフト削除に失敗しました')
     }
   }, [])
 

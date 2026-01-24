@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Calendar, Check, Loader2 } from 'lucide-react'
 import { upsertShiftRequestsForToken } from '@/lib/actions/shift-requests'
+import { toast } from 'sonner'
 
 interface ShiftRequestFormProps {
   staffId: string
@@ -70,7 +71,7 @@ export function ShiftRequestForm({
         }))
 
       if (validRequests.length === 0) {
-        alert('希望を選択してください')
+        toast.warning('希望を選択してください')
         return
       }
 
@@ -81,7 +82,7 @@ export function ShiftRequestForm({
       setTimeout(() => setSuccess(false), 3000)
     } catch (error: any) {
       console.error('Submit error:', error)
-      alert(`提出に失敗しました: ${error.message}`)
+      toast.error(`提出に失敗しました: ${error.message}`)
     } finally {
       setLoading(false)
     }

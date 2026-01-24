@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Edit, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import type { Database } from '@/types/database'
 
 type Tag = Database['public']['Tables']['tags']['Row']
@@ -37,7 +38,7 @@ export function TagTable({ tags }: TagTableProps) {
       await deleteTag(id)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : '削除に失敗しました')
+      toast.error(error instanceof Error ? error.message : '削除に失敗しました')
     } finally {
       setDeleting(null)
     }

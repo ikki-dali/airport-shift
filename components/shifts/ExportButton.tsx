@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface ExportButtonProps {
   yearMonth: string
@@ -31,7 +32,7 @@ export function ExportButton({ yearMonth }: ExportButtonProps) {
       window.URL.revokeObjectURL(url)
     } catch (error: any) {
       console.error('Export error:', error)
-      alert(`エクスポートに失敗しました: ${error.message}`)
+      toast.error(`エクスポートに失敗しました: ${error.message}`)
     } finally {
       setIsExporting(false)
     }
