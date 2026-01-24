@@ -374,7 +374,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/staff/${s.id}/edit`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" aria-label="スタッフを編集">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>

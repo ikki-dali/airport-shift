@@ -201,6 +201,7 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="並び替え"
           >
             <option value="code">コード順</option>
             <option value="start_time">開始時刻順</option>
@@ -278,6 +279,7 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
                             setFormDialogOpen(true)
                           }}
                           className="h-8 w-8 p-0"
+                          aria-label="勤務記号を編集"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -289,6 +291,7 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
                             setDeleteDialogOpen(true)
                           }}
                           className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          aria-label="勤務記号を削除"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

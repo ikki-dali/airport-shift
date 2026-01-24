@@ -33,6 +33,7 @@ export function WeekSelector({ selectedWeek, onWeekChange }: WeekSelectorProps) 
         size="sm"
         onClick={handlePrevWeek}
         className="h-9"
+        aria-label="前週へ"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -56,6 +57,7 @@ export function WeekSelector({ selectedWeek, onWeekChange }: WeekSelectorProps) 
         size="sm"
         onClick={handleNextWeek}
         className="h-9"
+        aria-label="次週へ"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

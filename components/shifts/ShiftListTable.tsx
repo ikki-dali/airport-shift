@@ -167,6 +167,7 @@ export function ShiftListTable({
                       checked={selectedShifts.includes(shift.id)}
                       onChange={(e) => handleSelect(shift.id, e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300"
+                      aria-label="このシフトを選択"
                     />
                   </td>
                   <td className="p-3">

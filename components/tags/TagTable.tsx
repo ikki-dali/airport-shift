@@ -85,7 +85,7 @@ export function TagTable({ tags }: TagTableProps) {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Link href={`/tags/${tag.id}/edit`}>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" aria-label="タグを編集">
                         <Edit className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -95,6 +95,7 @@ export function TagTable({ tags }: TagTableProps) {
                       onClick={() => handleDelete(tag.id, tag.name)}
                       disabled={deleting === tag.id}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      aria-label="タグを削除"
                     >
                       {deleting === tag.id ? (
                         '...'

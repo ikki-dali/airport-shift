@@ -34,6 +34,7 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
               size="icon"
               onClick={handlePrevMonth}
               className="h-8 w-8"
+              aria-label="前月へ"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -42,6 +43,7 @@ export function MonthSelector({ selectedMonth, onMonthChange }: MonthSelectorPro
               size="icon"
               onClick={handleNextMonth}
               className="h-8 w-8"
+              aria-label="次月へ"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>

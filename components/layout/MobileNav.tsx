@@ -55,7 +55,7 @@ export function MobileNav() {
   return (
     <>
       {/* モバイルヘッダー */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Calendar className="h-5 w-5" />
@@ -68,7 +68,7 @@ export function MobileNav() {
 
         <div className="flex items-center gap-2">
           {/* 通知アイコン（モバイルヘッダー用） */}
-          <Link href="/notifications" className="relative p-2">
+          <Link href="/notifications" className="relative p-2" aria-label="通知">
             <Bell className="h-6 w-6 text-gray-600" />
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
@@ -80,11 +80,13 @@ export function MobileNav() {
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+            aria-label={isOpen ? 'メニューを閉じる' : 'メニューを開く'}
+            aria-expanded={isOpen}
           >
             {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* モバイルメニュー（オーバーレイ） */}
       {isOpen && (
