@@ -6,11 +6,12 @@ import { MobileNav } from './MobileNav'
 
 export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  // スタッフ専用ページ（サイドバーなし）
+  // サイドバーなしのページ（スタッフ専用ページ、ログインページ）
   const isStaffPage = pathname?.startsWith('/staff/shifts') || pathname?.startsWith('/shift-request')
+  const isLoginPage = pathname === '/login'
 
-  if (isStaffPage) {
-    // スタッフページ: サイドバーなし
+  if (isStaffPage || isLoginPage) {
+    // スタッフページ/ログインページ: サイドバーなし
     return <>{children}</>
   }
 
