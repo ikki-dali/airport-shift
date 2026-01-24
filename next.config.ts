@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const nextConfig: NextConfig = {
   // Production optimizations
@@ -32,4 +33,8 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const analyzeBundles = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+export default analyzeBundles(nextConfig);
