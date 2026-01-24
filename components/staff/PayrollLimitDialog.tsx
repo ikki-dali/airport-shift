@@ -67,7 +67,6 @@ export function PayrollLimitDialog({
       onOpenChange(false)
       window.location.reload() // 簡易的にリロード
     } catch (err) {
-      console.error('Error saving payroll setting:', err)
       setError(err instanceof Error ? err.message : '設定の保存に失敗しました')
     } finally {
       setIsSaving(false)

@@ -42,8 +42,8 @@ export default function LocationRequirementsPage({
       setRequirements(requirementsData)
       setDutyCodes(dutyCodesData)
       setTags(tagsData)
-    } catch (error) {
-      console.error('Failed to load data:', error)
+    } catch {
+      /* ignore */
     } finally {
       setLoading(false)
     }

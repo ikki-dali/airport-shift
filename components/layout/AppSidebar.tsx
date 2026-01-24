@@ -37,8 +37,8 @@ export function AppSidebar() {
       try {
         const count = await getUnreadCount()
         if (isActive) setUnreadCount(count)
-      } catch (error) {
-        console.error('Failed to load unread count:', error)
+      } catch {
+        /* ignore */
       }
     }
     fetchUnreadCount()

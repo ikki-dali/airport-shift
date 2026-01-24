@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateExcel, ShiftExportData } from '@/lib/exporters/excel-exporter'
 import { generateCSV } from '@/lib/exporters/csv-exporter'
+import { logger } from '@/lib/errors/logger'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     .order('staff_id')
 
   if (error) {
-    console.error('Export error:', error)
+    logger.error('Export error', { action: 'shiftExport', yearMonth }, error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid format' }, { status: 400 })
   } catch (error: any) {
-    console.error('Export generation error:', error)
+    logger.error('Export generation error', { action: 'shiftExport', yearMonth, format }, error)
     return NextResponse.json(
       { error: `エクスポート生成エラー: ${error.message}` },
       { status: 500 }

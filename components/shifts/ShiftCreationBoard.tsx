@@ -137,9 +137,7 @@ export function ShiftCreationBoard({
 
         setShifts((prev) => [...prev, newShift])
         setViolations([]) // 成功時に違反をクリア
-        console.log('シフトを作成しました')
       } catch (error) {
-        console.error('Error creating shift:', error)
         toast.error(error instanceof Error ? error.message : 'シフト作成に失敗しました')
       } finally {
         setDutyCodeDialogOpen(false)
@@ -155,9 +153,7 @@ export function ShiftCreationBoard({
       try {
         await deleteShift(shiftId)
         setShifts((prev) => prev.filter((s) => s.id !== shiftId))
-        console.log('シフトを削除しました')
       } catch (error) {
-        console.error('Error deleting shift:', error)
         toast.error(error instanceof Error ? error.message : 'シフト削除に失敗しました')
       }
     },

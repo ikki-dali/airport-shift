@@ -1,5 +1,6 @@
 import type { StaffWithRole, DutyCode, Shift, ShiftRequest } from './types'
 import { scoreStaffAssignment, calculateStats, calculateTotalScore } from './scoring'
+import { logger } from '@/lib/errors/logger'
 import {
   selectOptimalStaffMultiple,
   validateAllAssignments,
@@ -121,7 +122,7 @@ function greedyAssign(
   for (const requirement of sortedRequirements) {
     // タイムアウトチェック
     if (Date.now() - startTime > timeoutMs) {
-      console.warn('Greedy assignment timed out')
+      logger.warn('Greedy assignment timed out', { action: 'greedyAssign' })
       break
     }
 
@@ -250,7 +251,7 @@ function localSearchOptimization(
     }
   }
 
-  console.log(`Local search completed: ${iteration} iterations, final score: ${currentScore}`)
+  logger.info('Local search completed', { action: 'localSearchOptimization', iterations: iteration, finalScore: currentScore })
   return currentAssignments
 }
 

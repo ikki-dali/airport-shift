@@ -18,8 +18,8 @@ export function NotificationBell({ staffId }: NotificationBellProps) {
       try {
         const count = await getUnreadCount(staffId)
         if (isActive) setUnreadCount(count)
-      } catch (error) {
-        console.error('Failed to load unread count:', error)
+      } catch {
+        /* ignore */
       }
     }
     fetchUnreadCount()

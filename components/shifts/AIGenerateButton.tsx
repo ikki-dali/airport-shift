@@ -110,7 +110,6 @@ export function AIGenerateButton({
         })
       }
     } catch (error: any) {
-      console.error('AI generation error:', error)
       toast.error('エラーが発生しました', {
         description: error.message,
         duration: 5000,

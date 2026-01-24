@@ -129,8 +129,7 @@ export function ShiftCreationBoardV3({
       handleRefresh()
       setDeleteModalOpen(false)
       setShiftToDelete(null)
-    } catch (error) {
-      console.error('Failed to delete shift:', error)
+    } catch {
       toast.error('シフトの削除に失敗しました')
     } finally {
       setIsDeleting(false)
@@ -203,8 +202,7 @@ export function ShiftCreationBoardV3({
       })
       toast.success('シフトを移動しました')
       handleRefresh()
-    } catch (error) {
-      console.error('Failed to move shift:', error)
+    } catch {
       toast.error('シフトの移動に失敗しました')
     }
   }

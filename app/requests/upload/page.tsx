@@ -42,8 +42,7 @@ export default function ExcelUploadPage() {
     try {
       const data = await getStaff({ isActive: true })
       setStaffList(data)
-    } catch (err) {
-      console.error('Failed to load staff list:', err)
+    } catch {
       setError('スタッフリストの読み込みに失敗しました')
     }
   }

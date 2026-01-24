@@ -47,7 +47,6 @@ export function AutoAssignButton({
       setPreviewResult(result)
       setShowPreview(true)
     } catch (err) {
-      console.error('Auto-assign preview error:', err)
       setError(err instanceof Error ? err.message : '自動割り当てに失敗しました')
     } finally {
       setIsLoading(false)

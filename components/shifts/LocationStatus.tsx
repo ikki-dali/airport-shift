@@ -32,8 +32,8 @@ export function LocationStatus({
       try {
         const result = await validateShifts(shifts, locationId, dutyCodeId, date)
         setViolations(result)
-      } catch (error) {
-        console.error('制約チェックエラー:', error)
+      } catch {
+        /* ignore */
       } finally {
         setLoading(false)
       }

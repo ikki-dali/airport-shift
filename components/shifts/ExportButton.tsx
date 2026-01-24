@@ -31,7 +31,6 @@ export function ExportButton({ yearMonth }: ExportButtonProps) {
       document.body.removeChild(a)
       window.URL.revokeObjectURL(url)
     } catch (error: any) {
-      console.error('Export error:', error)
       toast.error(`エクスポートに失敗しました: ${error.message}`)
     } finally {
       setIsExporting(false)

@@ -81,7 +81,6 @@ export function ShiftRequestForm({
       // 3秒後に成功メッセージを消す
       setTimeout(() => setSuccess(false), 3000)
     } catch (error: any) {
-      console.error('Submit error:', error)
       toast.error(`提出に失敗しました: ${error.message}`)
     } finally {
       setLoading(false)

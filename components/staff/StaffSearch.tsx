@@ -88,8 +88,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       await navigator.clipboard.writeText(url)
       setCopiedId(staffId)
       setTimeout(() => setCopiedId(null), 2000)
-    } catch (error) {
-      console.error('Failed to copy:', error)
+    } catch {
       toast.error('URLのコピーに失敗しました')
     }
   }
@@ -103,8 +102,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       } else {
         toast.error(result.error || 'メール送信に失敗しました')
       }
-    } catch (error) {
-      console.error('Failed to send email:', error)
+    } catch {
       toast.error('メール送信に失敗しました')
     } finally {
       setSendingEmailId(null)
@@ -151,8 +149,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       } else {
         toast.error(`${result.successCount}件成功、${result.failCount}件失敗しました`)
       }
-    } catch (error) {
-      console.error('Failed to send bulk emails:', error)
+    } catch {
       toast.error('一括送信に失敗しました')
     } finally {
       setIsBulkSending(false)
