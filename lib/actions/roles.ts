@@ -6,6 +6,7 @@ import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
 import { requireAuth } from '@/lib/auth'
+import { validateData, roleSchema } from '@/lib/validators/schemas'
 
 type Role = Database['public']['Tables']['roles']['Row']
 type RoleInsert = Database['public']['Tables']['roles']['Insert']
@@ -49,11 +50,11 @@ export async function createRole(formData: FormData) {
   await requireAuth()
   const supabase = await createClient()
 
-  const role: RoleInsert = {
+  const role: RoleInsert = validateData(roleSchema, {
     name: formData.get('name') as string,
     is_responsible: formData.get('is_responsible') === 'on',
     priority: parseInt(formData.get('priority') as string) || 0,
-  }
+  })
 
   const { data, error } = await supabase
     .from('roles')
@@ -74,11 +75,11 @@ export async function updateRole(id: string, formData: FormData) {
   await requireAuth()
   const supabase = await createClient()
 
-  const role: RoleUpdate = {
+  const role: RoleUpdate = validateData(roleSchema, {
     name: formData.get('name') as string,
     is_responsible: formData.get('is_responsible') === 'on',
     priority: parseInt(formData.get('priority') as string) || 0,
-  }
+  })
 
   const { data, error } = await supabase
     .from('roles')

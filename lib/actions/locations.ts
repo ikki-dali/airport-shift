@@ -6,6 +6,7 @@ import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
 import { requireAuth } from '@/lib/auth'
+import { validateData, locationCreateSchema, locationUpdateSchema } from '@/lib/validators/schemas'
 
 export type Location = Database['public']['Tables']['locations']['Row']
 
@@ -40,12 +41,12 @@ export async function createLocation(formData: FormData) {
   await requireAuth()
   const supabase = await createClient()
 
-  const location = {
+  const location = validateData(locationCreateSchema, {
     business_type: formData.get('business_type') as string,
     location_name: formData.get('location_name') as string,
     code: formData.get('code') as string,
     is_active: formData.get('is_active') === 'true',
-  }
+  })
 
   const { data, error } = await supabase
     .from('locations')
@@ -68,11 +69,11 @@ export async function updateLocation(id: string, formData: FormData) {
   await requireAuth()
   const supabase = await createClient()
 
-  const location = {
+  const location = validateData(locationUpdateSchema, {
     business_type: formData.get('business_type') as string,
     location_name: formData.get('location_name') as string,
     is_active: formData.get('is_active') === 'true',
-  }
+  })
 
   const { data, error } = await supabase
     .from('locations')

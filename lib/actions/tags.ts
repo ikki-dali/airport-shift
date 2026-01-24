@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
+import { validateData, tagSchema } from '@/lib/validators/schemas'
 
 type Tag = Database['public']['Tables']['tags']['Row']
 type TagInsert = Database['public']['Tables']['tags']['Insert']
@@ -47,10 +48,10 @@ export async function getTag(id: string) {
 export async function createTag(formData: FormData) {
   const supabase = await createClient()
 
-  const tag: TagInsert = {
+  const tag: TagInsert = validateData(tagSchema, {
     name: formData.get('name') as string,
-    description: formData.get('description') as string || null,
-  }
+    description: (formData.get('description') as string) || null,
+  })
 
   const { data, error } = await supabase
     .from('tags')
@@ -75,10 +76,10 @@ export async function createTag(formData: FormData) {
 export async function updateTag(id: string, formData: FormData) {
   const supabase = await createClient()
 
-  const tag: TagUpdate = {
+  const tag: TagUpdate = validateData(tagSchema, {
     name: formData.get('name') as string,
-    description: formData.get('description') as string || null,
-  }
+    description: (formData.get('description') as string) || null,
+  })
 
   const { data, error } = await supabase
     .from('tags')

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ShiftListTable } from '@/components/shifts/ShiftListTable'
 import { ConfirmDialog } from '@/components/shifts/ConfirmDialog'
@@ -41,9 +41,28 @@ export default function ShiftsPage() {
   const [isConfirming, setIsConfirming] = useState(false)
 
   // データ取得
-  useEffect(() => {
-    loadData()
+  const loadData = useCallback(async (ym: string) => {
+    try {
+      setIsLoading(true)
+      const [shiftsData, staffData, locationsData] = await Promise.all([
+        getShiftsWithDetails({ yearMonth: ym }),
+        getStaff(),
+        getLocations(),
+      ])
+      setShifts(shiftsData)
+      setStaff(staffData)
+      setLocations(locationsData)
+    } catch (error) {
+      console.error('データ取得エラー:', error)
+      alert('データの取得に失敗しました')
+    } finally {
+      setIsLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    loadData(yearMonth)
+  }, [loadData, yearMonth])
 
   // フィルタリング
   useEffect(() => {
@@ -64,37 +83,8 @@ export default function ShiftsPage() {
     setFilteredShifts(result)
   }, [shifts, statusFilter, staffFilter, locationFilter])
 
-  const loadData = async () => {
-    try {
-      setIsLoading(true)
-      const [shiftsData, staffData, locationsData] = await Promise.all([
-        getShiftsWithDetails({ yearMonth }),
-        getStaff(),
-        getLocations(),
-      ])
-      setShifts(shiftsData)
-      setStaff(staffData)
-      setLocations(locationsData)
-    } catch (error) {
-      console.error('データ取得エラー:', error)
-      alert('データの取得に失敗しました')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleYearMonthChange = async (newYearMonth: string) => {
+  const handleYearMonthChange = (newYearMonth: string) => {
     setYearMonth(newYearMonth)
-    try {
-      setIsLoading(true)
-      const shiftsData = await getShiftsWithDetails({ yearMonth: newYearMonth })
-      setShifts(shiftsData)
-    } catch (error) {
-      console.error('データ取得エラー:', error)
-      alert('データの取得に失敗しました')
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   const handleConfirm = async (shiftIds: string[]) => {
@@ -146,7 +136,7 @@ export default function ShiftsPage() {
       alert('シフトを確定しました')
       setConfirmDialogOpen(false)
       setConfirmTarget(null)
-      await loadData()
+      await loadData(yearMonth)
     } catch (error: any) {
       console.error('確定エラー:', error)
       alert(`確定に失敗しました: ${error.message}`)
@@ -161,7 +151,7 @@ export default function ShiftsPage() {
     try {
       await deleteShift(shiftId)
       alert('シフトを削除しました')
-      await loadData()
+      await loadData(yearMonth)
     } catch (error: any) {
       console.error('削除エラー:', error)
       alert(`削除に失敗しました: ${error.message}`)
@@ -174,7 +164,7 @@ export default function ShiftsPage() {
     try {
       await unconfirmShifts(shiftIds)
       alert('確定を解除しました')
-      await loadData()
+      await loadData(yearMonth)
     } catch (error: any) {
       console.error('確定解除エラー:', error)
       alert(`確定解除に失敗しました: ${error.message}`)

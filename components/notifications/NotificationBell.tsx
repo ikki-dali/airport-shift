@@ -13,20 +13,22 @@ export function NotificationBell({ staffId }: NotificationBellProps) {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    loadUnreadCount()
-    // 30秒ごとに未読数を更新
-    const interval = setInterval(loadUnreadCount, 30000)
-    return () => clearInterval(interval)
-  }, [staffId])
-
-  const loadUnreadCount = async () => {
-    try {
-      const count = await getUnreadCount(staffId)
-      setUnreadCount(count)
-    } catch (error) {
-      console.error('Failed to load unread count:', error)
+    let isActive = true
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await getUnreadCount(staffId)
+        if (isActive) setUnreadCount(count)
+      } catch (error) {
+        console.error('Failed to load unread count:', error)
+      }
     }
-  }
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => {
+      isActive = false
+      clearInterval(interval)
+    }
+  }, [staffId])
 
   return (
     <Link href="/notifications" className="relative">

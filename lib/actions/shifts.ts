@@ -10,6 +10,7 @@ import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError, ConflictError } from '@/lib/errors'
 import { logger } from '@/lib/errors/logger'
 import { requireAuth } from '@/lib/auth'
+import { validateData, shiftCreateSchema, shiftUpdateSchema } from '@/lib/validators/schemas'
 
 export interface Shift {
   id: string
@@ -120,30 +121,23 @@ export async function createShift(
     updated_by: string | null
   }
 
-  if (typeof staffIdOrData === 'object') {
-    // オブジェクト形式で呼び出された場合
-    insertData = {
-      staff_id: staffIdOrData.staff_id,
-      location_id: staffIdOrData.location_id,
-      duty_code_id: staffIdOrData.duty_code_id,
-      date: staffIdOrData.date,
-      status: '予定',
-      note: staffIdOrData.note || null,
-      created_by: user.id,
-      updated_by: user.id,
-    }
-  } else {
-    // 個別引数形式で呼び出された場合
-    insertData = {
-      staff_id: staffIdOrData,
-      location_id: locationId!,
-      duty_code_id: dutyCodeId!,
-      date: date!,
-      status: '予定',
-      note: note || null,
-      created_by: user.id,
-      updated_by: user.id,
-    }
+  // 入力データを正規化
+  const rawData = typeof staffIdOrData === 'object'
+    ? staffIdOrData
+    : { staff_id: staffIdOrData, location_id: locationId!, duty_code_id: dutyCodeId!, date: date!, note: note }
+
+  // バリデーション
+  const validated = validateData(shiftCreateSchema, rawData)
+
+  insertData = {
+    staff_id: validated.staff_id,
+    location_id: validated.location_id,
+    duty_code_id: validated.duty_code_id,
+    date: validated.date,
+    status: '予定',
+    note: validated.note || null,
+    created_by: user.id,
+    updated_by: user.id,
   }
 
   // 既存のシフトをチェック
@@ -184,12 +178,16 @@ export async function updateShift(
   expectedVersion?: number
 ): Promise<Shift> {
   const user = await requireAuth()
+
+  // バリデーション
+  const validated = validateData(shiftUpdateSchema, updates)
+
   const supabase = await createClient()
 
   let query = supabase
     .from('shifts')
     .update({
-      ...updates,
+      ...validated,
       updated_by: user.id,
     })
     .eq('id', shiftId)

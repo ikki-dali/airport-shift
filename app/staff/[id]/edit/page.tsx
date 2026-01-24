@@ -13,20 +13,21 @@ export default async function EditStaffPage({
 }) {
   const { id } = await params
 
+  let staff, roles, tags;
   try {
-    const [staff, roles, tags] = await Promise.all([
+    [staff, roles, tags] = await Promise.all([
       getStaffById(id),
       getRoles(),
       getTags(),
     ])
-
-    return (
-      <div className="container mx-auto p-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">スタッフ編集</h1>
-        <StaffForm staff={staff} roles={roles} tags={tags} />
-      </div>
-    )
-  } catch (error) {
+  } catch {
     notFound()
   }
+
+  return (
+    <div className="container mx-auto p-8 max-w-2xl">
+      <h1 className="text-3xl font-bold mb-6">スタッフ編集</h1>
+      <StaffForm staff={staff} roles={roles} tags={tags} />
+    </div>
+  )
 }

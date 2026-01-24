@@ -6,6 +6,7 @@ import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
 import { requireAuth } from '@/lib/auth'
+import { validateData, staffCreateSchema, staffUpdateSchema } from '@/lib/validators/schemas'
 
 export type Staff = Database['public']['Tables']['staff']['Row']
 export type StaffWithRole = Staff & {
@@ -84,17 +85,15 @@ export async function createStaff(formData: FormData) {
   await requireAuth()
   const supabase = await createClient()
 
-  const tags = formData.getAll('tags') as string[]
-
-  const staff = {
+  const staff = validateData(staffCreateSchema, {
     employee_number: formData.get('employee_number') as string,
     name: formData.get('name') as string,
     email: (formData.get('email') as string) || null,
     phone: (formData.get('phone') as string) || null,
     role_id: (formData.get('role_id') as string) || null,
-    tags: tags.length > 0 ? tags : [],
+    tags: formData.getAll('tags') as string[],
     is_active: formData.get('is_active') === 'true',
-  }
+  })
 
   const { data, error } = await supabase
     .from('staff')
@@ -117,16 +116,14 @@ export async function updateStaff(id: string, formData: FormData) {
   await requireAuth()
   const supabase = await createClient()
 
-  const tags = formData.getAll('tags') as string[]
-
-  const staff = {
+  const staff = validateData(staffUpdateSchema, {
     name: formData.get('name') as string,
     email: (formData.get('email') as string) || null,
     phone: (formData.get('phone') as string) || null,
     role_id: (formData.get('role_id') as string) || null,
-    tags: tags.length > 0 ? tags : [],
+    tags: formData.getAll('tags') as string[],
     is_active: formData.get('is_active') === 'true',
-  }
+  })
 
   const { data, error } = await supabase
     .from('staff')

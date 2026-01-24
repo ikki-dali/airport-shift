@@ -11,16 +11,17 @@ export default async function EditRolePage({
 }) {
   const { id } = await params
 
+  let role;
   try {
-    const role = await getRole(id)
-
-    return (
-      <div className="container mx-auto p-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">役職編集</h1>
-        <RoleForm role={role} />
-      </div>
-    )
-  } catch (error) {
+    role = await getRole(id)
+  } catch {
     notFound()
   }
+
+  return (
+    <div className="container mx-auto p-8 max-w-2xl">
+      <h1 className="text-3xl font-bold mb-6">役職編集</h1>
+      <RoleForm role={role} />
+    </div>
+  )
 }
