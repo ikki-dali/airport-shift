@@ -25,6 +25,26 @@ export default function SeedPage() {
   const [result, setResult] = useState<SeedResult | null>(null)
   const [clearExisting, setClearExisting] = useState(false)
 
+  // 本番環境では無効化
+  if (process.env.NODE_ENV === 'production') {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">データベースシード管理</h1>
+        </div>
+        <Card className="p-6 bg-red-50 border-red-200">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-red-800">
+              <p className="font-medium mb-1">この機能は本番環境では無効です</p>
+              <p>データベースシード機能は開発・テスト環境でのみ使用できます。</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   const handleSeed = async () => {
     setIsSeeding(true)
     setResult(null)
