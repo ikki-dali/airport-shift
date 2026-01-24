@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_JP } from 'next/font/google'
 import './globals.css'
 import { ConditionalLayout } from '@/components/layout/ConditionalLayout'
@@ -14,7 +14,12 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: 'シフト管理システム | Airport Shift Manager',
   description: '空港シフト管理システム - 効率的なシフト作成と管理',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({
