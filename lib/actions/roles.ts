@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
+import { requireAuth } from '@/lib/auth'
 
 type Role = Database['public']['Tables']['roles']['Row']
 type RoleInsert = Database['public']['Tables']['roles']['Insert']
@@ -45,6 +46,7 @@ export async function getRole(id: string) {
  * 役職を作成
  */
 export async function createRole(formData: FormData) {
+  await requireAuth()
   const supabase = await createClient()
 
   const role: RoleInsert = {
@@ -69,6 +71,7 @@ export async function createRole(formData: FormData) {
  * 役職を更新
  */
 export async function updateRole(id: string, formData: FormData) {
+  await requireAuth()
   const supabase = await createClient()
 
   const role: RoleUpdate = {
@@ -94,6 +97,7 @@ export async function updateRole(id: string, formData: FormData) {
  * 役職を削除
  */
 export async function deleteRole(id: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   // 使用中かチェック

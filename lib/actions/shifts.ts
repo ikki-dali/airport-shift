@@ -9,15 +9,7 @@ import { sendShiftConfirmationEmail } from '@/lib/email/send-shift-confirmation'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError, ConflictError } from '@/lib/errors'
 import { logger } from '@/lib/errors/logger'
-
-/**
- * 現在のユーザーIDを取得
- */
-async function getCurrentUserId(): Promise<string | null> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user?.id || null
-}
+import { requireAuth } from '@/lib/auth'
 
 export interface Shift {
   id: string
@@ -114,8 +106,8 @@ export async function createShift(
   date?: string,
   note?: string
 ): Promise<Shift> {
+  const user = await requireAuth()
   const supabase = await createClient()
-  const userId = await getCurrentUserId()
 
   let insertData: {
     staff_id: string
@@ -137,8 +129,8 @@ export async function createShift(
       date: staffIdOrData.date,
       status: '予定',
       note: staffIdOrData.note || null,
-      created_by: userId,
-      updated_by: userId,
+      created_by: user.id,
+      updated_by: user.id,
     }
   } else {
     // 個別引数形式で呼び出された場合
@@ -149,8 +141,8 @@ export async function createShift(
       date: date!,
       status: '予定',
       note: note || null,
-      created_by: userId,
-      updated_by: userId,
+      created_by: user.id,
+      updated_by: user.id,
     }
   }
 
@@ -191,14 +183,14 @@ export async function updateShift(
   },
   expectedVersion?: number
 ): Promise<Shift> {
+  const user = await requireAuth()
   const supabase = await createClient()
-  const userId = await getCurrentUserId()
 
   let query = supabase
     .from('shifts')
     .update({
       ...updates,
-      updated_by: userId,
+      updated_by: user.id,
     })
     .eq('id', shiftId)
 
@@ -228,6 +220,7 @@ export async function updateShift(
  * シフトを削除
  */
 export async function deleteShift(shiftId: string): Promise<void> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { error } = await supabase.from('shifts').delete().eq('id', shiftId)
@@ -245,6 +238,7 @@ export async function deleteStaffShiftsByDateRange(
   startDate: string,
   endDate: string
 ): Promise<{ deletedCount: number }> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -374,14 +368,14 @@ export async function confirmShifts(
     skipWarnings?: boolean
   }
 ) {
+  const user = await requireAuth()
   const supabase = await createClient()
-  const userId = await getCurrentUserId()
 
   // RPC呼び出し（トランザクション内でバリデーション+更新を実行）
   const { data: rpcResult, error: rpcError } = await supabase
     .rpc('confirm_shifts', {
       p_shift_ids: shiftIds,
-      p_updated_by: userId,
+      p_updated_by: user.id,
     })
 
   if (rpcError) {
@@ -470,6 +464,7 @@ export async function confirmShifts(
  * 月次シフトを一括確定
  */
 export async function confirmMonthShifts(yearMonth: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   // 対象月の開始日と終了日を計算
@@ -499,14 +494,14 @@ export async function confirmMonthShifts(yearMonth: string) {
  * シフトの確定を解除（管理者用）
  */
 export async function unconfirmShifts(shiftIds: string[]) {
+  const user = await requireAuth()
   const supabase = await createClient()
-  const userId = await getCurrentUserId()
 
   const { error } = await supabase
     .from('shifts')
     .update({
       status: '予定',
-      updated_by: userId,
+      updated_by: user.id,
     })
     .in('id', shiftIds)
 

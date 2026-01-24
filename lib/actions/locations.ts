@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
+import { requireAuth } from '@/lib/auth'
 
 export type Location = Database['public']['Tables']['locations']['Row']
 
@@ -36,6 +37,7 @@ export async function getLocation(id: string) {
 }
 
 export async function createLocation(formData: FormData) {
+  await requireAuth()
   const supabase = await createClient()
 
   const location = {
@@ -63,6 +65,7 @@ export async function createLocation(formData: FormData) {
 }
 
 export async function updateLocation(id: string, formData: FormData) {
+  await requireAuth()
   const supabase = await createClient()
 
   const location = {
@@ -86,6 +89,7 @@ export async function updateLocation(id: string, formData: FormData) {
 }
 
 export async function deleteLocation(id: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   // 配属箇所が使用中かチェック（シフト割り当て、要件設定など）

@@ -1,9 +1,11 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import type { Database } from '@/types/database'
 import { sendShiftRequestInvitation } from '@/lib/email/send-shift-request-invitation'
 import { logger } from '@/lib/errors/logger'
+import { requireAuth } from '@/lib/auth'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -15,7 +17,8 @@ export async function getStaffByToken(token: string): Promise<Staff | null> {
     return null
   }
 
-  const supabase = await createClient()
+  // トークンページは認証不要のためService Roleクライアントを使用（RLSバイパス）
+  const supabase = createServiceClient()
 
   const { data, error } = await supabase
     .from('staff')
@@ -35,6 +38,7 @@ export async function getStaffByToken(token: string): Promise<Staff | null> {
  * スタッフの request_token を生成・更新
  */
 export async function generateStaffToken(staffId: string): Promise<string | null> {
+  await requireAuth()
   const supabase = await createClient()
 
   // UUIDを生成
@@ -59,6 +63,7 @@ export async function generateStaffToken(staffId: string): Promise<string | null
  * 全スタッフのトークン情報を取得（管理者用）
  */
 export async function getAllStaffTokens() {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -78,6 +83,7 @@ export async function getAllStaffTokens() {
  * スタッフにシフト希望提出リンクをメール送信
  */
 export async function sendShiftRequestEmail(staffId: string, deadline?: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   // スタッフ情報を取得

@@ -1,11 +1,13 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 import type { ParsedRequest } from '@/lib/parsers/excel-parser'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
+import { requireAuth } from '@/lib/auth'
 
 type ShiftRequest = Database['public']['Tables']['shift_requests']['Row']
 
@@ -66,6 +68,7 @@ export async function importShiftRequests(
   yearMonth: string,
   overwrite: boolean = false
 ) {
+  await requireAuth()
   const supabase = await createClient()
 
   // 既存データのチェック
@@ -125,6 +128,7 @@ export async function importShiftRequests(
 }
 
 export async function deleteShiftRequestsByYearMonth(yearMonth: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   const year = parseInt(yearMonth.split('-')[0])
@@ -152,6 +156,7 @@ export async function bulkUpsertShiftRequests(
     note?: string
   }>
 ) {
+  await requireAuth()
   const supabase = await createClient()
 
   // 年月を計算（最初のリクエストから）
@@ -179,6 +184,7 @@ export async function bulkUpsertShiftRequests(
 }
 
 export async function deleteShiftRequest(staffId: string, date: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -219,6 +225,77 @@ export async function getShiftRequestsGroupedByYearMonth() {
       .map(([yearMonth, count]) => ({ year_month: yearMonth, count }))
       .sort((a, b) => b.year_month.localeCompare(a.year_month))
   }
+
+  return data
+}
+
+// =====================================================
+// トークンページ用関数（認証不要・Service Clientを使用）
+// =====================================================
+
+/**
+ * トークンページ用: スタッフのシフト希望を取得
+ * Service Clientを使用してRLSをバイパスする
+ */
+export async function getShiftRequestsForToken(
+  staffId: string,
+  yearMonth: string
+): Promise<ShiftRequestWithStaff[]> {
+  const supabase = createServiceClient()
+
+  const year = parseInt(yearMonth.split('-')[0])
+  const month = parseInt(yearMonth.split('-')[1])
+  const startDate = `${yearMonth}-01`
+  const lastDay = new Date(year, month, 0).getDate()
+  const endDate = `${yearMonth}-${String(lastDay).padStart(2, '0')}`
+
+  const { data, error } = await supabase
+    .from('shift_requests')
+    .select(`
+      *,
+      staff (
+        id,
+        employee_number,
+        name
+      )
+    `)
+    .eq('staff_id', staffId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true })
+
+  if (error) handleSupabaseError(error, { action: 'getShiftRequestsForToken', entity: 'シフト希望' })
+  return data as ShiftRequestWithStaff[]
+}
+
+/**
+ * トークンページ用: シフト希望をupsert
+ * Service Clientを使用してRLSをバイパスする
+ */
+export async function upsertShiftRequestsForToken(
+  requests: Array<{
+    staff_id: string
+    date: string
+    request_type: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤'
+    note?: string
+  }>
+) {
+  const supabase = createServiceClient()
+
+  const requestsWithYearMonth = requests.map((req) => ({
+    ...req,
+    year_month: req.date.substring(0, 7),
+  }))
+
+  const { data, error } = await supabase
+    .from('shift_requests')
+    .upsert(requestsWithYearMonth, {
+      onConflict: 'staff_id,date',
+      ignoreDuplicates: false,
+    })
+    .select()
+
+  if (error) handleSupabaseError(error, { action: 'upsertShiftRequestsForToken', entity: 'シフト希望' })
 
   return data
 }

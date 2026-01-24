@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { logger } from '@/lib/errors/logger'
+import { requireAuth } from '@/lib/auth'
 
 export interface Notification {
   id: string
@@ -76,6 +77,7 @@ export async function createNotification(data: {
   message: string
   related_shift_id?: string
 }): Promise<Notification> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data: notification, error } = await supabase
@@ -108,6 +110,7 @@ export async function createBulkNotifications(
     related_shift_id?: string
   }
 ): Promise<{ count: number }> {
+  await requireAuth()
   const supabase = await createClient()
 
   const notifications = staffIds.map((staffId) => ({
@@ -133,6 +136,7 @@ export async function createBulkNotifications(
  * 通知を既読にする
  */
 export async function markAsRead(notificationId: string): Promise<void> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { error } = await supabase
@@ -149,6 +153,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
  * すべての通知を既読にする
  */
 export async function markAllAsRead(staffId?: string): Promise<void> {
+  await requireAuth()
   const supabase = await createClient()
 
   let query = supabase
@@ -172,6 +177,7 @@ export async function markAllAsRead(staffId?: string): Promise<void> {
  * 通知を削除
  */
 export async function deleteNotification(notificationId: string): Promise<void> {
+  await requireAuth()
   const supabase = await createClient()
 
   const { error } = await supabase
