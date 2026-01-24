@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server'
 import { seedDatabase } from '@/lib/seed/seed-data'
 
 export async function POST(request: Request) {
+  // 本番環境では無効化（データ削除リスク防止）
+  if (process.env.NODE_ENV === 'production' && !process.env.ENABLE_SEED_ENDPOINT) {
+    return NextResponse.json(
+      { error: 'This endpoint is disabled in production' },
+      { status: 403 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { clearExisting = false } = body
