@@ -83,8 +83,8 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
         break_minutes: 0,
         is_overnight: false,
       })
-    } catch (error: any) {
-      alert(`エラーが発生しました: ${error.message}`)
+    } catch (error: unknown) {
+      alert(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }
