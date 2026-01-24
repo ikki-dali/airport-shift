@@ -34,7 +34,6 @@ export async function parseExcelFile(
   try {
     const arrayBuffer = await file.arrayBuffer()
     const workbook = new ExcelJS.Workbook()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await workbook.xlsx.load(Buffer.from(arrayBuffer) as any)
 
     if (workbook.worksheets.length === 0) {
