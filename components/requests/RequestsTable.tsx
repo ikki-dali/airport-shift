@@ -13,7 +13,7 @@ interface ShiftRequest {
     id: string
     employee_number: string
     name: string
-  }
+  } | null
 }
 
 interface RequestsTableProps {
@@ -84,10 +84,10 @@ export function RequestsTable({ requests, yearMonth }: RequestsTableProps) {
           </thead>
           <tbody>
             {staffList.map(({ staff, requests }) => (
-              <tr key={staff.id} className="border-b border-gray-200">
+              <tr key={staff?.id || 'unknown'} className="border-b border-gray-200">
                 <td className="sticky left-0 z-10 bg-white border-r border-gray-300 p-2 font-medium text-sm">
-                  <div>{staff.name}</div>
-                  <div className="text-xs text-gray-500">{staff.employee_number}</div>
+                  <div>{staff?.name || '不明'}</div>
+                  <div className="text-xs text-gray-500">{staff?.employee_number || ''}</div>
                 </td>
                 {daysInMonth.map((day) => {
                   const dateStr = format(day, 'yyyy-MM-dd')

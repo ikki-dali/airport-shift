@@ -113,7 +113,7 @@ export function checkRequiredTags(
 
   const missingTags = requiredTags.filter((requiredTag) => {
     return !assignedStaff.some(
-      (st) => st.tag_ids && st.tag_ids.includes(requiredTag)
+      (st) => st.tags && st.tags.includes(requiredTag)
     )
   })
 

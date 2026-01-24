@@ -66,6 +66,7 @@ async function generateMonthlyRequirements(
       duty_codes (
         id,
         code,
+        name,
         start_time,
         end_time,
         category

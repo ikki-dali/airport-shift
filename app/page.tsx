@@ -13,8 +13,12 @@ import { getAllLocationRequirements } from '@/lib/actions/location-requirements'
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  let staff, locations, dutyCodes, shifts, locationRequirements
-  let error = null
+  let staff: Awaited<ReturnType<typeof getStaff>> = []
+  let locations: Awaited<ReturnType<typeof getLocations>> = []
+  let dutyCodes: Awaited<ReturnType<typeof getDutyCodes>> = []
+  let shifts: Awaited<ReturnType<typeof getShiftsWithDetails>> = []
+  let locationRequirements: Awaited<ReturnType<typeof getAllLocationRequirements>> = []
+  let error: string | null = null
 
   try {
     const today = new Date()
@@ -28,13 +32,8 @@ export default async function HomePage() {
       getShiftsWithDetails({ yearMonth: currentYearMonth }),
       getAllLocationRequirements(),
     ])
-  } catch (e: any) {
-    error = e.message
-    staff = []
-    locations = []
-    dutyCodes = []
-    shifts = []
-    locationRequirements = []
+  } catch (e: unknown) {
+    error = e instanceof Error ? e.message : 'Unknown error'
   }
 
   const activeStaff = staff.filter((s) => s.is_active)

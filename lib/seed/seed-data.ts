@@ -202,7 +202,7 @@ export async function seedDatabase(options: SeedOptions = {}) {
 
   // 7. 配属箇所要件
   console.log('📋 Seeding location requirements...')
-  const locationRequirements = [
+  const locationRequirementsRaw = [
     // T3中央 - 06G5DA（通常日）
     {
       location_id: locationMap.get('T3C'),
@@ -210,7 +210,7 @@ export async function seedDatabase(options: SeedOptions = {}) {
       required_staff_count: 5,
       required_responsible_count: 1,
       required_tags: ['保安検査'],
-      day_of_week: null,
+      day_of_week: null as number | null,
     },
     // T3中央 - 06G5DA（月曜日）
     {
@@ -219,7 +219,7 @@ export async function seedDatabase(options: SeedOptions = {}) {
       required_staff_count: 8,
       required_responsible_count: 2,
       required_tags: ['保安検査'],
-      day_of_week: 1,
+      day_of_week: 1 as number | null,
     },
     // T3北 - 06G5DA
     {
@@ -228,7 +228,7 @@ export async function seedDatabase(options: SeedOptions = {}) {
       required_staff_count: 4,
       required_responsible_count: 1,
       required_tags: ['保安検査'],
-      day_of_week: null,
+      day_of_week: null as number | null,
     },
     // T2中央 - 06G5DA
     {
@@ -237,7 +237,7 @@ export async function seedDatabase(options: SeedOptions = {}) {
       required_staff_count: 3,
       required_responsible_count: 1,
       required_tags: ['保安検査'],
-      day_of_week: null,
+      day_of_week: null as number | null,
     },
     // バス案内 - 07G4D
     {
@@ -246,7 +246,7 @@ export async function seedDatabase(options: SeedOptions = {}) {
       required_staff_count: 2,
       required_responsible_count: 0,
       required_tags: ['バス案内'],
-      day_of_week: null,
+      day_of_week: null as number | null,
     },
     // 横特 - 08G4D
     {
@@ -255,9 +255,15 @@ export async function seedDatabase(options: SeedOptions = {}) {
       required_staff_count: 2,
       required_responsible_count: 0,
       required_tags: ['横特'],
-      day_of_week: null,
+      day_of_week: null as number | null,
     },
   ]
+
+  // undefined値を持つエントリを除外し、型を保証
+  const locationRequirements = locationRequirementsRaw.filter(
+    (r): r is typeof r & { location_id: string; duty_code_id: string } =>
+      r.location_id != null && r.duty_code_id != null
+  )
 
   const { data: insertedRequirements, error: requirementsError } = await supabase
     .from('location_requirements')
