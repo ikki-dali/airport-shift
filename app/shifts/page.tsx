@@ -201,8 +201,9 @@ export default function ShiftsPage() {
         <div className="mb-6 rounded-lg bg-white p-6 shadow">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">年月</label>
+              <label htmlFor="filter-year-month" className="mb-2 block text-sm font-medium text-gray-700">年月</label>
               <input
+                id="filter-year-month"
                 type="month"
                 value={yearMonth}
                 onChange={(e) => handleYearMonthChange(e.target.value)}
@@ -211,8 +212,9 @@ export default function ShiftsPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">ステータス</label>
+              <label htmlFor="filter-status" className="mb-2 block text-sm font-medium text-gray-700">ステータス</label>
               <select
+                id="filter-status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
@@ -226,8 +228,9 @@ export default function ShiftsPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">スタッフ</label>
+              <label htmlFor="filter-staff" className="mb-2 block text-sm font-medium text-gray-700">スタッフ</label>
               <select
+                id="filter-staff"
                 value={staffFilter}
                 onChange={(e) => setStaffFilter(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
@@ -242,8 +245,9 @@ export default function ShiftsPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">配属箇所</label>
+              <label htmlFor="filter-location" className="mb-2 block text-sm font-medium text-gray-700">配属箇所</label>
               <select
+                id="filter-location"
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
