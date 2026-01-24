@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface ExcelUploaderProps {
   onFileSelect: (file: File) => void
@@ -36,7 +37,7 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
 
     const error = validateFile(file)
     if (error) {
-      alert(error)
+      toast.error(error)
       return
     }
 
@@ -52,7 +53,7 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
 
     const error = validateFile(file)
     if (error) {
-      alert(error)
+      toast.error(error)
       return
     }
 
@@ -70,7 +71,7 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
 
   const handleSubmit = () => {
     if (!selectedFile) {
-      alert('ファイルを選択してください')
+      toast.warning('ファイルを選択してください')
       return
     }
 

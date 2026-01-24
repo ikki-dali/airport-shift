@@ -77,7 +77,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
 
   const copyTokenUrl = async (staffId: string, token: string | null) => {
     if (!token) {
-      alert('このスタッフにはトークンが発行されていません')
+      toast.warning('このスタッフにはトークンが発行されていません')
       return
     }
 
@@ -90,7 +90,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       setTimeout(() => setCopiedId(null), 2000)
     } catch (error) {
       console.error('Failed to copy:', error)
-      alert('URLのコピーに失敗しました')
+      toast.error('URLのコピーに失敗しました')
     }
   }
 
