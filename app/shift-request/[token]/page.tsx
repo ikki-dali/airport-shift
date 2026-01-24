@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getStaffByToken } from '@/lib/actions/staff-tokens'
-import { getShiftRequests } from '@/lib/actions/shift-requests'
+import { getShiftRequestsForToken } from '@/lib/actions/shift-requests'
 import { ShiftRequestForm } from '@/components/shift-request/ShiftRequestForm'
 import { format, addDays, startOfWeek } from 'date-fns'
 import { ja } from 'date-fns/locale'
@@ -31,12 +31,9 @@ export default async function ShiftRequestPage({ params }: PageProps) {
     dates.push(addDays(thisWeekStart, i))
   }
 
-  // 既存の希望データを取得
+  // 既存の希望データを取得（service client経由でRLSバイパス）
   const yearMonth = format(thisWeekStart, 'yyyy-MM')
-  const existingRequests = await getShiftRequests({ 
-    yearMonth,
-    staffId: staff.id 
-  })
+  const existingRequests = await getShiftRequestsForToken(staff.id, yearMonth)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">

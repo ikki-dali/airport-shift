@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
+import { requireAuth } from '@/lib/auth'
 
 export type DutyCode = Database['public']['Tables']['duty_codes']['Row']
 
@@ -45,6 +46,7 @@ export async function getDutyCodesByCategory(category: string) {
 export type DutyCodeInput = Omit<DutyCode, 'id' | 'created_at' | 'updated_at'>
 
 export async function createDutyCode(input: DutyCodeInput) {
+  await requireAuth()
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('duty_codes')
@@ -57,6 +59,7 @@ export async function createDutyCode(input: DutyCodeInput) {
 }
 
 export async function updateDutyCode(id: string, input: Partial<DutyCodeInput>) {
+  await requireAuth()
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('duty_codes')
@@ -70,6 +73,7 @@ export async function updateDutyCode(id: string, input: Partial<DutyCodeInput>) 
 }
 
 export async function deleteDutyCode(id: string) {
+  await requireAuth()
   const supabase = await createClient()
   const { error } = await supabase
     .from('duty_codes')

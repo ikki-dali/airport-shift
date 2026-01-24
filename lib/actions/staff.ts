@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
+import { requireAuth } from '@/lib/auth'
 
 export type Staff = Database['public']['Tables']['staff']['Row']
 export type StaffWithRole = Staff & {
@@ -80,6 +81,7 @@ export async function getStaffById(id: string) {
 }
 
 export async function createStaff(formData: FormData) {
+  await requireAuth()
   const supabase = await createClient()
 
   const tags = formData.getAll('tags') as string[]
@@ -112,6 +114,7 @@ export async function createStaff(formData: FormData) {
 }
 
 export async function updateStaff(id: string, formData: FormData) {
+  await requireAuth()
   const supabase = await createClient()
 
   const tags = formData.getAll('tags') as string[]
@@ -140,6 +143,7 @@ export async function updateStaff(id: string, formData: FormData) {
 }
 
 export async function deleteStaff(id: string) {
+  await requireAuth()
   const supabase = await createClient()
 
   // スタッフが使用中かチェック（シフト割り当てなど）
@@ -160,6 +164,7 @@ export async function deleteStaff(id: string) {
 }
 
 export async function toggleStaffActive(id: string, isActive: boolean) {
+  await requireAuth()
   const supabase = await createClient()
 
   const { data, error } = await supabase

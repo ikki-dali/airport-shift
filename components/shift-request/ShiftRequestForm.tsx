@@ -6,7 +6,7 @@ import { ja } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Calendar, Check, Loader2 } from 'lucide-react'
-import { bulkUpsertShiftRequests } from '@/lib/actions/shift-requests'
+import { upsertShiftRequestsForToken } from '@/lib/actions/shift-requests'
 
 interface ShiftRequestFormProps {
   staffId: string
@@ -74,7 +74,7 @@ export function ShiftRequestForm({
         return
       }
 
-      await bulkUpsertShiftRequests(validRequests)
+      await upsertShiftRequestsForToken(validRequests)
       setSuccess(true)
       
       // 3秒後に成功メッセージを消す
