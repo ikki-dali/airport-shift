@@ -10,6 +10,9 @@ import type { DutyCode } from '@/lib/actions/duty-codes'
 import type { Location } from '@/lib/actions/locations'
 import type { Shift } from '@/lib/actions/shifts'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
+import { logger } from '@/lib/errors/logger'
 
 type LocationRequirement = Database['public']['Tables']['location_requirements']['Row']
 
@@ -55,8 +58,8 @@ async function generateMonthlyRequirements(
   }
 
   const { data: locations, error: locationsError } = await locationsQuery
-  if (locationsError) throw locationsError
-  if (!locations) throw new Error('Locations not found')
+  if (locationsError) handleSupabaseError(locationsError, { action: 'generateMonthlyRequirements', entity: 'ロケーション' })
+  if (!locations || locations.length === 0) throw new ValidationError('対象のロケーションが見つかりません')
 
   // 全ての場所要件を取得
   const { data: requirements, error: reqError } = await supabase
@@ -74,8 +77,8 @@ async function generateMonthlyRequirements(
     `)
     .in('location_id', locations.map((l) => l.id))
 
-  if (reqError) throw reqError
-  if (!requirements) throw new Error('Requirements not found')
+  if (reqError) handleSupabaseError(reqError, { action: 'generateMonthlyRequirements', entity: '配置要件' })
+  if (!requirements || requirements.length === 0) throw new ValidationError('配置要件が見つかりません')
 
   // 日付×場所×勤務コードの組み合わせを生成
   const positionRequirements: PositionRequirement[] = []
@@ -93,7 +96,7 @@ async function generateMonthlyRequirements(
         if (req.specific_date) {
           // 不正な日付をスキップ（例: 2025-11-31）
           if (!isValid(parseISO(req.specific_date))) {
-            console.warn(`Invalid specific_date in requirement: ${req.specific_date}`)
+            logger.warn(`Invalid specific_date in requirement: ${req.specific_date}`, { action: 'generateMonthlyRequirements' })
             return false
           }
           return req.specific_date === dateStr
@@ -150,7 +153,7 @@ export async function previewAutoAssign(
   )
 
   if (requirements.length === 0) {
-    throw new Error('対象期間・場所に有効な要件が設定されていません')
+    throw new ValidationError('対象期間・場所に有効な要件が設定されていません')
   }
 
   // スタッフリストを取得
@@ -167,7 +170,7 @@ export async function previewAutoAssign(
     `)
     .eq('is_active', true)
 
-  if (staffError) throw staffError
+  if (staffError) handleSupabaseError(staffError, { action: 'previewAutoAssign', entity: 'スタッフ' })
 
   // StaffWithRole型に変換（is_responsibleを追加）
   const allStaff: StaffWithRole[] = staffData.map((s) => ({
@@ -194,7 +197,7 @@ export async function previewAutoAssign(
     .gte('date', startDate)
     .lte('date', endDate)
 
-  if (requestsError) throw requestsError
+  if (requestsError) handleSupabaseError(requestsError, { action: 'previewAutoAssign', entity: 'シフト希望' })
 
   // 既存のシフトを取得（上書きしない場合は考慮する）
   const { data: existingShifts, error: shiftsError } = await supabase
@@ -203,7 +206,7 @@ export async function previewAutoAssign(
     .gte('date', startDate)
     .lte('date', endDate)
 
-  if (shiftsError) throw shiftsError
+  if (shiftsError) handleSupabaseError(shiftsError, { action: 'previewAutoAssign', entity: 'シフト' })
 
   // 最適化実行
   const result = await optimizeShiftAssignments(
@@ -285,14 +288,14 @@ export async function executeAutoAssign(
 
   // コンフリクトがある場合は確認が必要
   if (preview.conflicts.length > 0 && !input.overwriteExisting) {
-    throw new Error(
+    throw new ValidationError(
       `既存のシフトとの競合が${preview.conflicts.length}件あります。上書きオプションを有効にするか、既存シフトを削除してください。`
     )
   }
 
   // 検証エラーがある場合は中止
   if (!preview.validation.isValid) {
-    throw new Error(
+    throw new ValidationError(
       `制約違反が検出されました:\n${preview.validation.errors.join('\n')}`
     )
   }
@@ -315,7 +318,7 @@ export async function executeAutoAssign(
     }
 
     const { error: deleteError } = await deleteQuery
-    if (deleteError) throw deleteError
+    if (deleteError) handleSupabaseError(deleteError, { action: 'executeAutoAssign', entity: 'シフト' })
   }
 
   // シフトを一括作成
@@ -333,10 +336,7 @@ export async function executeAutoAssign(
     .insert(shiftsToCreate)
     .select()
 
-  if (error) {
-    console.error('Auto-assign insert error:', error)
-    throw new Error(`シフト作成エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'executeAutoAssign', entity: 'シフト' })
 
   revalidatePath('/shifts/create')
   revalidatePath(`/shifts`)

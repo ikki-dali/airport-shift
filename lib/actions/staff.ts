@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
 
 export type Staff = Database['public']['Tables']['staff']['Row']
 export type StaffWithRole = Staff & {
@@ -53,7 +55,7 @@ export async function getStaff(filters?: {
 
   const { data, error } = await query
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getStaff', entity: 'スタッフ' })
   return data as StaffWithRole[]
 }
 
@@ -73,7 +75,7 @@ export async function getStaffById(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getStaffById', entity: 'スタッフ' })
   return data as StaffWithRole
 }
 
@@ -99,11 +101,10 @@ export async function createStaff(formData: FormData) {
     .single()
 
   if (error) {
-    // 重複エラーチェック
     if (error.code === '23505') {
-      throw new Error('この社員番号は既に使用されています')
+      throw new ValidationError('この社員番号は既に使用されています')
     }
-    throw error
+    handleSupabaseError(error, { action: 'createStaff', entity: 'スタッフ' })
   }
 
   revalidatePath('/staff')
@@ -131,7 +132,7 @@ export async function updateStaff(id: string, formData: FormData) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'updateStaff', entity: 'スタッフ' })
 
   revalidatePath('/staff')
   revalidatePath(`/staff/${id}`)
@@ -148,12 +149,12 @@ export async function deleteStaff(id: string) {
     .eq('staff_id', id)
 
   if (count && count > 0) {
-    throw new Error('このスタッフはシフトに割り当てられているため削除できません')
+    throw new ValidationError('このスタッフはシフトに割り当てられているため削除できません')
   }
 
   const { error } = await supabase.from('staff').delete().eq('id', id)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteStaff', entity: 'スタッフ' })
 
   revalidatePath('/staff')
 }
@@ -168,7 +169,7 @@ export async function toggleStaffActive(id: string, isActive: boolean) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'toggleStaffActive', entity: 'スタッフ' })
 
   revalidatePath('/staff')
   revalidatePath(`/staff/${id}`)

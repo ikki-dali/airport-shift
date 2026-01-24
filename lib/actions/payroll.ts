@@ -14,6 +14,7 @@ import {
 import { getShifts } from './shifts'
 import { getDutyCodes } from './duty-codes'
 import { getStaff } from './staff'
+import { handleSupabaseError } from '@/lib/errors/helpers'
 
 /**
  * 給与記録を取得
@@ -49,7 +50,7 @@ export async function getPayrollRecords(filters?: {
 
   const { data, error } = await query
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getPayrollRecords', entity: '給与記録' })
   return data
 }
 
@@ -93,7 +94,7 @@ export async function calculateAndSaveMonthlyPayroll(
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'calculateAndSaveMonthlyPayroll', entity: '給与記録' })
 
   revalidatePath('/payroll')
   return payroll
@@ -154,7 +155,7 @@ export async function getAnnualPayrollSummary(staffId: string, year: number) {
     .eq('year', year)
     .maybeSingle()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getAnnualPayrollSummary', entity: '年間給与' })
   return data
 }
 
@@ -206,7 +207,7 @@ export async function calculateAndSaveAnnualPayroll(
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'calculateAndSaveAnnualPayroll', entity: '年間給与' })
 
   revalidatePath('/payroll')
   return annual
@@ -274,7 +275,7 @@ export async function getPayrollDashboard(yearMonth: string) {
     `)
     .eq('year', year)
 
-  if (annualError) throw annualError
+  if (annualError) handleSupabaseError(annualError, { action: 'getPayrollDashboard', entity: '年間給与' })
 
   // 統計を計算
   const totalMonthlyPay = monthlyRecords.reduce((sum, r) => sum + r.total_pay, 0)
@@ -308,7 +309,7 @@ export async function confirmPayrollRecord(staffId: string, yearMonth: string) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'confirmPayrollRecord', entity: '給与記録' })
 
   revalidatePath('/payroll')
   return data
@@ -326,7 +327,7 @@ export async function confirmAllPayrollRecords(yearMonth: string) {
     .eq('year_month', yearMonth)
     .select()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'confirmAllPayrollRecords', entity: '給与記録' })
 
   revalidatePath('/payroll')
   return data

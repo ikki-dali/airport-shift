@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
 
 type Role = Database['public']['Tables']['roles']['Row']
 type RoleInsert = Database['public']['Tables']['roles']['Insert']
@@ -19,7 +21,7 @@ export async function getRoles() {
     .select('*')
     .order('priority', { ascending: false })
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getRoles', entity: '役職' })
   return data as Role[]
 }
 
@@ -35,7 +37,7 @@ export async function getRole(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getRole', entity: '役職' })
   return data as Role
 }
 
@@ -57,7 +59,7 @@ export async function createRole(formData: FormData) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'createRole', entity: '役職' })
 
   revalidatePath('/roles')
   return data as Role
@@ -82,7 +84,7 @@ export async function updateRole(id: string, formData: FormData) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'updateRole', entity: '役職' })
 
   revalidatePath('/roles')
   return data as Role
@@ -101,7 +103,7 @@ export async function deleteRole(id: string) {
     .eq('role_id', id)
 
   if (count && count > 0) {
-    throw new Error('この役職は使用中のため削除できません')
+    throw new ValidationError('この役職は使用中のため削除できません')
   }
 
   const { error } = await supabase
@@ -109,7 +111,7 @@ export async function deleteRole(id: string) {
     .delete()
     .eq('id', id)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteRole', entity: '役職' })
 
   revalidatePath('/roles')
 }

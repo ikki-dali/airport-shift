@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
 
 export type Location = Database['public']['Tables']['locations']['Row']
 
@@ -17,7 +19,7 @@ export async function getLocations() {
     .order('business_type', { ascending: true })
     .order('location_name', { ascending: true })
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getLocations', entity: 'ロケーション' })
   return data as (Location & { location_requirements: { count: number }[] })[]
 }
 
@@ -29,7 +31,7 @@ export async function getLocation(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getLocation', entity: 'ロケーション' })
   return data as Location
 }
 
@@ -51,9 +53,9 @@ export async function createLocation(formData: FormData) {
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error('このコードは既に使用されています')
+      throw new ValidationError('このコードは既に使用されています')
     }
-    throw error
+    handleSupabaseError(error, { action: 'createLocation', entity: 'ロケーション' })
   }
 
   revalidatePath('/locations')
@@ -76,7 +78,7 @@ export async function updateLocation(id: string, formData: FormData) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'updateLocation', entity: 'ロケーション' })
 
   revalidatePath('/locations')
   revalidatePath(`/locations/${id}`)
@@ -93,7 +95,7 @@ export async function deleteLocation(id: string) {
     .eq('location_id', id)
 
   if (requirementsCount && requirementsCount > 0) {
-    throw new Error('この配属箇所には要件設定があるため削除できません。先に要件を削除してください。')
+    throw new ValidationError('この配属箇所には要件設定があるため削除できません。先に要件を削除してください。')
   }
 
   const { count: shiftsCount } = await supabase
@@ -102,12 +104,12 @@ export async function deleteLocation(id: string) {
     .eq('location_id', id)
 
   if (shiftsCount && shiftsCount > 0) {
-    throw new Error('この配属箇所はシフトに割り当てられているため削除できません')
+    throw new ValidationError('この配属箇所はシフトに割り当てられているため削除できません')
   }
 
   const { error } = await supabase.from('locations').delete().eq('id', id)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteLocation', entity: 'ロケーション' })
 
   revalidatePath('/locations')
 }

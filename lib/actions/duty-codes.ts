@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
 
 export type DutyCode = Database['public']['Tables']['duty_codes']['Row']
 
@@ -13,7 +14,7 @@ export async function getDutyCodes() {
     .order('category', { ascending: true })
     .order('code', { ascending: true })
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getDutyCodes', entity: '勤務記号' })
   return data as DutyCode[]
 }
 
@@ -25,7 +26,7 @@ export async function getDutyCode(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getDutyCode', entity: '勤務記号' })
   return data as DutyCode
 }
 
@@ -37,7 +38,7 @@ export async function getDutyCodesByCategory(category: string) {
     .eq('category', category)
     .order('code', { ascending: true })
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getDutyCodesByCategory', entity: '勤務記号' })
   return data as DutyCode[]
 }
 
@@ -51,7 +52,7 @@ export async function createDutyCode(input: DutyCodeInput) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'createDutyCode', entity: '勤務記号' })
   return data as DutyCode
 }
 
@@ -64,7 +65,7 @@ export async function updateDutyCode(id: string, input: Partial<DutyCodeInput>) 
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'updateDutyCode', entity: '勤務記号' })
   return data as DutyCode
 }
 
@@ -75,6 +76,6 @@ export async function deleteDutyCode(id: string) {
     .delete()
     .eq('id', id)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteDutyCode', entity: '勤務記号' })
   return { success: true }
 }

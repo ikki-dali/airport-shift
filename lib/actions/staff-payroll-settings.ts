@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getLimitAmount, type LimitType } from '@/lib/payroll/calculator'
+import { handleSupabaseError } from '@/lib/errors/helpers'
 
 export interface StaffPayrollSetting {
   id: string
@@ -28,7 +29,7 @@ export async function getStaffPayrollSetting(staffId: string) {
     .eq('staff_id', staffId)
     .maybeSingle()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getStaffPayrollSetting', entity: '給与設定' })
   return data as StaffPayrollSetting | null
 }
 
@@ -50,7 +51,7 @@ export async function getAllStaffPayrollSettings() {
     `)
     .order('created_at', { ascending: false })
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getAllStaffPayrollSettings', entity: '給与設定' })
   return data
 }
 
@@ -87,7 +88,7 @@ export async function upsertStaffPayrollSetting(input: {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'upsertStaffPayrollSetting', entity: '給与設定' })
 
   revalidatePath('/staff')
   revalidatePath('/payroll')
@@ -105,7 +106,7 @@ export async function deleteStaffPayrollSetting(staffId: string) {
     .delete()
     .eq('staff_id', staffId)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteStaffPayrollSetting', entity: '給与設定' })
 
   revalidatePath('/staff')
   revalidatePath('/payroll')
@@ -123,17 +124,17 @@ export async function createDefaultSettingsForAllStaff() {
     .select('id')
     .eq('is_active', true)
 
-  if (staffError) throw staffError
+  if (staffError) handleSupabaseError(staffError, { action: 'createDefaultSettingsForAllStaff', entity: 'スタッフ' })
 
   // 既存の設定があるスタッフを除外
   const { data: existingSettings, error: settingsError } = await supabase
     .from('staff_payroll_settings')
     .select('staff_id')
 
-  if (settingsError) throw settingsError
+  if (settingsError) handleSupabaseError(settingsError, { action: 'createDefaultSettingsForAllStaff', entity: '給与設定' })
 
-  const existingStaffIds = new Set(existingSettings.map((s) => s.staff_id))
-  const newStaff = allStaff.filter((s) => !existingStaffIds.has(s.id))
+  const existingStaffIds = new Set(existingSettings!.map((s) => s.staff_id))
+  const newStaff = allStaff!.filter((s) => !existingStaffIds.has(s.id))
 
   // デフォルト設定を作成
   const defaultSettings = newStaff.map((staff) => ({
@@ -149,7 +150,7 @@ export async function createDefaultSettingsForAllStaff() {
       .from('staff_payroll_settings')
       .insert(defaultSettings)
 
-    if (insertError) throw insertError
+    if (insertError) handleSupabaseError(insertError, { action: 'createDefaultSettingsForAllStaff', entity: '給与設定' })
   }
 
   revalidatePath('/staff')

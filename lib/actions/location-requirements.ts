@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
 
 type LocationRequirement = Database['public']['Tables']['location_requirements']['Row']
 type LocationRequirementWithDutyCode = LocationRequirement & {
@@ -33,7 +34,7 @@ export async function getLocationRequirements(locationId: string) {
     .eq('location_id', locationId)
     .order('duty_code_id')
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getLocationRequirements', entity: '配置要件' })
   return data as LocationRequirementWithDutyCode[]
 }
 
@@ -58,7 +59,7 @@ export async function getAllLocationRequirements() {
     `)
     .order('location_id')
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getAllLocationRequirements', entity: '配置要件' })
   return data
 }
 
@@ -80,7 +81,7 @@ export async function getLocationRequirement(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getLocationRequirement', entity: '配置要件' })
   return data as LocationRequirementWithDutyCode
 }
 
@@ -112,7 +113,7 @@ export async function createLocationRequirement(formData: FormData) {
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'createLocationRequirement', entity: '配置要件' })
 
   revalidatePath(`/locations/${requirement.location_id}/requirements`)
   return data as LocationRequirement
@@ -146,7 +147,7 @@ export async function updateLocationRequirement(id: string, formData: FormData) 
     .select()
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'updateLocationRequirement', entity: '配置要件' })
 
   // location_idを取得してrevalidate
   const locationId = data.location_id
@@ -162,7 +163,7 @@ export async function deleteLocationRequirement(id: string, locationId: string) 
     .delete()
     .eq('id', id)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteLocationRequirement', entity: '配置要件' })
 
   revalidatePath(`/locations/${locationId}/requirements`)
 }
