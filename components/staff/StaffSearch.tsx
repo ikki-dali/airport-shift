@@ -19,12 +19,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Search, X, Edit, Link as LinkIcon, Copy, Check, Mail, Send } from 'lucide-react'
+import { Search, X, Edit, Link as LinkIcon, Copy, Check, Mail, Send, Upload } from 'lucide-react'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
 import { sendShiftRequestEmail, sendBulkShiftRequestEmails } from '@/lib/actions/staff-tokens'
 import { toast } from 'sonner'
 import { Checkbox } from '@/components/ui/checkbox'
+import { BulkStaffImportModal } from './BulkStaffImportModal'
+import { useRouter } from 'next/navigation'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 type Role = Database['public']['Tables']['roles']['Row']
@@ -37,6 +39,7 @@ interface StaffSearchProps {
 }
 
 export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -44,6 +47,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null)
   const [selectedStaffIds, setSelectedStaffIds] = useState<Set<string>>(new Set())
   const [isBulkSending, setIsBulkSending] = useState(false)
+  const [bulkImportOpen, setBulkImportOpen] = useState(false)
 
   // フィルタリング処理
   const filteredStaff = useMemo(() => {
@@ -201,6 +205,11 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
             リセット
           </Button>
         )}
+
+        <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
+          <Upload className="h-4 w-4 mr-2" />
+          一括追加
+        </Button>
       </div>
 
       {/* 検索結果サマリーと一括操作 */}
@@ -383,6 +392,15 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* 一括登録モーダル */}
+      <BulkStaffImportModal
+        open={bulkImportOpen}
+        onOpenChange={setBulkImportOpen}
+        roles={roles}
+        tags={tags}
+        onSuccess={() => router.refresh()}
+      />
     </div>
   )
 }
