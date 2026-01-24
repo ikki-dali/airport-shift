@@ -113,3 +113,21 @@ export class AuthError extends AppError {
     this.name = 'AuthError'
   }
 }
+
+/**
+ * 楽観的ロック競合エラー（同時更新検知）
+ */
+export class ConflictError extends AppError {
+  constructor(
+    message: string = '他のユーザーによってデータが更新されています。画面を更新してください。',
+    context?: Record<string, unknown>
+  ) {
+    super(message, {
+      code: 'CONFLICT_ERROR',
+      statusCode: 409,
+      isOperational: true,
+      context,
+    })
+    this.name = 'ConflictError'
+  }
+}
