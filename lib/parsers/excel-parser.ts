@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 export interface ParsedRequest {
   staffId: string
@@ -33,9 +33,11 @@ export async function parseExcelFile(
 
   try {
     const arrayBuffer = await file.arrayBuffer()
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' })
+    const workbook = new ExcelJS.Workbook()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await workbook.xlsx.load(Buffer.from(arrayBuffer) as any)
 
-    if (workbook.SheetNames.length === 0) {
+    if (workbook.worksheets.length === 0) {
       errors.push('シートが見つかりません')
       return {
         yearMonth: '',
@@ -47,8 +49,15 @@ export async function parseExcelFile(
       }
     }
 
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-    const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+    const firstSheet = workbook.worksheets[0]
+
+    // ExcelJSのワークシートからデータを2D配列として取得
+    const data: any[][] = []
+    firstSheet.eachRow((row) => {
+      // row.valuesは1-indexed（index 0はundefined）なのでslice(1)
+      const values = Array.isArray(row.values) ? row.values.slice(1) : []
+      data.push(values)
+    })
 
     if (data.length === 0) {
       errors.push('データが空です')
