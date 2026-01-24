@@ -193,6 +193,7 @@ export function selectOptimalStaffMultiple(
         duty_code_id: requirement.duty_code_id,
         staff_id: responsibleCandidate.id,
         is_responsible: true,
+        version: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -227,6 +228,7 @@ export function selectOptimalStaffMultiple(
       duty_code_id: requirement.duty_code_id,
       staff_id: nextStaff.id,
       is_responsible: nextStaff.roles?.is_responsible || false,
+      version: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })

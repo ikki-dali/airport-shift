@@ -282,6 +282,7 @@ export interface Database {
           date: string
           status: string
           note: string | null
+          version: number
           created_at: string
           updated_at: string
           created_by: string | null
@@ -295,6 +296,7 @@ export interface Database {
           date: string
           status?: string
           note?: string | null
+          version?: number
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -308,6 +310,7 @@ export interface Database {
           date?: string
           status?: string
           note?: string | null
+          version?: number
           created_at?: string
           updated_at?: string
           created_by?: string | null
@@ -571,6 +574,16 @@ export interface Database {
         Returns: {
           year_month: string
           count: number
+        }[]
+      }
+      confirm_shifts: {
+        Args: {
+          p_shift_ids: string[]
+          p_updated_by: string | null
+        }
+        Returns: {
+          confirmed_count: number
+          confirmed_ids: string[]
         }[]
       }
     }

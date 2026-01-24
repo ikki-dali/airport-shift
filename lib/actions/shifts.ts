@@ -7,7 +7,7 @@ import { ja } from 'date-fns/locale'
 import { createBulkNotifications } from './notifications'
 import { sendShiftConfirmationEmail } from '@/lib/email/send-shift-confirmation'
 import { handleSupabaseError } from '@/lib/errors/helpers'
-import { ValidationError } from '@/lib/errors'
+import { ValidationError, ConflictError } from '@/lib/errors'
 import { logger } from '@/lib/errors/logger'
 
 /**
@@ -27,6 +27,7 @@ export interface Shift {
   date: string
   status: '予定' | '確定' | '変更' | 'キャンセル'
   note: string | null
+  version: number
   created_at: string
   updated_at: string
   created_by: string | null
@@ -175,7 +176,8 @@ export async function createShift(
 }
 
 /**
- * シフトを更新
+ * シフトを更新（楽観的ロック対応）
+ * expectedVersionを指定すると、DBのversionと一致しない場合にConflictErrorをスロー
  */
 export async function updateShift(
   shiftId: string,
@@ -186,22 +188,37 @@ export async function updateShift(
     date?: string
     status?: '予定' | '確定' | '変更' | 'キャンセル'
     note?: string | null
-  }
+  },
+  expectedVersion?: number
 ): Promise<Shift> {
   const supabase = await createClient()
   const userId = await getCurrentUserId()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('shifts')
     .update({
       ...updates,
       updated_by: userId,
     })
     .eq('id', shiftId)
-    .select()
-    .single()
 
-  if (error) handleSupabaseError(error, { action: 'updateShift', entity: 'シフト' })
+  // 楽観的ロック: versionが指定されていれば一致チェック
+  if (expectedVersion !== undefined) {
+    query = query.eq('version', expectedVersion)
+  }
+
+  const { data, error } = await query.select().single()
+
+  if (error) {
+    // PGRST116: .single()で0行返却（version不一致 = 他ユーザーが更新済み）
+    if (error.code === 'PGRST116' && expectedVersion !== undefined) {
+      throw new ConflictError(
+        '他のユーザーによってシフトが更新されています。画面を更新してから再度お試しください。',
+        { shiftId, expectedVersion, action: 'updateShift' }
+      )
+    }
+    handleSupabaseError(error, { action: 'updateShift', entity: 'シフト' })
+  }
 
   revalidatePath('/shifts/create')
   return data as Shift
@@ -348,7 +365,8 @@ export async function getShiftsWithDetails(filters?: {
 }
 
 /**
- * シフトを確定する
+ * シフトを確定する（RPC経由のトランザクション処理）
+ * バリデーション→行ロック→更新をDB側で一括実行し、途中エラー時は全体ロールバック
  */
 export async function confirmShifts(
   shiftIds: string[],
@@ -357,95 +375,87 @@ export async function confirmShifts(
   }
 ) {
   const supabase = await createClient()
+  const userId = await getCurrentUserId()
 
-  // 対象シフトを取得
-  const { data: shifts, error: fetchError } = await supabase
+  // RPC呼び出し（トランザクション内でバリデーション+更新を実行）
+  const { data: rpcResult, error: rpcError } = await supabase
+    .rpc('confirm_shifts', {
+      p_shift_ids: shiftIds,
+      p_updated_by: userId,
+    })
+
+  if (rpcError) {
+    // RPC内のバリデーションエラーを判別
+    if (rpcError.message?.includes('VALIDATION:')) {
+      const cleanMessage = rpcError.message.replace(/^.*VALIDATION:\s*/, '')
+      throw new ValidationError(cleanMessage)
+    }
+    handleSupabaseError(rpcError, { action: 'confirmShifts', entity: 'シフト' })
+  }
+
+  const confirmedCount = rpcResult?.[0]?.confirmed_count ?? shiftIds.length
+
+  // 確定済みシフトの詳細を取得（通知・メール用、トランザクション外）
+  const { data: shifts } = await supabase
     .from('shifts')
     .select('*, location:location_id(*), duty_code:duty_code_id(*), staff:staff_id(*, roles(*))')
     .in('id', shiftIds)
 
-  if (fetchError) handleSupabaseError(fetchError, { action: 'confirmShifts', entity: 'シフト' })
-
-  if (!shifts || shifts.length === 0) {
-    throw new ValidationError('確定対象のシフトが見つかりません')
-  }
-
-  // 確定済みシフトがある場合はエラー
-  const alreadyConfirmed = shifts.filter((s) => s.status === '確定')
-  if (alreadyConfirmed.length > 0) {
-    throw new ValidationError(`既に確定済みのシフトが含まれています（${alreadyConfirmed.length}件）`)
-  }
-
-  // ステータスを「確定」に変更
-  const userId = await getCurrentUserId()
-  const { error: updateError } = await supabase
-    .from('shifts')
-    .update({
-      status: '確定',
-      updated_by: userId,
-    })
-    .in('id', shiftIds)
-
-  if (updateError) handleSupabaseError(updateError, { action: 'confirmShifts', entity: 'シフト' })
-
-  // 通知を作成
+  // 通知を作成（非ブロッキング）
   try {
-    const staffIds = [...new Set(shifts.map((s: any) => s.staff_id))]
-    await createBulkNotifications(staffIds, {
-      type: 'shift_confirmed',
-      title: 'シフトが確定されました',
-      message: `${shifts.length}件のシフトが確定されました。確認してください。`,
-    })
+    if (shifts && shifts.length > 0) {
+      const staffIds = [...new Set(shifts.map((s: any) => s.staff_id))]
+      await createBulkNotifications(staffIds, {
+        type: 'shift_confirmed',
+        title: 'シフトが確定されました',
+        message: `${confirmedCount}件のシフトが確定されました。確認してください。`,
+      })
+    }
   } catch (notificationError) {
     logger.error('Notification creation failed (non-blocking)', { action: 'confirmShifts' }, notificationError)
   }
 
-  // メール送信
+  // メール送信（非ブロッキング）
   try {
-    // スタッフごとにグループ化してメール送信
-    const staffGroups = shifts.reduce((acc: any, shift: any) => {
-      const staffId = shift.staff_id
-      if (!acc[staffId]) {
-        acc[staffId] = {
-          staff: shift.staff,
-          count: 0,
+    if (shifts && shifts.length > 0) {
+      const staffGroups = shifts.reduce((acc: any, shift: any) => {
+        const staffId = shift.staff_id
+        if (!acc[staffId]) {
+          acc[staffId] = { staff: shift.staff, count: 0 }
+        }
+        acc[staffId].count++
+        return acc
+      }, {})
+
+      let sentCount = 0
+      let errorCount = 0
+
+      for (const [, data] of Object.entries(staffGroups)) {
+        const staff = (data as any).staff
+        const count = (data as any).count
+
+        if (staff.email && staff.request_token) {
+          try {
+            await sendShiftConfirmationEmail({
+              to: staff.email,
+              staffName: staff.name,
+              token: staff.request_token,
+              shiftCount: count,
+            })
+            sentCount++
+            logger.info(`Email sent to ${staff.name}`, { action: 'confirmShifts', email: staff.email })
+            await new Promise(resolve => setTimeout(resolve, 500))
+          } catch (emailErr: unknown) {
+            errorCount++
+            logger.error(`Failed to send email to ${staff.name}`, { action: 'confirmShifts' }, emailErr)
+          }
+        } else {
+          logger.info(`Skipped ${staff.name}: no email or token`, { action: 'confirmShifts' })
         }
       }
-      acc[staffId].count++
-      return acc
-    }, {})
 
-    // 各スタッフに順次メール送信（レート制限対策：1秒に2リクエストまで）
-    let sentCount = 0
-    let errorCount = 0
-    
-    for (const [, data] of Object.entries(staffGroups)) {
-      const staff = (data as any).staff
-      const count = (data as any).count
-      
-      if (staff.email && staff.request_token) {
-        try {
-          await sendShiftConfirmationEmail({
-            to: staff.email,
-            staffName: staff.name,
-            token: staff.request_token,
-            shiftCount: count,
-          })
-          sentCount++
-          logger.info(`Email sent to ${staff.name}`, { action: 'confirmShifts', email: staff.email })
-
-          // レート制限対策：500ms待機（1秒に2リクエストまで）
-          await new Promise(resolve => setTimeout(resolve, 500))
-        } catch (emailErr: unknown) {
-          errorCount++
-          logger.error(`Failed to send email to ${staff.name}`, { action: 'confirmShifts' }, emailErr)
-        }
-      } else {
-        logger.info(`Skipped ${staff.name}: no email or token`, { action: 'confirmShifts' })
-      }
+      logger.info(`Email sending completed: ${sentCount} sent, ${errorCount} failed`, { action: 'confirmShifts' })
     }
-    
-    logger.info(`Email sending completed: ${sentCount} sent, ${errorCount} failed`, { action: 'confirmShifts' })
   } catch (emailError) {
     logger.error('Email sending failed (non-blocking)', { action: 'confirmShifts' }, emailError)
   }
@@ -453,7 +463,7 @@ export async function confirmShifts(
   revalidatePath('/shifts')
   revalidatePath('/shifts/create')
 
-  return { success: true, confirmedCount: shifts.length }
+  return { success: true, confirmedCount }
 }
 
 /**
