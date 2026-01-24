@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { logger } from '@/lib/errors/logger'
 
 /**
  * トークンでスタッフ情報を取得
@@ -55,7 +56,7 @@ export async function getStaffShiftsByToken(token: string) {
     .order('date', { ascending: true })
 
   if (error) {
-    console.error('Error fetching staff shifts:', error)
+    logger.error('Error fetching staff shifts', { action: 'getStaffShiftsByToken' }, error)
     return null
   }
 

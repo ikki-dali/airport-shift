@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { logger } from '@/lib/errors/logger'
 
 export interface Notification {
   id: string
@@ -33,10 +35,7 @@ export async function getNotifications(staffId?: string): Promise<Notification[]
 
   const { data, error } = await query
 
-  if (error) {
-    console.error('Error fetching notifications:', error)
-    throw new Error(`通知取得エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'getNotifications', entity: '通知' })
 
   return data as Notification[]
 }
@@ -60,7 +59,7 @@ export async function getUnreadCount(staffId?: string): Promise<number> {
   const { count, error } = await query
 
   if (error) {
-    console.error('Error fetching unread count:', error)
+    logger.error('Failed to fetch unread count', { action: 'getUnreadCount' }, error)
     return 0
   }
 
@@ -91,10 +90,7 @@ export async function createNotification(data: {
     .select()
     .single()
 
-  if (error) {
-    console.error('Error creating notification:', error)
-    throw new Error(`通知作成エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'createNotification', entity: '通知' })
 
   revalidatePath('/notifications')
   return notification as Notification
@@ -127,10 +123,7 @@ export async function createBulkNotifications(
     .insert(notifications)
     .select()
 
-  if (error) {
-    console.error('Error creating bulk notifications:', error)
-    throw new Error(`一斉通知作成エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'createBulkNotifications', entity: '通知' })
 
   revalidatePath('/notifications')
   return { count: result?.length || 0 }
@@ -147,10 +140,7 @@ export async function markAsRead(notificationId: string): Promise<void> {
     .update({ is_read: true })
     .eq('id', notificationId)
 
-  if (error) {
-    console.error('Error marking notification as read:', error)
-    throw new Error(`通知既読エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'markAsRead', entity: '通知' })
 
   revalidatePath('/notifications')
 }
@@ -173,10 +163,7 @@ export async function markAllAsRead(staffId?: string): Promise<void> {
 
   const { error } = await query
 
-  if (error) {
-    console.error('Error marking all notifications as read:', error)
-    throw new Error(`全通知既読エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'markAllAsRead', entity: '通知' })
 
   revalidatePath('/notifications')
 }
@@ -192,10 +179,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
     .delete()
     .eq('id', notificationId)
 
-  if (error) {
-    console.error('Error deleting notification:', error)
-    throw new Error(`通知削除エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'deleteNotification', entity: '通知' })
 
   revalidatePath('/notifications')
 }

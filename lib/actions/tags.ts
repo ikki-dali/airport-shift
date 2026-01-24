@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
 
 type Tag = Database['public']['Tables']['tags']['Row']
 type TagInsert = Database['public']['Tables']['tags']['Insert']
@@ -19,7 +21,7 @@ export async function getTags() {
     .select('*')
     .order('name')
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getTags', entity: 'タグ' })
   return data as Tag[]
 }
 
@@ -35,7 +37,7 @@ export async function getTag(id: string) {
     .eq('id', id)
     .single()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getTag', entity: 'タグ' })
   return data as Tag
 }
 
@@ -57,10 +59,10 @@ export async function createTag(formData: FormData) {
     .single()
 
   if (error) {
-    if (error.code === '23505') { // unique violation
-      throw new Error('このタグ名は既に使用されています')
+    if (error.code === '23505') {
+      throw new ValidationError('このタグ名は既に使用されています')
     }
-    throw error
+    handleSupabaseError(error, { action: 'createTag', entity: 'タグ' })
   }
 
   revalidatePath('/tags')
@@ -87,9 +89,9 @@ export async function updateTag(id: string, formData: FormData) {
 
   if (error) {
     if (error.code === '23505') {
-      throw new Error('このタグ名は既に使用されています')
+      throw new ValidationError('このタグ名は既に使用されています')
     }
-    throw error
+    handleSupabaseError(error, { action: 'updateTag', entity: 'タグ' })
   }
 
   revalidatePath('/tags')
@@ -109,7 +111,7 @@ export async function deleteTag(id: string) {
     .contains('tags', [await getTagName(id)])
 
   if (staffWithTag && staffWithTag.length > 0) {
-    throw new Error('このタグは使用中のため削除できません')
+    throw new ValidationError('このタグは使用中のため削除できません')
   }
 
   const { error } = await supabase
@@ -117,7 +119,7 @@ export async function deleteTag(id: string) {
     .delete()
     .eq('id', id)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteTag', entity: 'タグ' })
 
   revalidatePath('/tags')
 }

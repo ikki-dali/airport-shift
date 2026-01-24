@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
 import { sendShiftRequestInvitation } from '@/lib/email/send-shift-request-invitation'
+import { logger } from '@/lib/errors/logger'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -23,7 +24,7 @@ export async function getStaffByToken(token: string): Promise<Staff | null> {
     .single()
 
   if (error || !data) {
-    console.error('Failed to get staff by token:', error)
+    logger.error('Failed to get staff by token', { action: 'getStaffByToken' }, error)
     return null
   }
 
@@ -47,7 +48,7 @@ export async function generateStaffToken(staffId: string): Promise<string | null
     .single()
 
   if (error || !data) {
-    console.error('Failed to generate staff token:', error)
+    logger.error('Failed to generate staff token', { action: 'generateStaffToken', staffId }, error)
     return null
   }
 
@@ -66,7 +67,7 @@ export async function getAllStaffTokens() {
     .order('employee_number')
 
   if (error) {
-    console.error('Failed to get all staff tokens:', error)
+    logger.error('Failed to get all staff tokens', { action: 'getAllStaffTokens' }, error)
     return []
   }
 
@@ -87,7 +88,7 @@ export async function sendShiftRequestEmail(staffId: string, deadline?: string) 
     .single()
 
   if (staffError || !data) {
-    console.error('Failed to get staff:', staffError)
+    logger.error('Failed to get staff for email', { action: 'sendShiftRequestEmail', staffId }, staffError)
     return { success: false, error: 'スタッフ情報の取得に失敗しました' }
   }
 

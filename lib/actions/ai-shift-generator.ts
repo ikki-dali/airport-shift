@@ -1,14 +1,18 @@
 'use server'
 
-import OpenAI from 'openai'
+import OpenAI, { APIConnectionTimeoutError, RateLimitError, APIError } from 'openai'
 import { createClient } from '@/lib/supabase/server'
 import type { StaffWithRole } from './staff'
 import type { Location } from './locations'
 import type { DutyCode } from './duty-codes'
 import { format } from 'date-fns'
+import { logger } from '@/lib/errors/logger'
+import { handleSupabaseError } from '@/lib/errors/helpers'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 30_000,   // 30秒タイムアウト
+  maxRetries: 3,     // 3回リトライ（SDK内蔵のexponential backoff）
 })
 
 interface ShiftAssignment {
@@ -225,20 +229,15 @@ ${shiftRequests.map((r) => {
       }
     }
 
-    // デバッグ用：AIの応答を出力
-    console.log('=== AI Response ===')
-    console.log(responseText)
-    console.log('===================')
-
     // JSONをパース
     let parsedResponse
     try {
       parsedResponse = JSON.parse(responseText)
-    } catch (error: any) {
-      console.error('Failed to parse AI response:', error)
+    } catch (parseError: unknown) {
+      logger.error('Failed to parse AI response', { action: 'generateWeeklyShifts' }, parseError)
       return {
         success: false,
-        message: `AI応答のJSON解析に失敗しました: ${error.message}\n\n応答内容:\n${responseText.substring(0, 500)}`,
+        message: 'AI応答の解析に失敗しました。再度お試しください。',
       }
     }
 
@@ -246,17 +245,15 @@ ${shiftRequests.map((r) => {
 
     // バリデーション
     if (!Array.isArray(shifts)) {
-      console.error('Invalid shifts format (not array):', { parsedResponse, shifts })
+      logger.error('Invalid shifts format (not array)', { action: 'generateWeeklyShifts', parsedResponse })
       return {
         success: false,
-        message: `AIが生成したシフトの形式が不正です（配列ではありません）。\n\n受信データ:\n${JSON.stringify(parsedResponse, null, 2).substring(0, 500)}`,
+        message: 'AIが生成したシフトの形式が不正です。再度お試しください。',
       }
     }
 
     if (shifts.length === 0) {
-      console.warn('AI generated 0 shifts')
-      console.log('Shift requests count:', shiftRequests.length)
-      console.log('Shift requests:', shiftRequests.slice(0, 5))
+      logger.warn('AI generated 0 shifts', { action: 'generateWeeklyShifts', shiftRequestsCount: shiftRequests.length })
       return {
         success: false,
         message: `AIがシフトを生成できませんでした。\n\n考えられる原因:\n- この期間にシフト希望を提出しているスタッフがいない（希望提出: ${shiftRequests.length}件）\n- 制約条件（既存シフト、連続勤務、週40時間など）が厳しすぎて配置できない\n- 希望を出したスタッフが全員「休」希望を出している\n\nシフト希望の提出状況を確認してください。`,
@@ -323,7 +320,7 @@ ${shiftRequests.map((r) => {
 
     // 有効なシフトが1つもない場合はエラー
     if (validShifts.length === 0) {
-      console.error('No valid shifts generated. All skipped:', skippedShifts)
+      logger.error('No valid shifts generated', { action: 'generateWeeklyShifts', skippedCount: skippedShifts.length })
       return {
         success: false,
         message: `生成された全てのシフトが無効でした:\n${skippedShifts.slice(0, 5).join('\n')}${skippedShifts.length > 5 ? '\n...' : ''}`,
@@ -332,10 +329,10 @@ ${shiftRequests.map((r) => {
 
     // スキップしたシフトがあればログに出力
     if (skippedShifts.length > 0) {
-      console.log(`Skipped ${skippedShifts.length} invalid/duplicate shifts:`, skippedShifts)
+      logger.info(`Skipped ${skippedShifts.length} invalid/duplicate shifts`, { action: 'generateWeeklyShifts', skippedShifts })
     }
 
-    console.log(`AI generated ${validShifts.length} valid shifts (skipped ${skippedShifts.length} duplicates/invalid)`)
+    logger.info(`AI generated ${validShifts.length} valid shifts`, { action: 'generateWeeklyShifts', validCount: validShifts.length, skippedCount: skippedShifts.length })
 
     return {
       success: true,
@@ -344,11 +341,35 @@ ${shiftRequests.map((r) => {
         : `${validShifts.length}件のシフトを生成しました`,
       shifts: validShifts,
     }
-  } catch (error: any) {
-    console.error('AI shift generation error:', error)
+  } catch (error: unknown) {
+    if (error instanceof APIConnectionTimeoutError) {
+      logger.error('OpenAI API timeout', { action: 'generateWeeklyShifts' }, error)
+      return {
+        success: false,
+        message: 'AI応答がタイムアウトしました。しばらく待ってから再度お試しください。',
+      }
+    }
+
+    if (error instanceof RateLimitError) {
+      logger.error('OpenAI API rate limit', { action: 'generateWeeklyShifts' }, error)
+      return {
+        success: false,
+        message: 'AI APIのレート制限に達しました。しばらく待ってから再度お試しください。',
+      }
+    }
+
+    if (error instanceof APIError) {
+      logger.error('OpenAI API error', { action: 'generateWeeklyShifts', status: error.status }, error)
+      return {
+        success: false,
+        message: 'AI APIエラーが発生しました。しばらく待ってから再度お試しください。',
+      }
+    }
+
+    logger.error('Unexpected error in AI shift generation', { action: 'generateWeeklyShifts' }, error)
     return {
       success: false,
-      message: `エラーが発生しました: ${error.message}`,
+      message: 'シフト生成中に予期しないエラーが発生しました。',
     }
   }
 }
@@ -359,18 +380,20 @@ export async function createAIGeneratedShifts(shifts: ShiftAssignment[]) {
   try {
     const { data, error } = await supabase.from('shifts').insert(shifts).select()
 
-    if (error) throw error
+    if (error) {
+      handleSupabaseError(error, { action: 'createAIGeneratedShifts', entity: 'シフト' })
+    }
 
     return {
       success: true,
       message: `${data.length}件のシフトを作成しました。`,
       data,
     }
-  } catch (error: any) {
-    console.error('Error creating AI generated shifts:', error)
+  } catch (error: unknown) {
+    logger.error('Error creating AI generated shifts', { action: 'createAIGeneratedShifts' }, error)
     return {
       success: false,
-      message: `シフト作成エラー: ${error.message}`,
+      message: 'シフトの保存中にエラーが発生しました。',
     }
   }
 }

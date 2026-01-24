@@ -6,6 +6,9 @@ import { format, endOfMonth } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { createBulkNotifications } from './notifications'
 import { sendShiftConfirmationEmail } from '@/lib/email/send-shift-confirmation'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
+import { logger } from '@/lib/errors/logger'
 
 /**
  * 現在のユーザーIDを取得
@@ -52,10 +55,7 @@ export async function getShifts(yearMonth?: string): Promise<Shift[]> {
 
   const { data, error } = await query
 
-  if (error) {
-    console.error('Error fetching shifts:', error)
-    throw new Error(`シフト取得エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'getShifts', entity: 'シフト' })
 
   return data as Shift[]
 }
@@ -76,10 +76,7 @@ export async function getShiftsByDateRange(
     .lte('date', endDate)
     .order('date', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching shifts by date range:', error)
-    throw new Error(`シフト取得エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'getShiftsByDateRange', entity: 'シフト' })
 
   return data as Shift[]
 }
@@ -161,7 +158,7 @@ export async function createShift(
   
   // 既に同じスタッフが同じ日にシフトを持っている場合は、既存のシフトを返す
   if (existingShift) {
-    console.log(`Shift already exists for staff ${insertData.staff_id} on ${insertData.date}, returning existing shift`)
+    logger.info('Shift already exists, returning existing', { action: 'createShift', staffId: insertData.staff_id, date: insertData.date })
     return existingShift
   }
 
@@ -171,10 +168,7 @@ export async function createShift(
     .select()
     .single()
 
-  if (error) {
-    console.error('Error creating shift:', error)
-    throw new Error(`シフト作成エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'createShift', entity: 'シフト' })
 
   revalidatePath('/shifts/create')
   return result as Shift
@@ -207,10 +201,7 @@ export async function updateShift(
     .select()
     .single()
 
-  if (error) {
-    console.error('Error updating shift:', error)
-    throw new Error(`シフト更新エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'updateShift', entity: 'シフト' })
 
   revalidatePath('/shifts/create')
   return data as Shift
@@ -224,10 +215,7 @@ export async function deleteShift(shiftId: string): Promise<void> {
 
   const { error } = await supabase.from('shifts').delete().eq('id', shiftId)
 
-  if (error) {
-    console.error('Error deleting shift:', error)
-    throw new Error(`シフト削除エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'deleteShift', entity: 'シフト' })
 
   revalidatePath('/shifts/create')
 }
@@ -250,10 +238,7 @@ export async function deleteStaffShiftsByDateRange(
     .lte('date', endDate)
     .select()
 
-  if (error) {
-    console.error('Error deleting shifts:', error)
-    throw new Error(`シフト一括削除エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'deleteStaffShiftsByDateRange', entity: 'シフト' })
 
   revalidatePath('/shifts/create')
   return { deletedCount: data?.length || 0 }
@@ -275,10 +260,7 @@ export async function getStaffShiftByDate(
     .eq('date', date)
     .maybeSingle()
 
-  if (error) {
-    console.error('Error fetching staff shift:', error)
-    throw new Error(`シフト取得エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'getStaffShiftByDate', entity: 'シフト' })
 
   return data as Shift | null
 }
@@ -360,10 +342,7 @@ export async function getShiftsWithDetails(filters?: {
 
   const { data, error } = await query
 
-  if (error) {
-    console.error('Error fetching shifts with details:', error)
-    throw new Error(`シフト取得エラー: ${error.message}`)
-  }
+  if (error) handleSupabaseError(error, { action: 'getShiftsWithDetails', entity: 'シフト' })
 
   return data
 }
@@ -385,16 +364,16 @@ export async function confirmShifts(
     .select('*, location:location_id(*), duty_code:duty_code_id(*), staff:staff_id(*, roles(*))')
     .in('id', shiftIds)
 
-  if (fetchError) throw fetchError
+  if (fetchError) handleSupabaseError(fetchError, { action: 'confirmShifts', entity: 'シフト' })
 
   if (!shifts || shifts.length === 0) {
-    throw new Error('確定対象のシフトが見つかりません')
+    throw new ValidationError('確定対象のシフトが見つかりません')
   }
 
   // 確定済みシフトがある場合はエラー
   const alreadyConfirmed = shifts.filter((s) => s.status === '確定')
   if (alreadyConfirmed.length > 0) {
-    throw new Error(`既に確定済みのシフトが含まれています（${alreadyConfirmed.length}件）`)
+    throw new ValidationError(`既に確定済みのシフトが含まれています（${alreadyConfirmed.length}件）`)
   }
 
   // ステータスを「確定」に変更
@@ -407,7 +386,7 @@ export async function confirmShifts(
     })
     .in('id', shiftIds)
 
-  if (updateError) throw updateError
+  if (updateError) handleSupabaseError(updateError, { action: 'confirmShifts', entity: 'シフト' })
 
   // 通知を作成
   try {
@@ -418,8 +397,7 @@ export async function confirmShifts(
       message: `${shifts.length}件のシフトが確定されました。確認してください。`,
     })
   } catch (notificationError) {
-    console.error('Notification error:', notificationError)
-    // 通知エラーは確定処理を失敗させない
+    logger.error('Notification creation failed (non-blocking)', { action: 'confirmShifts' }, notificationError)
   }
 
   // メール送信
@@ -454,23 +432,22 @@ export async function confirmShifts(
             shiftCount: count,
           })
           sentCount++
-          console.log(`Email sent to ${staff.name} (${staff.email})`)
-          
+          logger.info(`Email sent to ${staff.name}`, { action: 'confirmShifts', email: staff.email })
+
           // レート制限対策：500ms待機（1秒に2リクエストまで）
           await new Promise(resolve => setTimeout(resolve, 500))
-        } catch (error: any) {
+        } catch (emailErr: unknown) {
           errorCount++
-          console.error(`Failed to send email to ${staff.name}:`, error?.message || error)
+          logger.error(`Failed to send email to ${staff.name}`, { action: 'confirmShifts' }, emailErr)
         }
       } else {
-        console.log(`Skipped ${staff.name}: no email or token`)
+        logger.info(`Skipped ${staff.name}: no email or token`, { action: 'confirmShifts' })
       }
     }
     
-    console.log(`Email sending completed: ${sentCount} sent, ${errorCount} failed`)
+    logger.info(`Email sending completed: ${sentCount} sent, ${errorCount} failed`, { action: 'confirmShifts' })
   } catch (emailError) {
-    console.error('Email error:', emailError)
-    // メール送信エラーは確定処理を失敗させない
+    logger.error('Email sending failed (non-blocking)', { action: 'confirmShifts' }, emailError)
   }
 
   revalidatePath('/shifts')
@@ -500,7 +477,7 @@ export async function confirmMonthShifts(yearMonth: string) {
     .eq('status', '予定')
 
   if (!shifts || shifts.length === 0) {
-    throw new Error('確定対象のシフトがありません')
+    throw new ValidationError('確定対象のシフトがありません')
   }
 
   const shiftIds = shifts.map((s: { id: string }) => s.id)
@@ -523,7 +500,7 @@ export async function unconfirmShifts(shiftIds: string[]) {
     })
     .in('id', shiftIds)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'unconfirmShifts', entity: 'シフト' })
 
   revalidatePath('/shifts')
   revalidatePath('/shifts/create')

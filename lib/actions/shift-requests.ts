@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/types/database'
 import type { ParsedRequest } from '@/lib/parsers/excel-parser'
+import { handleSupabaseError } from '@/lib/errors/helpers'
+import { ValidationError } from '@/lib/errors'
 
 type ShiftRequest = Database['public']['Tables']['shift_requests']['Row']
 
@@ -55,7 +57,7 @@ export async function getShiftRequests(filters?: {
 
   const { data, error } = await query
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'getShiftRequests', entity: 'シフト希望' })
   return data as ShiftRequestWithStaff[]
 }
 
@@ -80,7 +82,7 @@ export async function importShiftRequests(
     .lte('date', endDate)
 
   if (count && count > 0 && !overwrite) {
-    throw new Error(
+    throw new ValidationError(
       `${yearMonth}の希望データが既に${count}件存在します。上書きする場合は上書きオプションを選択してください。`
     )
   }
@@ -93,7 +95,7 @@ export async function importShiftRequests(
       .gte('date', startDate)
       .lte('date', endDate)
 
-    if (deleteError) throw deleteError
+    if (deleteError) handleSupabaseError(deleteError, { action: 'importShiftRequests', entity: 'シフト希望' })
   }
 
   // データ変換
@@ -112,7 +114,7 @@ export async function importShiftRequests(
     const { error } = await supabase.from('shift_requests').insert(batch)
 
     if (error) {
-      throw new Error(`データ挿入エラー（${i}件目以降）: ${error.message}`)
+      handleSupabaseError(error, { action: 'importShiftRequests', entity: 'シフト希望' })
     }
 
     insertedCount += batch.length
@@ -137,7 +139,7 @@ export async function deleteShiftRequestsByYearMonth(yearMonth: string) {
     .gte('date', startDate)
     .lte('date', endDate)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteShiftRequestsByYearMonth', entity: 'シフト希望' })
 
   revalidatePath('/requests')
 }
@@ -170,7 +172,7 @@ export async function bulkUpsertShiftRequests(
     })
     .select()
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'bulkUpsertShiftRequests', entity: 'シフト希望' })
 
   revalidatePath('/shifts/create')
   return data
@@ -185,7 +187,7 @@ export async function deleteShiftRequest(staffId: string, date: string) {
     .eq('staff_id', staffId)
     .eq('date', date)
 
-  if (error) throw error
+  if (error) handleSupabaseError(error, { action: 'deleteShiftRequest', entity: 'シフト希望' })
 
   revalidatePath('/shifts/create')
 }
@@ -201,10 +203,10 @@ export async function getShiftRequestsGroupedByYearMonth() {
       .from('shift_requests')
       .select('date')
 
-    if (selectError) throw selectError
+    if (selectError) handleSupabaseError(selectError, { action: 'getShiftRequestsGroupedByYearMonth', entity: 'シフト希望' })
 
     // 年月ごとにグループ化
-    const grouped = allData.reduce((acc, req) => {
+    const grouped = allData!.reduce((acc, req) => {
       const yearMonth = req.date.substring(0, 7) // YYYY-MM
       if (!acc[yearMonth]) {
         acc[yearMonth] = 0

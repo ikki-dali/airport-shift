@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
+import { handleSupabaseError } from '@/lib/errors/helpers'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 type Shift = Database['public']['Tables']['shifts']['Row']
@@ -40,7 +41,7 @@ export async function getMonthlyShiftsByStaff(yearMonth: string) {
     .eq('is_active', true)
     .order('employee_number')
 
-  if (staffError) throw staffError
+  if (staffError) handleSupabaseError(staffError, { action: 'getMonthlyShiftsByStaff', entity: 'スタッフ' })
 
   // 指定月のシフトを取得
   const { data: shifts, error: shiftsError } = await supabase
@@ -69,10 +70,10 @@ export async function getMonthlyShiftsByStaff(yearMonth: string) {
     .lte('date', endDate)
     .order('date')
 
-  if (shiftsError) throw shiftsError
+  if (shiftsError) handleSupabaseError(shiftsError, { action: 'getMonthlyShiftsByStaff', entity: 'シフト' })
 
   // スタッフごとにシフトをグループ化
-  const staffWithShifts: StaffWithShifts[] = staff.map((s) => ({
+  const staffWithShifts: StaffWithShifts[] = staff!.map((s) => ({
     ...s,
     shifts: (shifts as ShiftWithDetails[]).filter((shift) => shift.staff_id === s.id),
   }))
