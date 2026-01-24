@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { logger } from '@/lib/errors/logger'
 import { requireAuth } from '@/lib/auth'
+import { validateData, notificationCreateSchema } from '@/lib/validators/schemas'
 
 export interface Notification {
   id: string
@@ -78,16 +79,20 @@ export async function createNotification(data: {
   related_shift_id?: string
 }): Promise<Notification> {
   await requireAuth()
+
+  // バリデーション
+  const validated = validateData(notificationCreateSchema, data)
+
   const supabase = await createClient()
 
   const { data: notification, error } = await supabase
     .from('notifications')
     .insert({
-      staff_id: data.staff_id,
-      type: data.type,
-      title: data.title,
-      message: data.message,
-      related_shift_id: data.related_shift_id || null,
+      staff_id: validated.staff_id,
+      type: validated.type,
+      title: validated.title,
+      message: validated.message,
+      related_shift_id: validated.related_shift_id || null,
     })
     .select()
     .single()

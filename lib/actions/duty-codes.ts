@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/types/database'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { requireAuth } from '@/lib/auth'
+import { validateData, dutyCodeSchema, dutyCodeUpdateSchema } from '@/lib/validators/schemas'
 
 export type DutyCode = Database['public']['Tables']['duty_codes']['Row']
 
@@ -47,10 +48,11 @@ export type DutyCodeInput = Omit<DutyCode, 'id' | 'created_at' | 'updated_at'>
 
 export async function createDutyCode(input: DutyCodeInput) {
   await requireAuth()
+  const validated = validateData(dutyCodeSchema, input)
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('duty_codes')
-    .insert([input])
+    .insert([validated as Database['public']['Tables']['duty_codes']['Insert']])
     .select()
     .single()
 
@@ -60,10 +62,11 @@ export async function createDutyCode(input: DutyCodeInput) {
 
 export async function updateDutyCode(id: string, input: Partial<DutyCodeInput>) {
   await requireAuth()
+  const validated = validateData(dutyCodeUpdateSchema, input)
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('duty_codes')
-    .update(input)
+    .update(validated as Database['public']['Tables']['duty_codes']['Update'])
     .eq('id', id)
     .select()
     .single()

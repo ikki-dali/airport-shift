@@ -32,21 +32,22 @@ export function AppSidebar() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    loadUnreadCount()
-    // 30秒ごとに未読数を更新
-    const interval = setInterval(loadUnreadCount, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const loadUnreadCount = async () => {
-    try {
-      // 管理者は全スタッフの未読通知数を表示
-      const count = await getUnreadCount()
-      setUnreadCount(count)
-    } catch (error) {
-      console.error('Failed to load unread count:', error)
+    let isActive = true
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await getUnreadCount()
+        if (isActive) setUnreadCount(count)
+      } catch (error) {
+        console.error('Failed to load unread count:', error)
+      }
     }
-  }
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000)
+    return () => {
+      isActive = false
+      clearInterval(interval)
+    }
+  }, [])
 
   return (
     <aside className="hidden md:fixed md:left-0 md:top-0 md:z-40 md:block md:h-screen md:w-64 border-r border-gray-200 bg-white">

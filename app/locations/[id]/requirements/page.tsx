@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, use } from 'react'
+import { useEffect, useState, useCallback, use } from 'react'
 import { getLocation } from '@/lib/actions/locations'
 import { getLocationRequirements } from '@/lib/actions/location-requirements'
 import { getDutyCodes } from '@/lib/actions/duty-codes'
@@ -29,11 +29,7 @@ export default function LocationRequirementsPage({
   const [showForm, setShowForm] = useState(false)
   const [editingRequirement, setEditingRequirement] = useState<LocationRequirement | undefined>()
 
-  useEffect(() => {
-    loadData()
-  }, [id])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [locationData, requirementsData, dutyCodesData, tagsData] = await Promise.all([
         getLocation(id),
@@ -51,7 +47,11 @@ export default function LocationRequirementsPage({
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleEdit = (requirement: any) => {
     setEditingRequirement(requirement)

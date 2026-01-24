@@ -11,16 +11,17 @@ export default async function EditLocationPage({
 }) {
   const { id } = await params
 
+  let location;
   try {
-    const location = await getLocation(id)
-
-    return (
-      <div className="container mx-auto p-8 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">配属箇所編集</h1>
-        <LocationForm location={location} />
-      </div>
-    )
-  } catch (error) {
+    location = await getLocation(id)
+  } catch {
     notFound()
   }
+
+  return (
+    <div className="container mx-auto p-8 max-w-2xl">
+      <h1 className="text-3xl font-bold mb-6">配属箇所編集</h1>
+      <LocationForm location={location} />
+    </div>
+  )
 }
