@@ -38,9 +38,7 @@ export async function sendShiftRequestInvitation({
 
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.NODE_ENV === 'production'
-        ? 'ANA シフト管理 <noreply@yourdomain.com>' // TODO: 本番環境のドメインに変更
-        : 'ANA シフト管理 <onboarding@resend.dev>', // 開発環境用
+      from: process.env.EMAIL_FROM || 'シフト管理 <noreply@resend.dev>',
       to: [to],
       subject: '【ANA】シフト希望提出のお願い',
       html: `
