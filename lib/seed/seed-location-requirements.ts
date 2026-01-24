@@ -161,7 +161,8 @@ export async function seedLocationRequirements() {
 
   // undefined の要素を除外
   const validRequirements = requirements.filter(
-    (r) => r.location_id && r.duty_code_id
+    (r): r is typeof r & { location_id: string; duty_code_id: string } =>
+      r.location_id != null && r.duty_code_id != null
   )
 
   if (validRequirements.length === 0) {

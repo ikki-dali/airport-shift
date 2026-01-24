@@ -35,7 +35,7 @@ export async function generateExcel(
   })
 
   // Bufferとして返却
-  return (await workbook.xlsx.writeBuffer()) as Buffer
+  return (await workbook.xlsx.writeBuffer()) as unknown as Buffer
 }
 
 function createSummarySheet(workbook: ExcelJS.Workbook, shifts: ShiftExportData[]) {

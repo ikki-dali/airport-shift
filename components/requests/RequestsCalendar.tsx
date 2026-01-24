@@ -14,7 +14,7 @@ interface ShiftRequest {
     id: string
     employee_number: string
     name: string
-  }
+  } | null
 }
 
 interface RequestsCalendarProps {
@@ -116,7 +116,7 @@ export function RequestsCalendar({ requests, yearMonth }: RequestsCalendarProps)
                             >
                               <div className="flex items-center gap-1">
                                 <span className="font-bold">{req.request_type}</span>
-                                <span className="truncate">{req.staff.name}</span>
+                                <span className="truncate">{req.staff?.name || ''}</span>
                               </div>
                             </div>
                           ))}

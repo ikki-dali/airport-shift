@@ -19,7 +19,7 @@ interface ShiftRequest {
     id: string
     employee_number: string
     name: string
-  }
+  } | null
 }
 
 interface ShiftRequestsPanelProps {

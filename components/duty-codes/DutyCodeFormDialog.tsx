@@ -28,12 +28,14 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState<DutyCodeInput>({
     code: dutyCode?.code || '',
+    name: dutyCode?.name || null,
     category: dutyCode?.category || '',
     start_time: dutyCode?.start_time || '',
     end_time: dutyCode?.end_time || '',
     duration_hours: dutyCode?.duration_hours || 0,
     duration_minutes: dutyCode?.duration_minutes || 0,
     break_minutes: dutyCode?.break_minutes || 0,
+    is_overnight: dutyCode?.is_overnight || false,
   })
 
   // コード入力時に自動パース
@@ -72,15 +74,17 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
       // フォームをリセット
       setFormData({
         code: '',
+        name: null,
         category: '',
         start_time: '',
         end_time: '',
         duration_hours: 0,
         duration_minutes: 0,
         break_minutes: 0,
+        is_overnight: false,
       })
-    } catch (error: any) {
-      alert(`エラーが発生しました: ${error.message}`)
+    } catch (error: unknown) {
+      alert(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }

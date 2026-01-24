@@ -87,7 +87,7 @@ export async function optimizeShiftAssignments(
   // 検証と統計
   const validation = validateAllAssignments(requirements, assignments)
   const stats = calculateStats(assignments, shiftRequests, allStaff)
-  const totalScore = calculateTotalScore(assignments, shiftRequests, allStaff)
+  const totalScore = calculateTotalScore(assignments, shiftRequests)
 
   return {
     assignments,
@@ -174,7 +174,7 @@ function localSearchOptimization(
   deadline: number
 ): Shift[] {
   let currentAssignments = [...initialAssignments]
-  let currentScore = calculateTotalScore(currentAssignments, shiftRequests, allStaff)
+  let currentScore = calculateTotalScore(currentAssignments, shiftRequests)
   let improved = true
   let iteration = 0
 
@@ -234,7 +234,7 @@ function localSearchOptimization(
         if (!hasAllTags) continue
 
         // スコア計算
-        const newScore = calculateTotalScore(newAssignments, shiftRequests, allStaff)
+        const newScore = calculateTotalScore(newAssignments, shiftRequests)
 
         // スコアが改善された場合は採用
         if (newScore > currentScore) {
@@ -309,7 +309,7 @@ export async function optimizePartialAssignments(
   // 全体を再検証
   const validation = validateAllAssignments(requirements, combinedAssignments)
   const stats = calculateStats(combinedAssignments, shiftRequests, allStaff)
-  const totalScore = calculateTotalScore(combinedAssignments, shiftRequests, allStaff)
+  const totalScore = calculateTotalScore(combinedAssignments, shiftRequests)
 
   return {
     assignments: combinedAssignments,

@@ -51,6 +51,15 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "staff_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       roles: {
         Row: {
@@ -74,6 +83,7 @@ export interface Database {
           priority?: number
           created_at?: string
         }
+        Relationships: []
       }
       tags: {
         Row: {
@@ -94,11 +104,13 @@ export interface Database {
           description?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       duty_codes: {
         Row: {
           id: string
           code: string
+          name: string | null
           start_time: string
           end_time: string
           duration_hours: number
@@ -112,6 +124,7 @@ export interface Database {
         Insert: {
           id?: string
           code: string
+          name?: string | null
           start_time: string
           end_time: string
           duration_hours: number
@@ -125,6 +138,7 @@ export interface Database {
         Update: {
           id?: string
           code?: string
+          name?: string | null
           start_time?: string
           end_time?: string
           duration_hours?: number
@@ -135,6 +149,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       locations: {
         Row: {
@@ -164,6 +179,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       location_requirements: {
         Row: {
@@ -199,6 +215,22 @@ export interface Database {
           specific_date?: string | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "location_requirements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "location_requirements_duty_code_id_fkey"
+            columns: ["duty_code_id"]
+            isOneToOne: false
+            referencedRelation: "duty_codes"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       shift_requests: {
         Row: {
@@ -217,7 +249,7 @@ export interface Database {
           date: string
           request_type: string
           note?: string | null
-          year_month: string
+          year_month?: string
           created_at?: string
           updated_at?: string
         }
@@ -231,6 +263,15 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "shift_requests_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       shifts: {
         Row: {
@@ -272,8 +313,75 @@ export interface Database {
           created_by?: string | null
           updated_by?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_duty_code_id_fkey"
+            columns: ["duty_code_id"]
+            isOneToOne: false
+            referencedRelation: "duty_codes"
+            referencedColumns: ["id"]
+          }
+        ]
       }
-      monthly_payroll: {
+      notifications: {
+        Row: {
+          id: string
+          staff_id: string
+          type: string
+          title: string
+          message: string
+          related_shift_id: string | null
+          is_read: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          staff_id: string
+          type: string
+          title: string
+          message: string
+          related_shift_id?: string | null
+          is_read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          staff_id?: string
+          type?: string
+          title?: string
+          message?: string
+          related_shift_id?: string | null
+          is_read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      payroll_records: {
         Row: {
           id: string
           staff_id: string
@@ -285,6 +393,7 @@ export interface Database {
           night_pay: number
           total_pay: number
           shift_count: number
+          status: string
           calculated_at: string
           created_at: string
         }
@@ -299,6 +408,7 @@ export interface Database {
           night_pay: number
           total_pay: number
           shift_count: number
+          status?: string
           calculated_at?: string
           created_at?: string
         }
@@ -313,9 +423,19 @@ export interface Database {
           night_pay?: number
           total_pay?: number
           shift_count?: number
+          status?: string
           calculated_at?: string
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_records_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       annual_payroll_summary: {
         Row: {
@@ -354,15 +474,110 @@ export interface Database {
           last_calculated_at?: string
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "annual_payroll_summary_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      staff_payroll_settings: {
+        Row: {
+          id: string
+          staff_id: string
+          target_limit: number
+          limit_type: string
+          custom_note: string | null
+          warning_threshold_percent: number
+          caution_threshold_percent: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          staff_id: string
+          target_limit: number
+          limit_type: string
+          custom_note?: string | null
+          warning_threshold_percent?: number
+          caution_threshold_percent?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          staff_id?: string
+          target_limit?: number
+          limit_type?: string
+          custom_note?: string | null
+          warning_threshold_percent?: number
+          caution_threshold_percent?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_payroll_settings_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: true
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      staff_tags: {
+        Row: {
+          staff_id: string
+          tag_id: string
+          created_at: string
+        }
+        Insert: {
+          staff_id: string
+          tag_id: string
+          created_at?: string
+        }
+        Update: {
+          staff_id?: string
+          tag_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_tags_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_shift_requests_by_month: {
+        Args: Record<string, never>
+        Returns: {
+          year_month: string
+          count: number
+        }[]
+      }
     }
     Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
       [_ in never]: never
     }
   }
