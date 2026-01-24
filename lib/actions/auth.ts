@@ -2,8 +2,16 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { checkRateLimit, loginRateLimiter } from '@/lib/rate-limit'
 
 export async function login(formData: FormData) {
+  // レート制限: 同一IPから5回/分
+  try {
+    await checkRateLimit(loginRateLimiter)
+  } catch {
+    return { error: 'ログイン試行回数が上限に達しました。しばらく待ってから再試行してください。' }
+  }
+
   const supabase = await createClient()
 
   const email = formData.get('email') as string
