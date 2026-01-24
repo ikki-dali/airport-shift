@@ -10,10 +10,12 @@ import {
   Hash,
   Calendar,
   DollarSign,
-  Bell
+  Bell,
+  LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getUnreadCount } from '@/lib/actions/notifications'
+import { logout } from '@/lib/actions/auth'
 
 const navigation = [
   { name: 'ホーム', href: '/', icon: Home },
@@ -97,15 +99,13 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3 rounded-lg bg-gray-50 p-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white font-semibold">
-            管
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">管理者</p>
-            <p className="text-xs text-gray-500 truncate">admin@example.com</p>
-          </div>
-        </div>
+        <button
+          onClick={() => logout()}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+        >
+          <LogOut className="h-5 w-5 text-gray-400" />
+          ログアウト
+        </button>
       </div>
     </aside>
   )
