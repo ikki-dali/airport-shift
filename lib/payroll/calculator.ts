@@ -128,7 +128,8 @@ export function calculateNightHours(timeRange: TimeRange): NightHoursCalculation
   // 夜勤時間の計算
   // ケース1: 22:00以降に開始
   if (startHour >= NIGHT_START_HOUR) {
-    const nightEnd = Math.min(adjustedEnd, NIGHT_START_HOUR + 24 + NIGHT_END_HOUR)
+    // 翌日05:00（= 24 + NIGHT_END_HOUR = 29）までが夜勤時間帯
+    const nightEnd = Math.min(adjustedEnd, 24 + NIGHT_END_HOUR)
     nightHours = Math.max(0, nightEnd - startHour)
   }
   // ケース2: 翌5:00より前に終了（深夜帯から開始）
@@ -137,7 +138,8 @@ export function calculateNightHours(timeRange: TimeRange): NightHoursCalculation
   }
   // ケース3: 22:00をまたぐ勤務
   else if (startHour < NIGHT_START_HOUR && adjustedEnd > NIGHT_START_HOUR) {
-    const nightEnd = Math.min(adjustedEnd, NIGHT_START_HOUR + 24 + NIGHT_END_HOUR)
+    // 翌日05:00（= 24 + NIGHT_END_HOUR = 29）までが夜勤時間帯
+    const nightEnd = Math.min(adjustedEnd, 24 + NIGHT_END_HOUR)
     nightHours = nightEnd - NIGHT_START_HOUR
   }
   // ケース4: 翌5:00をまたぐ勤務（深夜帯から開始）

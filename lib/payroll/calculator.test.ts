@@ -64,13 +64,12 @@ describe('payroll/calculator', () => {
       expect(result.regularHours).toBe(8)
     })
 
-    it('夜勤(22:00-06:00)は22:00開始のため全時間夜勤扱い', () => {
+    it('夜勤(22:00-06:00)は夜勤7h+通常1h', () => {
       const result = calculateNightHours({ start: '22:00', end: '06:00' })
       expect(result.totalHours).toBe(8)
-      // NOTE: 現在の実装では22:00以降開始の場合、終了時刻まで全て夜勤計算される
-      // ビジネス上は22:00-05:00(7h)のみ夜勤とすべき可能性あり（要確認）
-      expect(result.nightHours).toBe(8)
-      expect(result.regularHours).toBe(0)
+      // 夜勤時間帯は22:00-05:00（7時間）、05:00-06:00は通常時間
+      expect(result.nightHours).toBe(7)
+      expect(result.regularHours).toBe(1)
     })
 
     it('夕方から深夜(18:00-23:00)は22:00以降が夜勤', () => {
