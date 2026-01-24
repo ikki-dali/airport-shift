@@ -64,7 +64,6 @@ export function AssignmentPreview({
 
       onConfirm()
     } catch (err) {
-      console.error('Auto-assign execution error:', err)
       setError(err instanceof Error ? err.message : 'シフト作成に失敗しました')
     } finally {
       setIsExecuting(false)

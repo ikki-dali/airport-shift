@@ -1,6 +1,7 @@
 'use server'
 
 import { Resend } from 'resend'
+import { logger } from '@/lib/errors/logger'
 
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY
@@ -24,13 +25,13 @@ export async function sendShiftRequestInvitation({
   deadline,
 }: SendShiftRequestInvitationParams) {
   if (!to) {
-    console.warn('No email address provided for staff')
+    logger.warn('No email address provided for staff', { action: 'sendShiftRequestInvitation' })
     return { success: false, error: 'No email address' }
   }
 
   const resend = getResend()
   if (!resend) {
-    console.warn('RESEND_API_KEY is not set. Email sending is disabled.')
+    logger.warn('RESEND_API_KEY is not set. Email sending is disabled.', { action: 'sendShiftRequestInvitation' })
     return { success: false, error: 'Email sending is not configured' }
   }
 
@@ -90,14 +91,14 @@ export async function sendShiftRequestInvitation({
     })
 
     if (error) {
-      console.error('Resend error:', error)
+      logger.error('Resend error', { action: 'sendShiftRequestInvitation' }, error)
       return { success: false, error: error.message }
     }
 
-    console.log('Shift request invitation email sent successfully:', data)
+    logger.info('Shift request invitation email sent successfully', { action: 'sendShiftRequestInvitation', emailId: data?.id })
     return { success: true, data }
   } catch (error: any) {
-    console.error('Failed to send shift request invitation email:', error)
+    logger.error('Failed to send shift request invitation email', { action: 'sendShiftRequestInvitation' }, error)
     return { success: false, error: error.message }
   }
 }

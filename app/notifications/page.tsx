@@ -30,8 +30,7 @@ export default function NotificationsPage() {
       // 管理者は全スタッフの通知を取得
       const data = await getNotifications()
       setNotifications(data)
-    } catch (error) {
-      console.error('Failed to load notifications:', error)
+    } catch {
       toast.error('通知の取得に失敗しました')
     } finally {
       setIsLoading(false)

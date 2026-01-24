@@ -93,9 +93,7 @@ export function ShiftCreationBoardV2({
 
         setShifts((prev) => [...prev, newShift])
         setViolations([]) // 成功時に違反をクリア
-        console.log('シフトを作成しました')
       } catch (error) {
-        console.error('Error creating shift:', error)
         toast.error(error instanceof Error ? error.message : 'シフト作成に失敗しました')
       } finally {
         setPendingAdd(null)
@@ -109,9 +107,7 @@ export function ShiftCreationBoardV2({
     try {
       await deleteShift(shiftId)
       setShifts((prev) => prev.filter((s) => s.id !== shiftId))
-      console.log('シフトを削除しました')
     } catch (error) {
-      console.error('Error deleting shift:', error)
       toast.error(error instanceof Error ? error.message : 'シフト削除に失敗しました')
     }
   }, [])
@@ -121,8 +117,8 @@ export function ShiftCreationBoardV2({
     try {
       const updatedShifts = await getShifts()
       setShifts(updatedShifts)
-    } catch (error) {
-      console.error('Error reloading shifts:', error)
+    } catch {
+      // リロード失敗は無視
     }
   }, [])
 

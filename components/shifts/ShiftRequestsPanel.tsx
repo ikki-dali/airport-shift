@@ -112,8 +112,7 @@ export function ShiftRequestsPanel({ selectedDate, staff, onClose }: ShiftReques
         const filtered = await getShiftRequests({ date: dateStr })
 
         setRequests(filtered)
-      } catch (error) {
-        console.error('Error fetching shift requests:', error)
+      } catch {
         setRequests([])
       } finally {
         setLoading(false)

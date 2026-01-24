@@ -59,8 +59,7 @@ export default function ShiftsPage() {
       setShifts(shiftsData)
       setStaff(staffData)
       setLocations(locationsData)
-    } catch (error) {
-      console.error('データ取得エラー:', error)
+    } catch {
       toast.error('データの取得に失敗しました')
     } finally {
       setIsLoading(false)
@@ -145,7 +144,6 @@ export default function ShiftsPage() {
       setConfirmTarget(null)
       await loadData(yearMonth)
     } catch (error: any) {
-      console.error('確定エラー:', error)
       toast.error(`確定に失敗しました: ${error.message}`)
     } finally {
       setIsConfirming(false)
@@ -160,7 +158,6 @@ export default function ShiftsPage() {
       toast.success('シフトを削除しました')
       await loadData(yearMonth)
     } catch (error: any) {
-      console.error('削除エラー:', error)
       toast.error(`削除に失敗しました: ${error.message}`)
     }
   }
@@ -173,7 +170,6 @@ export default function ShiftsPage() {
       toast.success('確定を解除しました')
       await loadData(yearMonth)
     } catch (error: any) {
-      console.error('確定解除エラー:', error)
       toast.error(`確定解除に失敗しました: ${error.message}`)
     }
   }

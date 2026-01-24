@@ -79,7 +79,6 @@ export function StaffSelectorModal({
       onSuccess()
       onOpenChange(false)
     } catch (error: any) {
-      console.error('Failed to save shift:', error)
       const errorMessage = error?.message || String(error)
 
       if (errorMessage.includes('unique_staff_date_shift') || errorMessage.includes('duplicate')) {
