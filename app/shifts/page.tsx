@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import dynamic from 'next/dynamic'
 import { format } from 'date-fns'
 import { ShiftListTable } from '@/components/shifts/ShiftListTable'
-import { ConfirmDialog } from '@/components/shifts/ConfirmDialog'
 import {
   getShiftsWithDetails,
   confirmShifts,
@@ -15,6 +15,13 @@ import { getStaff } from '@/lib/actions/staff'
 import { getLocations } from '@/lib/actions/locations'
 import { ConstraintViolation } from '@/lib/validators/shift-validator'
 import { ExportButton } from '@/components/shifts/ExportButton'
+import { toast } from 'sonner'
+
+// モーダルは表示時のみロード
+const ConfirmDialog = dynamic(
+  () => import('@/components/shifts/ConfirmDialog').then(mod => ({ default: mod.ConfirmDialog })),
+  { ssr: false }
+)
 
 export default function ShiftsPage() {
   const [shifts, setShifts] = useState<any[]>([])
@@ -54,7 +61,7 @@ export default function ShiftsPage() {
       setLocations(locationsData)
     } catch (error) {
       console.error('データ取得エラー:', error)
-      alert('データの取得に失敗しました')
+      toast.error('データの取得に失敗しました')
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +112,7 @@ export default function ShiftsPage() {
     const pendingShifts = shifts.filter((s) => s.status === '予定')
 
     if (pendingShifts.length === 0) {
-      alert('確定対象の予定シフトがありません')
+      toast.warning('確定対象の予定シフトがありません')
       return
     }
 
@@ -133,13 +140,13 @@ export default function ShiftsPage() {
         await confirmShifts(confirmTarget.shiftIds, { skipWarnings: true })
       }
 
-      alert('シフトを確定しました')
+      toast.success('シフトを確定しました')
       setConfirmDialogOpen(false)
       setConfirmTarget(null)
       await loadData(yearMonth)
     } catch (error: any) {
       console.error('確定エラー:', error)
-      alert(`確定に失敗しました: ${error.message}`)
+      toast.error(`確定に失敗しました: ${error.message}`)
     } finally {
       setIsConfirming(false)
     }
@@ -150,11 +157,11 @@ export default function ShiftsPage() {
 
     try {
       await deleteShift(shiftId)
-      alert('シフトを削除しました')
+      toast.success('シフトを削除しました')
       await loadData(yearMonth)
     } catch (error: any) {
       console.error('削除エラー:', error)
-      alert(`削除に失敗しました: ${error.message}`)
+      toast.error(`削除に失敗しました: ${error.message}`)
     }
   }
 
@@ -163,11 +170,11 @@ export default function ShiftsPage() {
 
     try {
       await unconfirmShifts(shiftIds)
-      alert('確定を解除しました')
+      toast.success('確定を解除しました')
       await loadData(yearMonth)
     } catch (error: any) {
       console.error('確定解除エラー:', error)
-      alert(`確定解除に失敗しました: ${error.message}`)
+      toast.error(`確定解除に失敗しました: ${error.message}`)
     }
   }
 

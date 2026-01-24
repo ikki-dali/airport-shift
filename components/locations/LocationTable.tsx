@@ -5,6 +5,7 @@ import { deleteLocation } from '@/lib/actions/locations'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
+import { toast } from 'sonner'
 
 type Location = Database['public']['Tables']['locations']['Row'] & {
   location_requirements: { count: number }[]
@@ -26,7 +27,7 @@ export function LocationTable({ locations }: LocationTableProps) {
       await deleteLocation(id)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : '削除に失敗しました')
+      toast.error(error instanceof Error ? error.message : '削除に失敗しました')
     } finally {
       setDeleting(null)
     }

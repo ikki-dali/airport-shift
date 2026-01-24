@@ -18,6 +18,7 @@ import { validateNewShift, type ConstraintViolation } from '@/lib/validators/shi
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 import { ViewModeSwitcher } from './ViewModeSwitcher'
+import { toast } from 'sonner'
 import { ShiftListView } from './ShiftListView'
 import { ShiftRequestsPanel } from './ShiftRequestsPanel'
 import { AutoAssignButton } from './AutoAssignButton'
@@ -139,7 +140,7 @@ export function ShiftCreationBoard({
         console.log('シフトを作成しました')
       } catch (error) {
         console.error('Error creating shift:', error)
-        alert(error instanceof Error ? error.message : 'シフト作成に失敗しました')
+        toast.error(error instanceof Error ? error.message : 'シフト作成に失敗しました')
       } finally {
         setDutyCodeDialogOpen(false)
         setPendingDrop(null)
@@ -157,7 +158,7 @@ export function ShiftCreationBoard({
         console.log('シフトを削除しました')
       } catch (error) {
         console.error('Error deleting shift:', error)
-        alert(error instanceof Error ? error.message : 'シフト削除に失敗しました')
+        toast.error(error instanceof Error ? error.message : 'シフト削除に失敗しました')
       }
     },
     []

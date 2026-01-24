@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { deleteRole } from '@/lib/actions/roles'
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database'
+import { toast } from 'sonner'
 
 type Role = Database['public']['Tables']['roles']['Row']
 
@@ -25,7 +26,7 @@ export function RoleTable({ roles }: RoleTableProps) {
       await deleteRole(id)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : '削除に失敗しました')
+      toast.error(error instanceof Error ? error.message : '削除に失敗しました')
     } finally {
       setDeleting(null)
     }

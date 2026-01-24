@@ -1,13 +1,22 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { ExcelUploader } from '@/components/requests/ExcelUploader'
-import { ParsePreview } from '@/components/requests/ParsePreview'
-import { ImportResults } from '@/components/requests/ImportResults'
-import { parseExcelFile, type ParseResult } from '@/lib/parsers/excel-parser'
+import type { ParseResult } from '@/lib/parsers/excel-parser'
 import { importShiftRequests } from '@/lib/actions/shift-requests'
 import { getStaff } from '@/lib/actions/staff'
 import type { Database } from '@/types/database'
+
+// 重いコンポーネントを動的インポート（表示時のみロード）
+const ParsePreview = dynamic(
+  () => import('@/components/requests/ParsePreview').then(mod => ({ default: mod.ParsePreview })),
+  { loading: () => <div className="text-center py-8">読み込み中...</div> }
+)
+const ImportResults = dynamic(
+  () => import('@/components/requests/ImportResults').then(mod => ({ default: mod.ImportResults })),
+  { loading: () => <div className="text-center py-8">読み込み中...</div> }
+)
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -44,6 +53,8 @@ export default function ExcelUploadPage() {
     setError('')
 
     try {
+      // xlsxライブラリ(340KB)をファイル選択時のみ動的ロード
+      const { parseExcelFile } = await import('@/lib/parsers/excel-parser')
       const result = await parseExcelFile(file, staffList)
       setParseResult(result)
       setStep('preview')

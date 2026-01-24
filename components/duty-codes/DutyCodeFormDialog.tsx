@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 
 interface DutyCodeFormDialogProps {
   open: boolean
@@ -84,7 +85,7 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
         is_overnight: false,
       })
     } catch (error: unknown) {
-      alert(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      toast.error(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setLoading(false)
     }

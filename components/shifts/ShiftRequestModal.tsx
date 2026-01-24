@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import type { StaffWithRole } from '@/lib/actions/staff'
 import { bulkUpsertShiftRequests, getShiftRequests } from '@/lib/actions/shift-requests'
 import { Calendar } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface ShiftRequestModalProps {
   open: boolean
@@ -156,15 +157,15 @@ export function ShiftRequestModal({
 
       if (validRequests.length > 0) {
         await bulkUpsertShiftRequests(validRequests)
-        alert(`${validRequests.length}件の希望を保存しました`)
+        toast.success(`${validRequests.length}件の希望を保存しました`)
         onSuccess()
         onOpenChange(false)
       } else {
-        alert('保存する希望がありません')
+        toast.warning('保存する希望がありません')
       }
     } catch (error: any) {
       console.error('Save error:', error)
-      alert(`保存に失敗しました: ${error.message}`)
+      toast.error(`保存に失敗しました: ${error.message}`)
     } finally {
       setLoading(false)
     }

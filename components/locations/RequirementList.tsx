@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { deleteLocationRequirement } from '@/lib/actions/location-requirements'
 import { useRouter } from 'next/navigation'
 import type { Database } from '@/types/database'
+import { toast } from 'sonner'
 
 type LocationRequirement = Database['public']['Tables']['location_requirements']['Row'] & {
   duty_codes: {
@@ -40,7 +41,7 @@ export function RequirementList({
       await deleteLocationRequirement(id, locationId)
       router.refresh()
     } catch (error) {
-      alert(error instanceof Error ? error.message : '削除に失敗しました')
+      toast.error(error instanceof Error ? error.message : '削除に失敗しました')
     } finally {
       setDeleting(null)
     }
