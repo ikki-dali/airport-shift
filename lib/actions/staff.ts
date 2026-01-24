@@ -177,3 +177,106 @@ export async function toggleStaffActive(id: string, isActive: boolean) {
   revalidatePath(`/staff/${id}`)
   return data as Staff
 }
+
+export interface BulkImportStaffRow {
+  employee_number: string
+  name: string
+  email?: string
+  phone?: string
+  role_id?: string | null
+  tags?: string[]
+}
+
+export interface BulkImportResult {
+  successCount: number
+  skipCount: number
+  errors: { row: number; message: string }[]
+}
+
+export async function bulkImportStaff(
+  rows: BulkImportStaffRow[],
+  rowNumbers: number[]
+): Promise<BulkImportResult> {
+  await requireAuth()
+  const supabase = await createClient()
+
+  // 既存の社員番号を取得
+  const { data: existingStaff } = await supabase
+    .from('staff')
+    .select('employee_number')
+
+  const existingNumbers = new Set(
+    (existingStaff || []).map((s) => s.employee_number)
+  )
+
+  const toInsert: Array<{
+    employee_number: string
+    name: string
+    email: string | null
+    phone: string | null
+    role_id: string | null
+    tags: string[]
+    is_active: boolean
+  }> = []
+  const errors: { row: number; message: string }[] = []
+  let skipCount = 0
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
+    const rowNumber = rowNumbers[i]
+
+    // 重複チェック
+    if (existingNumbers.has(row.employee_number)) {
+      skipCount++
+      errors.push({ row: rowNumber, message: `社員番号「${row.employee_number}」は既に登録済みです（スキップ）` })
+      continue
+    }
+
+    // バリデーション
+    const result = staffCreateSchema.safeParse({
+      employee_number: row.employee_number,
+      name: row.name,
+      email: row.email || null,
+      phone: row.phone || null,
+      role_id: row.role_id || null,
+      tags: row.tags || [],
+      is_active: true,
+    })
+
+    if (!result.success) {
+      const messages = result.error.issues.map((issue) => issue.message).join(', ')
+      errors.push({ row: rowNumber, message: messages })
+      continue
+    }
+
+    toInsert.push(result.data as any)
+  }
+
+  // バッチインサート（100件ずつ）
+  let successCount = 0
+  const batchSize = 100
+
+  for (let i = 0; i < toInsert.length; i += batchSize) {
+    const batch = toInsert.slice(i, i + batchSize)
+    const { error } = await supabase.from('staff').insert(batch)
+
+    if (error) {
+      // バッチ全体が失敗した場合、個別挿入を試みる
+      for (let j = 0; j < batch.length; j++) {
+        const { error: singleError } = await supabase.from('staff').insert(batch[j])
+        if (singleError) {
+          const originalIndex = i + j
+          const rowNumber = rowNumbers[originalIndex] || originalIndex + 2
+          errors.push({ row: rowNumber, message: singleError.message })
+        } else {
+          successCount++
+        }
+      }
+    } else {
+      successCount += batch.length
+    }
+  }
+
+  revalidatePath('/staff')
+  return { successCount, skipCount, errors }
+}
