@@ -4,7 +4,7 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, User, Users } from 'lucide-react'
+import { Users, AlertTriangle } from 'lucide-react'
 
 // デモ用の1日あたり必要人数
 const DAILY_REQUIRED_STAFF = 43
@@ -52,183 +52,99 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
   // 今日のシフトをフィルタ
   const todayShifts = shifts.filter((s) => s.date === todayStr)
 
-  // 配置箇所×勤務記号ごとにグルーピング
-  const slotMap: Record<string, {
-    locationId: string
-    locationName: string
-    dutyCodeId: string
-    dutyCode: string
-    startTime: string
-    endTime: string
-    required: number
-    assigned: Shift[]
-  }> = {}
+  // 今日の必要人数を計算
+  const todayRequired = locationRequirements.reduce((sum, req) => {
+    if (req.day_of_week !== null && req.day_of_week !== dayOfWeek) return sum
+    if (req.specific_date !== null && req.specific_date !== todayStr) return sum
+    return sum + req.required_staff_count
+  }, 0)
 
-  // 必要人数を設定
-  locationRequirements.forEach((req) => {
-    // 曜日指定がある場合はマッチする場合のみ
-    if (req.day_of_week !== null && req.day_of_week !== dayOfWeek) return
-    // 特定日指定がある場合はマッチする場合のみ
-    if (req.specific_date !== null && req.specific_date !== todayStr) return
+  // 実際の必要人数（設定がなければデフォルト値）
+  const requiredStaff = todayRequired > 0 ? todayRequired : DAILY_REQUIRED_STAFF
 
-    const key = `${req.location_id}-${req.duty_code_id}`
-    if (!slotMap[key]) {
-      slotMap[key] = {
-        locationId: req.location_id,
-        locationName: '',
-        dutyCodeId: req.duty_code_id,
-        dutyCode: '',
-        startTime: '',
-        endTime: '',
-        required: 0,
-        assigned: [],
-      }
-    }
-    slotMap[key].required += req.required_staff_count
-  })
+  // 今日の確定シフト数を計算
+  const confirmedCount = todayShifts.filter((s) => s.status === '確定').length
+  const pendingCount = todayShifts.length - confirmedCount
+  const totalAssigned = todayShifts.length
+  const shortage = requiredStaff - totalAssigned
+  const isShortageDay = shortage > 0
 
-  // シフトを割り当て
+  // 配置箇所ごとにグルーピング
+  const byLocation: Record<string, Shift[]> = {}
   todayShifts.forEach((shift) => {
-    const key = `${shift.location.id}-${shift.duty_code.id}`
-    if (!slotMap[key]) {
-      slotMap[key] = {
-        locationId: shift.location.id,
-        locationName: shift.location.location_name,
-        dutyCodeId: shift.duty_code.id,
-        dutyCode: shift.duty_code.code,
-        startTime: shift.duty_code.start_time,
-        endTime: shift.duty_code.end_time,
-        required: 0,
-        assigned: [],
-      }
-    }
-    slotMap[key].locationName = shift.location.location_name
-    slotMap[key].dutyCode = shift.duty_code.code
-    slotMap[key].startTime = shift.duty_code.start_time
-    slotMap[key].endTime = shift.duty_code.end_time
-    slotMap[key].assigned.push(shift)
+    const key = shift.location.location_name
+    if (!byLocation[key]) byLocation[key] = []
+    byLocation[key].push(shift)
   })
 
-  const slots = Object.values(slotMap).filter(
-    (slot) => slot.required > 0 || slot.assigned.length > 0
-  )
+  // 配置箇所をソート（人数多い順）
+  const locationEntries = Object.entries(byLocation).sort((a, b) => b[1].length - a[1].length)
 
-  // 人手不足の枠を先に表示
-  const sortedSlots = slots.sort((a, b) => {
-    const aShortage = a.assigned.length < a.required
-    const bShortage = b.assigned.length < b.required
-    if (aShortage && !bShortage) return -1
-    if (!aShortage && bShortage) return 1
-    return 0
-  })
-
-  if (sortedSlots.length === 0) {
+  if (todayShifts.length === 0) {
     return (
-      <Card className="p-8 text-center text-gray-500">
+      <Card className="p-6 text-center text-gray-500">
         今日のシフトデータがありません
       </Card>
     )
   }
 
-  // 今日の確定シフト数を計算
-  const confirmedCount = todayShifts.filter((s) => s.status === '確定').length
-  const totalAssigned = todayShifts.length
-  const isShortageDay = totalAssigned < DAILY_REQUIRED_STAFF
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-600">
-          {format(today, 'yyyy年M月d日 (E)', { locale: ja })}
-        </div>
-
-        {/* 本日の出勤状況サマリー */}
-        <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
-            isShortageDay ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+    <div className="space-y-3">
+      {/* サマリーバー */}
+      <div className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-2">
+        <span className="text-sm text-gray-600">
+          {format(today, 'M月d日(E)', { locale: ja })}
+        </span>
+        <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-1.5 text-sm font-medium ${
+            isShortageDay ? 'text-red-600' : 'text-green-600'
           }`}>
             <Users className="h-4 w-4" />
-            <span className="font-semibold">
-              {DAILY_REQUIRED_STAFF}人中 {totalAssigned}人配置
-            </span>
+            <span>{totalAssigned}/{requiredStaff}人</span>
             {isShortageDay && (
-              <Badge variant="outline" className="border-red-600 text-red-600 text-xs">
-                {DAILY_REQUIRED_STAFF - totalAssigned}人不足
-              </Badge>
+              <span className="text-xs">(-{shortage})</span>
             )}
           </div>
-          <div className="text-sm text-gray-500">
-            確定: {confirmedCount}人 / 仮: {totalAssigned - confirmedCount}人
+          <div className="flex gap-2 text-xs">
+            <span className="text-green-600">確定 {confirmedCount}</span>
+            <span className="text-yellow-600">仮 {pendingCount}</span>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {sortedSlots.map((slot) => {
-          const isShortage = slot.assigned.length < slot.required
-          return (
-            <Card
-              key={`${slot.locationId}-${slot.dutyCodeId}`}
-              className={`p-4 ${
-                isShortage ? 'border-red-300 bg-red-50' : ''
-              }`}
-            >
-              {/* ヘッダー */}
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    {slot.locationName || '(未設定)'}
-                  </div>
-                  <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                    <Clock className="h-3 w-3" />
-                    {slot.dutyCode} ({slot.startTime}-{slot.endTime})
-                  </div>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={
-                    isShortage
-                      ? 'border-red-600 text-red-600'
-                      : 'border-green-600 text-green-600'
-                  }
-                >
-                  {slot.assigned.length}/{slot.required}名
-                </Badge>
-              </div>
+      {/* 人手不足警告（ある場合のみ） */}
+      {isShortageDay && (
+        <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <AlertTriangle className="h-4 w-4" />
+          <span>{shortage}人不足しています</span>
+        </div>
+      )}
 
-              {/* 割り当て済みスタッフ */}
-              {slot.assigned.length > 0 ? (
-                <div className="space-y-2">
-                  {slot.assigned.map((shift) => (
-                    <div
-                      key={shift.id}
-                      className="flex items-center gap-2 rounded bg-white p-2 text-sm"
-                    >
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span>{shift.staff.name}</span>
-                      <Badge
-                        variant="outline"
-                        className={`ml-auto text-xs ${
-                          shift.status === '確定'
-                            ? 'border-green-600 text-green-600'
-                            : 'border-yellow-600 text-yellow-600'
-                        }`}
-                      >
-                        {shift.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-red-600">
-                  配置スタッフなし
-                </div>
-              )}
-            </Card>
-          )
-        })}
-      </div>
+      {/* 配置箇所別コンパクトリスト */}
+      <Card className="divide-y">
+        {locationEntries.map(([location, locationShifts]) => (
+          <div key={location} className="px-4 py-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">{location}</span>
+              <span className="text-xs text-gray-500">{locationShifts.length}人</span>
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {locationShifts.map((shift) => (
+                <span
+                  key={shift.id}
+                  className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs ${
+                    shift.status === '確定'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-yellow-100 text-yellow-700'
+                  }`}
+                >
+                  {shift.staff.name}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </Card>
     </div>
   )
 }
