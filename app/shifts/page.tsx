@@ -13,8 +13,10 @@ import {
 } from '@/lib/actions/shifts'
 import { getStaff } from '@/lib/actions/staff'
 import { getLocations } from '@/lib/actions/locations'
+import { getAllLocationRequirements } from '@/lib/actions/location-requirements'
 import { ConstraintViolation } from '@/lib/validators/shift-validator'
 import { ExportButton } from '@/components/shifts/ExportButton'
+import { ShiftCalendarView } from '@/components/shifts/ShiftCalendarView'
 import { toast } from 'sonner'
 
 // モーダルは表示時のみロード
@@ -28,7 +30,9 @@ export default function ShiftsPage() {
   const [filteredShifts, setFilteredShifts] = useState<any[]>([])
   const [staff, setStaff] = useState<any[]>([])
   const [locations, setLocations] = useState<any[]>([])
+  const [locationRequirements, setLocationRequirements] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 
   // フィルター状態
   const currentYearMonth = format(new Date(), 'yyyy-MM')
@@ -51,14 +55,16 @@ export default function ShiftsPage() {
   const loadData = useCallback(async (ym: string) => {
     try {
       setIsLoading(true)
-      const [shiftsData, staffData, locationsData] = await Promise.all([
+      const [shiftsData, staffData, locationsData, requirementsData] = await Promise.all([
         getShiftsWithDetails({ yearMonth: ym }),
         getStaff(),
         getLocations(),
+        getAllLocationRequirements(),
       ])
       setShifts(shiftsData)
       setStaff(staffData)
       setLocations(locationsData)
+      setLocationRequirements(requirementsData)
     } catch {
       toast.error('データの取得に失敗しました')
     } finally {
@@ -183,6 +189,29 @@ export default function ShiftsPage() {
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">シフト一覧・確定</h1>
           <div className="flex gap-2">
+            {/* ビュー切り替え */}
+            <div className="flex rounded-lg border border-gray-300 bg-white">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                  viewMode === 'table'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                一覧
+              </button>
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                  viewMode === 'calendar'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                カレンダー
+              </button>
+            </div>
             <ExportButton yearMonth={yearMonth} />
             <button
               onClick={() => (window.location.href = '/shifts/create')}
@@ -277,11 +306,17 @@ export default function ShiftsPage() {
           </div>
         </div>
 
-        {/* シフト一覧テーブル */}
+        {/* シフト表示 */}
         {isLoading ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
             <p className="text-gray-500">読み込み中...</p>
           </div>
+        ) : viewMode === 'calendar' ? (
+          <ShiftCalendarView
+            shifts={shifts}
+            locationRequirements={locationRequirements}
+            yearMonth={yearMonth}
+          />
         ) : (
           <ShiftListTable
             shifts={filteredShifts}
