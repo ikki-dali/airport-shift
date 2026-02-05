@@ -133,24 +133,21 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                 <span className="text-sm font-semibold text-gray-800">{location}</span>
                 <span className="text-xs text-gray-500">{locationShifts.length}人</span>
               </div>
-              <div className="space-y-1">
+              <div className="flex flex-wrap gap-1">
                 {sortedShifts.map((shift) => {
                   const startTime = shift.duty_code.start_time.slice(0, 5)
                   const endTime = shift.duty_code.end_time.slice(0, 5)
                   return (
-                    <div
+                    <span
                       key={shift.id}
-                      className={`flex items-center justify-between rounded px-2 py-1 text-sm ${
+                      className={`inline-block rounded px-1.5 py-0.5 text-xs ${
                         shift.status === '確定'
-                          ? 'bg-green-50'
-                          : 'bg-yellow-50'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
                       }`}
                     >
-                      <span className="font-medium text-gray-800">{shift.staff.name}</span>
-                      <span className="text-xs text-gray-600">
-                        {startTime}-{endTime} / {shift.duty_code.code}
-                      </span>
-                    </div>
+                      {shift.staff.name} {startTime}-{endTime} / {shift.duty_code.code}
+                    </span>
                   )
                 })}
               </div>
