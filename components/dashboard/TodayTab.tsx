@@ -8,22 +8,16 @@ import { Users, AlertTriangle } from 'lucide-react'
 // デモ用の1日あたり必要人数
 const DAILY_REQUIRED_STAFF = 43
 
-// 配置箇所ごとの色設定
-const LOCATION_COLORS: Record<string, { bg: string; border: string; header: string }> = {
-  '第1ターミナル': { bg: 'bg-blue-50', border: 'border-blue-200', header: 'bg-blue-100 text-blue-800' },
-  '第2ターミナル': { bg: 'bg-green-50', border: 'border-green-200', header: 'bg-green-100 text-green-800' },
-  '第3ターミナル北': { bg: 'bg-purple-50', border: 'border-purple-200', header: 'bg-purple-100 text-purple-800' },
-  '第3ターミナル南': { bg: 'bg-orange-50', border: 'border-orange-200', header: 'bg-orange-100 text-orange-800' },
-  'バスゲート': { bg: 'bg-pink-50', border: 'border-pink-200', header: 'bg-pink-100 text-pink-800' },
+// 配置箇所ごとの色設定（Excelシフト表風）
+const LOCATION_COLORS: Record<string, { rowBg: string; headerBg: string; headerText: string }> = {
+  '第1ターミナル': { rowBg: 'bg-blue-50', headerBg: 'bg-blue-600', headerText: 'text-white' },
+  '第2ターミナル': { rowBg: 'bg-green-50', headerBg: 'bg-green-600', headerText: 'text-white' },
+  '第3ターミナル北': { rowBg: 'bg-purple-50', headerBg: 'bg-purple-600', headerText: 'text-white' },
+  '第3ターミナル南': { rowBg: 'bg-amber-50', headerBg: 'bg-amber-600', headerText: 'text-white' },
+  'バスゲート': { rowBg: 'bg-rose-50', headerBg: 'bg-rose-600', headerText: 'text-white' },
 }
 
-const DEFAULT_COLOR = { bg: 'bg-gray-50', border: 'border-gray-200', header: 'bg-gray-100 text-gray-800' }
-
-// 時間を分に変換（タイムラインバー用）
-function timeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
-}
+const DEFAULT_COLOR = { rowBg: 'bg-gray-50', headerBg: 'bg-gray-600', headerText: 'text-white' }
 
 interface Shift {
   id: string
@@ -136,72 +130,75 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
         </div>
       )}
 
-      {/* 配置箇所別カード */}
-      <div className="grid gap-3 md:grid-cols-2">
-        {locationEntries.map(([location, locationShifts]) => {
-          const colors = LOCATION_COLORS[location] || DEFAULT_COLOR
-          const sortedShifts = [...locationShifts].sort((a, b) =>
-            a.duty_code.start_time.localeCompare(b.duty_code.start_time)
-          )
+      {/* Excelシフト表風テーブル */}
+      <Card className="overflow-hidden border">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-300 px-2 py-1.5 text-center text-xs font-semibold text-gray-600 w-8">No</th>
+              <th className="border border-gray-300 px-2 py-1.5 text-left text-xs font-semibold text-gray-600 w-24">配置</th>
+              <th className="border border-gray-300 px-2 py-1.5 text-left text-xs font-semibold text-gray-600">氏名</th>
+              <th className="border border-gray-300 px-2 py-1.5 text-left text-xs font-semibold text-gray-600 w-40">勤務時間 / 記号</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              let globalIndex = 0
+              return locationEntries.map(([location, locationShifts]) => {
+                const colors = LOCATION_COLORS[location] || DEFAULT_COLOR
+                const sortedShifts = [...locationShifts].sort((a, b) =>
+                  a.duty_code.start_time.localeCompare(b.duty_code.start_time)
+                )
 
-          return (
-            <Card key={location} className={`overflow-hidden border-2 ${colors.border}`}>
-              {/* 配置箇所ヘッダー */}
-              <div className={`px-3 py-2 font-semibold text-sm ${colors.header}`}>
-                {location}
-                <span className="ml-2 font-normal opacity-75">({locationShifts.length}人)</span>
-              </div>
-
-              {/* スタッフリスト */}
-              <div className={colors.bg}>
-                {sortedShifts.map((shift, idx) => {
+                return sortedShifts.map((shift, idx) => {
+                  globalIndex++
                   const startTime = shift.duty_code.start_time.slice(0, 5)
                   const endTime = shift.duty_code.end_time.slice(0, 5)
-                  const startMin = timeToMinutes(shift.duty_code.start_time)
-                  const endMin = timeToMinutes(shift.duty_code.end_time)
-                  // 6:00-23:00 を 0-100% にマッピング
-                  const dayStart = 6 * 60  // 6:00
-                  const dayEnd = 23 * 60   // 23:00
-                  const barStart = Math.max(0, (startMin - dayStart) / (dayEnd - dayStart) * 100)
-                  const barWidth = Math.min(100 - barStart, (endMin - startMin) / (dayEnd - dayStart) * 100)
+                  const isPending = shift.status !== '確定'
 
                   return (
-                    <div
-                      key={shift.id}
-                      className={`px-3 py-1.5 border-b last:border-b-0 ${
-                        idx % 2 === 0 ? 'bg-white/50' : 'bg-white/80'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className={`w-2 h-2 rounded-full ${
-                          shift.status === '確定' ? 'bg-green-500' : 'bg-yellow-500'
-                        }`} />
-                        <span className="font-medium text-gray-800 min-w-[5rem]">
-                          {shift.staff.name}
-                        </span>
-                        <span className="text-gray-600 text-xs">
-                          {startTime}-{endTime}
-                        </span>
-                        <span className="text-gray-500 font-mono text-xs">
-                          {shift.duty_code.code}
-                        </span>
-                      </div>
-                      {/* タイムラインバー */}
-                      <div className="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            shift.status === '確定' ? 'bg-green-400' : 'bg-yellow-400'
-                          }`}
-                          style={{ marginLeft: `${barStart}%`, width: `${barWidth}%` }}
-                        />
-                      </div>
-                    </div>
+                    <tr key={shift.id} className={isPending ? 'bg-yellow-100' : ''}>
+                      {/* No（連番） */}
+                      <td className="border border-gray-300 px-2 py-1 text-center text-xs text-gray-500">
+                        {globalIndex}
+                      </td>
+                      {/* 配置箇所（グループの最初だけ表示、色付きヘッダー） */}
+                      {idx === 0 ? (
+                        <td
+                          className={`border border-gray-300 px-2 py-1 text-xs font-semibold ${colors.headerBg} ${colors.headerText}`}
+                          rowSpan={locationShifts.length}
+                        >
+                          {location}
+                          <div className="font-normal opacity-80">({locationShifts.length}人)</div>
+                        </td>
+                      ) : null}
+                      {/* 氏名 */}
+                      <td className={`border border-gray-300 px-2 py-1 font-medium ${colors.rowBg}`}>
+                        {shift.staff.name}
+                      </td>
+                      {/* 勤務時間 / 記号 */}
+                      <td className={`border border-gray-300 px-2 py-1 font-mono text-xs ${colors.rowBg}`}>
+                        {startTime}-{endTime} / {shift.duty_code.code}
+                      </td>
+                    </tr>
                   )
-                })}
-              </div>
-            </Card>
-          )
-        })}
+                })
+              })
+            })()}
+          </tbody>
+        </table>
+      </Card>
+
+      {/* 凡例 */}
+      <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-1">
+          <span className="w-4 h-3 bg-yellow-100 border border-gray-300" />
+          <span>仮シフト</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-4 h-3 bg-white border border-gray-300" />
+          <span>確定シフト</span>
+        </div>
       </div>
     </div>
   )
