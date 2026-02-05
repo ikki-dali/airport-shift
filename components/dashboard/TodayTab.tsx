@@ -120,30 +120,43 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
         </div>
       )}
 
-      {/* 配置箇所別コンパクトリスト */}
+      {/* 配置箇所別リスト */}
       <Card className="divide-y">
-        {locationEntries.map(([location, locationShifts]) => (
-          <div key={location} className="px-4 py-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">{location}</span>
-              <span className="text-xs text-gray-500">{locationShifts.length}人</span>
+        {locationEntries.map(([location, locationShifts]) => {
+          // 時間帯順にソート
+          const sortedShifts = [...locationShifts].sort((a, b) =>
+            a.duty_code.start_time.localeCompare(b.duty_code.start_time)
+          )
+          return (
+            <div key={location} className="px-4 py-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-gray-800">{location}</span>
+                <span className="text-xs text-gray-500">{locationShifts.length}人</span>
+              </div>
+              <div className="space-y-1">
+                {sortedShifts.map((shift) => {
+                  const startTime = shift.duty_code.start_time.slice(0, 5)
+                  const endTime = shift.duty_code.end_time.slice(0, 5)
+                  return (
+                    <div
+                      key={shift.id}
+                      className={`flex items-center justify-between rounded px-2 py-1 text-sm ${
+                        shift.status === '確定'
+                          ? 'bg-green-50'
+                          : 'bg-yellow-50'
+                      }`}
+                    >
+                      <span className="font-medium text-gray-800">{shift.staff.name}</span>
+                      <span className="text-xs text-gray-600">
+                        {startTime}-{endTime} / {shift.duty_code.code}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {locationShifts.map((shift) => (
-                <span
-                  key={shift.id}
-                  className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs ${
-                    shift.status === '確定'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}
-                >
-                  {shift.staff.name}
-                </span>
-              ))}
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </Card>
     </div>
   )
