@@ -4,7 +4,10 @@ import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { MapPin, Clock, User } from 'lucide-react'
+import { MapPin, Clock, User, Users } from 'lucide-react'
+
+// デモ用の1日あたり必要人数
+const DAILY_REQUIRED_STAFF = 43
 
 interface Shift {
   id: string
@@ -127,10 +130,37 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
     )
   }
 
+  // 今日の確定シフト数を計算
+  const confirmedCount = todayShifts.filter((s) => s.status === '確定').length
+  const totalAssigned = todayShifts.length
+  const isShortageDay = totalAssigned < DAILY_REQUIRED_STAFF
+
   return (
     <div className="space-y-4">
-      <div className="text-sm text-gray-600">
-        {format(today, 'yyyy年M月d日 (E)', { locale: ja })}
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-600">
+          {format(today, 'yyyy年M月d日 (E)', { locale: ja })}
+        </div>
+
+        {/* 本日の出勤状況サマリー */}
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg ${
+            isShortageDay ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+          }`}>
+            <Users className="h-4 w-4" />
+            <span className="font-semibold">
+              {DAILY_REQUIRED_STAFF}人中 {totalAssigned}人配置
+            </span>
+            {isShortageDay && (
+              <Badge variant="outline" className="border-red-600 text-red-600 text-xs">
+                {DAILY_REQUIRED_STAFF - totalAssigned}人不足
+              </Badge>
+            )}
+          </div>
+          <div className="text-sm text-gray-500">
+            確定: {confirmedCount}人 / 仮: {totalAssigned - confirmedCount}人
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
