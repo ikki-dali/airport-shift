@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { CalendarDays, CalendarRange, Calendar } from 'lucide-react'
 import { TodayTab } from './TodayTab'
 import { WeekTab } from './WeekTab'
@@ -42,59 +41,45 @@ interface DashboardTabsProps {
   yearMonth: string
 }
 
-type TabType = 'today' | 'week' | 'month'
-
 export function DashboardTabs({ shifts, locationRequirements, yearMonth }: DashboardTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('today')
-
-  const tabs: { key: TabType; label: string; icon: React.ReactNode }[] = [
-    { key: 'today', label: 'Today', icon: <CalendarDays className="h-4 w-4" /> },
-    { key: 'week', label: 'This Week', icon: <CalendarRange className="h-4 w-4" /> },
-    { key: 'month', label: 'This Month', icon: <Calendar className="h-4 w-4" /> },
-  ]
-
   return (
-    <div className="space-y-4">
-      {/* タブ切り替え */}
-      <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1 w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 rounded px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <div className="space-y-8">
+      {/* Today セクション */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarDays className="h-5 w-5 text-blue-600" />
+          <h2 className="text-lg font-semibold text-gray-900">Today</h2>
+        </div>
+        <TodayTab
+          shifts={shifts}
+          locationRequirements={locationRequirements}
+        />
+      </section>
 
-      {/* タブコンテンツ */}
-      <div>
-        {activeTab === 'today' && (
-          <TodayTab
-            shifts={shifts}
-            locationRequirements={locationRequirements}
-          />
-        )}
-        {activeTab === 'week' && (
-          <WeekTab
-            shifts={shifts}
-            locationRequirements={locationRequirements}
-          />
-        )}
-        {activeTab === 'month' && (
-          <MonthTab
-            shifts={shifts}
-            locationRequirements={locationRequirements}
-            yearMonth={yearMonth}
-          />
-        )}
-      </div>
+      {/* This Week セクション */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <CalendarRange className="h-5 w-5 text-blue-600" />
+          <h2 className="text-lg font-semibold text-gray-900">This Week</h2>
+        </div>
+        <WeekTab
+          shifts={shifts}
+          locationRequirements={locationRequirements}
+        />
+      </section>
+
+      {/* This Month セクション */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className="h-5 w-5 text-blue-600" />
+          <h2 className="text-lg font-semibold text-gray-900">This Month</h2>
+        </div>
+        <MonthTab
+          shifts={shifts}
+          locationRequirements={locationRequirements}
+          yearMonth={yearMonth}
+        />
+      </section>
     </div>
   )
 }
