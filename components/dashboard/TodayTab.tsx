@@ -147,7 +147,7 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
       )}
 
       {/* Excelシフト表風テーブル（コンパクト化＋タイムラインバー） */}
-      <Card className="overflow-auto border max-h-[60vh]">
+      <Card className="border">
         <table className="w-full text-xs border-collapse">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-200">
@@ -180,8 +180,20 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                   // タイムラインバー計算
                   const startMin = timeToMinutes(shift.duty_code.start_time)
                   const endMin = timeToMinutes(shift.duty_code.end_time)
+
+                  // 日またぎ判定（終了時間が開始時間より前）
+                  const isOvernight = endMin < startMin
+
+                  // 通常シフトのバー計算
                   const barStart = Math.max(0, (startMin - TIMELINE_START) / (TIMELINE_END - TIMELINE_START) * 100)
-                  const barWidth = Math.min(100 - barStart, (endMin - startMin) / (TIMELINE_END - TIMELINE_START) * 100)
+                  const barWidth = isOvernight
+                    ? (TIMELINE_END - startMin) / (TIMELINE_END - TIMELINE_START) * 100  // 開始〜24:00
+                    : Math.min(100 - barStart, (endMin - startMin) / (TIMELINE_END - TIMELINE_START) * 100)
+
+                  // 日またぎの場合の翌日部分（4:00〜終了時間）
+                  const overnightBarWidth = isOvernight
+                    ? Math.max(0, (endMin - TIMELINE_START) / (TIMELINE_END - TIMELINE_START) * 100)
+                    : 0
 
                   return (
                     <tr key={shift.id} className={isPending ? 'bg-yellow-50' : ''}>
@@ -205,10 +217,18 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                         <span className="text-gray-400 ml-0.5">/{shift.duty_code.code}</span>
                       </td>
                       <td className="border border-gray-300 px-1 py-0.5">
-                        <div className="h-2 bg-gray-100 rounded-sm overflow-hidden min-w-[120px]">
+                        <div className="h-2 bg-gray-100 rounded-sm overflow-hidden min-w-[120px] relative">
+                          {/* 日またぎの場合: 左端に翌日分（4:00〜終了時間） */}
+                          {isOvernight && overnightBarWidth > 0 && (
+                            <div
+                              className={`absolute h-full rounded-sm ${isPending ? 'bg-yellow-400' : 'bg-blue-400'}`}
+                              style={{ left: 0, width: `${overnightBarWidth}%` }}
+                            />
+                          )}
+                          {/* メインバー（通常 or 日またぎの当日分） */}
                           <div
-                            className={`h-full rounded-sm ${isPending ? 'bg-yellow-400' : 'bg-blue-400'}`}
-                            style={{ marginLeft: `${barStart}%`, width: `${barWidth}%` }}
+                            className={`absolute h-full rounded-sm ${isPending ? 'bg-yellow-400' : 'bg-blue-400'}`}
+                            style={{ left: `${barStart}%`, width: `${barWidth}%` }}
                           />
                         </div>
                       </td>
