@@ -61,6 +61,27 @@ interface LocationRequirement {
   required_staff_count: number
   day_of_week: number | null
   specific_date: string | null
+  duty_codes: {
+    id: string
+    code: string
+    start_time: string | null
+    end_time: string | null
+    category: string
+  } | null
+  locations: {
+    id: string
+    location_name: string
+  } | null
+}
+
+interface ShortageItem {
+  locationName: string
+  dutyCode: string
+  startTime: string
+  endTime: string
+  required: number
+  assigned: number
+  shortage: number
 }
 
 interface TodayTabProps {
@@ -104,6 +125,36 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
   // 配置箇所をソート（人数多い順）
   const locationEntries = Object.entries(byLocation).sort((a, b) => b[1].length - a[1].length)
 
+  // 配置箇所×時間帯ごとの不足を計算
+  const shortages: ShortageItem[] = []
+  locationRequirements.forEach((req) => {
+    // 今日に適用される要件かチェック
+    if (req.day_of_week !== null && req.day_of_week !== dayOfWeek) return
+    if (req.specific_date !== null && req.specific_date !== todayStr) return
+    if (!req.locations || !req.duty_codes) return
+
+    // この配置箇所×勤務記号に配置されている人数をカウント
+    const assignedCount = todayShifts.filter(
+      (s) => s.location.id === req.location_id && s.duty_code.id === req.duty_code_id
+    ).length
+
+    const shortageCount = req.required_staff_count - assignedCount
+    if (shortageCount > 0) {
+      shortages.push({
+        locationName: req.locations.location_name,
+        dutyCode: req.duty_codes.code,
+        startTime: req.duty_codes.start_time?.slice(0, 5) || '',
+        endTime: req.duty_codes.end_time?.slice(0, 5) || '',
+        required: req.required_staff_count,
+        assigned: assignedCount,
+        shortage: shortageCount,
+      })
+    }
+  })
+
+  // 不足が多い順にソート
+  shortages.sort((a, b) => b.shortage - a.shortage)
+
   if (todayShifts.length === 0) {
     return (
       <Card className="p-6 text-center text-gray-500">
@@ -143,6 +194,25 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
         <div className="flex items-center gap-1.5 bg-red-50 px-2 py-1 text-xs text-red-700">
           <AlertTriangle className="h-3 w-3" />
           <span>{shortage}人不足</span>
+        </div>
+      )}
+
+      {/* 配置箇所×時間帯ごとの不足詳細 */}
+      {shortages.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded px-2 py-1.5">
+          <div className="text-xs font-semibold text-red-700 mb-1">不足箇所:</div>
+          <div className="flex flex-wrap gap-1">
+            {shortages.map((s, i) => (
+              <span
+                key={i}
+                className="inline-flex items-center gap-1 bg-red-100 text-red-800 px-1.5 py-0.5 rounded text-[10px]"
+              >
+                <span className="font-medium">{s.locationName}</span>
+                <span className="text-red-600">{s.startTime}-{s.endTime}</span>
+                <span className="text-red-500">({s.assigned}/{s.required} <span className="font-bold">-{s.shortage}</span>)</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

@@ -33,6 +33,17 @@ interface LocationRequirement {
   required_staff_count: number
   day_of_week: number | null
   specific_date: string | null
+  duty_codes: {
+    id: string
+    code: string
+    start_time: string | null
+    end_time: string | null
+    category: string
+  } | null
+  locations: {
+    id: string
+    location_name: string
+  } | null
 }
 
 interface DashboardTabsProps {
