@@ -50,14 +50,18 @@ export async function seedDatabase(options: SeedOptions = {}) {
   // 役職IDのマッピングを作成
   const roleMap = new Map(insertedRoles?.map((r) => [r.name, r.id]) || [])
 
-  // 2. タグマスタ
+  // 2. タグマスタ（9種類）
   console.log('🏷️  Seeding tags...')
   const tags = [
-    { name: '保安検査', description: 'T3中央、T3北、T2中央での保安検査業務' },
-    { name: 'バス案内', description: 'バス案内業務' },
-    { name: '横特', description: '東方航空バゲージ業務' },
+    { name: '番台', description: '番台業務（メイン業務）' },
     { name: 'OSS', description: 'OSS業務' },
-    { name: '番台', description: '番台業務' },
+    { name: 'ソラシド', description: 'ソラシドエア対応（航空会社対応）' },
+    { name: 'MU', description: '中国東方航空対応（航空会社対応）' },
+    { name: 'MC', description: 'MC対応（航空会社対応）' },
+    { name: 'KE', description: '大韓航空対応（航空会社対応）' },
+    { name: 'TG', description: 'タイ国際航空対応（航空会社対応）' },
+    { name: '際際バス', description: '国際線間バス案内業務' },
+    { name: 'クリーンバス', description: 'クリーンバス案内業務' },
   ]
 
   const { data: insertedTags, error: tagsError } = await supabase
@@ -106,14 +110,16 @@ export async function seedDatabase(options: SeedOptions = {}) {
   // 勤務記号IDのマッピングを作成
   const dutyCodeMap = new Map(insertedDutyCodes?.map((d) => [d.code, d.id]) || [])
 
-  // 4. 配属箇所マスタ
+  // 4. 配属箇所マスタ（7箇所）
   console.log('📍 Seeding locations...')
   const locations = [
     { business_type: '保安検査場案内業務', location_name: 'T3中央', code: 'T3C' },
-    { business_type: '保安検査場案内業務', location_name: 'T3北', code: 'T3N' },
-    { business_type: '保安検査場案内業務', location_name: 'T2中央', code: 'T2C' },
-    { business_type: 'バス案内業務', location_name: 'バス案内', code: 'BUS' },
-    { business_type: '横特業務', location_name: '東方航空バゲージ', code: 'TOU' },
+    { business_type: '保安検査場案内業務', location_name: 'T3北側', code: 'T3N' },
+    { business_type: '保安検査場案内業務', location_name: 'T2中央検査場', code: 'T2C' },
+    { business_type: 'バス案内業務', location_name: 'T3クリーンバス', code: 'T3CB' },
+    { business_type: 'バス案内業務', location_name: 'T3際際バス', code: 'T3IB' },
+    { business_type: 'バス案内業務', location_name: 'T2クリーンバス', code: 'T2CB' },
+    { business_type: 'バス案内業務', location_name: 'T2際際バス', code: 'T2IB' },
   ]
 
   const { data: insertedLocations, error: locationsError } = await supabase
@@ -134,21 +140,21 @@ export async function seedDatabase(options: SeedOptions = {}) {
   // 5. スタッフマスタ
   console.log('👥 Seeding staff...')
   const staffSamples = [
-    { employee_number: '0001', name: '山田太郎', email: 'yamada@example.com', role: 'リーダー', tags: ['保安検査', 'バス案内'] },
-    { employee_number: '0002', name: '佐藤花子', email: 'sato@example.com', role: 'サブリーダー', tags: ['保安検査'] },
-    { employee_number: '0003', name: '鈴木次郎', email: 'suzuki@example.com', role: '一般社員', tags: ['保安検査'] },
-    { employee_number: '0004', name: '田中美咲', email: 'tanaka@example.com', role: '一般社員', tags: ['バス案内'] },
-    { employee_number: '0005', name: '高橋健太', email: 'takahashi@example.com', role: '一般社員', tags: ['保安検査'] },
-    { employee_number: '0006', name: '伊藤舞', email: 'ito@example.com', role: 'サブリーダー', tags: ['バス案内', 'OSS'] },
-    { employee_number: '0007', name: '渡辺大輔', email: 'watanabe@example.com', role: '一般社員', tags: ['保安検査'] },
-    { employee_number: '0008', name: '中村優子', email: 'nakamura@example.com', role: '一般社員', tags: ['横特'] },
-    { employee_number: '0009', name: '小林誠', email: 'kobayashi@example.com', role: '一般社員', tags: ['保安検査'] },
-    { employee_number: '0010', name: '加藤明美', email: 'kato@example.com', role: '一般社員', tags: ['バス案内'] },
-    { employee_number: '0011', name: '吉田隆史', email: 'yoshida@example.com', role: 'リーダー', tags: ['保安検査', '番台'] },
-    { employee_number: '0012', name: '山本彩', email: 'yamamoto@example.com', role: '一般社員', tags: ['保安検査'] },
-    { employee_number: '0013', name: '佐々木翔', email: 'sasaki@example.com', role: '一般社員', tags: ['バス案内'] },
-    { employee_number: '0014', name: '森田里奈', email: 'morita@example.com', role: '一般社員', tags: ['保安検査'] },
-    { employee_number: '0015', name: '林拓也', email: 'hayashi@example.com', role: 'サブリーダー', tags: ['保安検査', 'バス案内'] },
+    { employee_number: '0001', name: '山田太郎', email: 'yamada@example.com', role: 'リーダー', tags: ['番台', 'クリーンバス'] },
+    { employee_number: '0002', name: '佐藤花子', email: 'sato@example.com', role: 'サブリーダー', tags: ['番台'] },
+    { employee_number: '0003', name: '鈴木次郎', email: 'suzuki@example.com', role: '一般社員', tags: ['番台'] },
+    { employee_number: '0004', name: '田中美咲', email: 'tanaka@example.com', role: '一般社員', tags: ['際際バス'] },
+    { employee_number: '0005', name: '高橋健太', email: 'takahashi@example.com', role: '一般社員', tags: ['番台'] },
+    { employee_number: '0006', name: '伊藤舞', email: 'ito@example.com', role: 'サブリーダー', tags: ['クリーンバス', 'OSS'] },
+    { employee_number: '0007', name: '渡辺大輔', email: 'watanabe@example.com', role: '一般社員', tags: ['番台'] },
+    { employee_number: '0008', name: '中村優子', email: 'nakamura@example.com', role: '一般社員', tags: ['MU'] },
+    { employee_number: '0009', name: '小林誠', email: 'kobayashi@example.com', role: '一般社員', tags: ['番台'] },
+    { employee_number: '0010', name: '加藤明美', email: 'kato@example.com', role: '一般社員', tags: ['際際バス'] },
+    { employee_number: '0011', name: '吉田隆史', email: 'yoshida@example.com', role: 'リーダー', tags: ['番台', 'OSS'] },
+    { employee_number: '0012', name: '山本彩', email: 'yamamoto@example.com', role: '一般社員', tags: ['番台'] },
+    { employee_number: '0013', name: '佐々木翔', email: 'sasaki@example.com', role: '一般社員', tags: ['クリーンバス'] },
+    { employee_number: '0014', name: '森田里奈', email: 'morita@example.com', role: '一般社員', tags: ['番台'] },
+    { employee_number: '0015', name: '林拓也', email: 'hayashi@example.com', role: 'サブリーダー', tags: ['番台', '際際バス'] },
   ]
 
   const staffToInsert = staffSamples.map((s) => ({
@@ -203,58 +209,76 @@ export async function seedDatabase(options: SeedOptions = {}) {
   // 7. 配属箇所要件
   console.log('📋 Seeding location requirements...')
   const locationRequirementsRaw = [
-    // T3中央 - 06G5DA（通常日）
+    // T3中央 - 06A6AA（通常日）
     {
       location_id: locationMap.get('T3C'),
-      duty_code_id: dutyCodeMap.get('06G5DA'),
+      duty_code_id: dutyCodeMap.get('06A6AA'),
       required_staff_count: 5,
       required_responsible_count: 1,
-      required_tags: ['保安検査'],
+      required_tags: ['番台'],
       day_of_week: null as number | null,
     },
-    // T3中央 - 06G5DA（月曜日）
+    // T3中央 - 06A6AA（月曜日）
     {
       location_id: locationMap.get('T3C'),
-      duty_code_id: dutyCodeMap.get('06G5DA'),
+      duty_code_id: dutyCodeMap.get('06A6AA'),
       required_staff_count: 8,
       required_responsible_count: 2,
-      required_tags: ['保安検査'],
+      required_tags: ['番台'],
       day_of_week: 1 as number | null,
     },
-    // T3北 - 06G5DA
+    // T3北側 - 06A6AA
     {
       location_id: locationMap.get('T3N'),
-      duty_code_id: dutyCodeMap.get('06G5DA'),
+      duty_code_id: dutyCodeMap.get('06A6AA'),
       required_staff_count: 4,
       required_responsible_count: 1,
-      required_tags: ['保安検査'],
+      required_tags: ['番台'],
       day_of_week: null as number | null,
     },
-    // T2中央 - 06G5DA
+    // T2中央検査場 - 06A6AA
     {
       location_id: locationMap.get('T2C'),
-      duty_code_id: dutyCodeMap.get('06G5DA'),
+      duty_code_id: dutyCodeMap.get('06A6AA'),
       required_staff_count: 3,
       required_responsible_count: 1,
-      required_tags: ['保安検査'],
+      required_tags: ['番台'],
       day_of_week: null as number | null,
     },
-    // バス案内 - 07G4D
+    // T3クリーンバス - 07A2GY
     {
-      location_id: locationMap.get('BUS'),
-      duty_code_id: dutyCodeMap.get('07G4D'),
+      location_id: locationMap.get('T3CB'),
+      duty_code_id: dutyCodeMap.get('07A2GY'),
       required_staff_count: 2,
       required_responsible_count: 0,
-      required_tags: ['バス案内'],
+      required_tags: ['クリーンバス'],
       day_of_week: null as number | null,
     },
-    // 横特 - 08G4D
+    // T3際際バス - 07A2GY
     {
-      location_id: locationMap.get('TOU'),
-      duty_code_id: dutyCodeMap.get('08G4D'),
+      location_id: locationMap.get('T3IB'),
+      duty_code_id: dutyCodeMap.get('07A2GY'),
       required_staff_count: 2,
       required_responsible_count: 0,
-      required_tags: ['横特'],
+      required_tags: ['際際バス'],
+      day_of_week: null as number | null,
+    },
+    // T2クリーンバス - 07A2GY
+    {
+      location_id: locationMap.get('T2CB'),
+      duty_code_id: dutyCodeMap.get('07A2GY'),
+      required_staff_count: 2,
+      required_responsible_count: 0,
+      required_tags: ['クリーンバス'],
+      day_of_week: null as number | null,
+    },
+    // T2際際バス - 07A2GY
+    {
+      location_id: locationMap.get('T2IB'),
+      duty_code_id: dutyCodeMap.get('07A2GY'),
+      required_staff_count: 2,
+      required_responsible_count: 0,
+      required_tags: ['際際バス'],
       day_of_week: null as number | null,
     },
   ]

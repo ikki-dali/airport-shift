@@ -41,14 +41,14 @@ export interface ParsedDutyCode {
 }
 
 export function parseDutyCode(code: string): ParsedDutyCode {
-  // 勤務記号の構造: 06G5DA
+  // 勤務記号の構造: 06G5DA (6桁) or 06A9A (5桁)
   // [0-1]: 開始時 (06)
   // [2]: 開始分 (G)
   // [3]: 勤務時間 (5) ※0は10時間
   // [4]: 勤務分 (D)
-  // [5]: 休憩 (A)
+  // [5]: 休憩 (A) ※5桁の場合は省略され、60分デフォルト
 
-  if (code.length !== 6) {
+  if (code.length !== 6 && code.length !== 5) {
     throw new Error(`Invalid duty code format: ${code}`);
   }
 
@@ -61,7 +61,8 @@ export function parseDutyCode(code: string): ParsedDutyCode {
   }
 
   const durationMinutes = letterToMinutes(code[4]);
-  const breakMinutes = code[5] ? breakCodeToMinutes(code[5]) : 60;
+  // 5桁コードは休憩なし扱い（60分デフォルト）
+  const breakMinutes = code.length === 6 && code[5] ? breakCodeToMinutes(code[5]) : 60;
 
   // 開始時刻
   const startTime = `${startHour.toString().padStart(2, '0')}:${startMinute.toString().padStart(2, '0')}`;
@@ -86,46 +87,44 @@ export function parseDutyCode(code: string): ParsedDutyCode {
   };
 }
 
-// 勤務記号一覧（28種類）のデフォルトデータ
+// 勤務記号一覧（33種類）のデフォルトデータ - 実Excelデータから抽出
 export const DEFAULT_DUTY_CODES = [
-  // T3中央（第3ターミナル中央保安検査場） - 12種類
-  { code: '06A6AA', category: 'T3中央' },
-  { code: '06G5DA', category: 'T3中央' },
-  { code: '08J5DA', category: 'T3中央' },
-  { code: '14A5AA', category: 'T3中央' },
-  { code: '14A6AA', category: 'T3中央' },
-  { code: '14G5DA', category: 'T3中央' },
-  { code: '18A5AA', category: 'T3中央' },
-  { code: '18A5GA', category: 'T3中央' },
-  { code: '18G5DA', category: 'T3中央' },
-  { code: '22A5AA', category: 'T3中央' },
-  { code: '22A9AA', category: 'T3中央' },
-  { code: '22A9AY', category: 'T3中央' },
+  // 早番（04-09時台開始）
+  { code: '04A5GA', category: '早番' },
+  { code: '04J5JA', category: '早番' },
+  { code: '05D5AA', category: '早番' },
+  { code: '05G5AA', category: '早番' },
+  { code: '06A6AA', category: '早番' },
+  { code: '06A9A', category: '早番' },   // 5桁: 休憩なし（60分デフォルト）
+  { code: '06G9AY', category: '早番' },
+  { code: '06J1JT', category: '早番' },
+  { code: '06J9AW', category: '早番' },
+  { code: '07A2GY', category: '早番' },
+  { code: '07G2AY', category: '早番' },
+  { code: '09G2GY', category: '早番' },
 
-  // T3北（第3ターミナル北側検査場） - 3種類
-  { code: '06J0AW', category: 'T3北' },
-  { code: '15A7JA', category: 'T3北' },
-  { code: '17J5AA', category: 'T3北' },
+  // 日勤（10-15時台開始）
+  { code: '10A5AA', category: '日勤' },
+  { code: '12A8AY', category: '日勤' },
+  { code: '12A9A', category: '日勤' },   // 5桁: 休憩なし（60分デフォルト）
+  { code: '13A9A', category: '日勤' },   // 5桁: 休憩なし（60分デフォルト）
+  { code: '13J5DA', category: '日勤' },
+  { code: '14A5AA', category: '日勤' },
+  { code: '14A9A', category: '日勤' },   // 5桁: 休憩なし（60分デフォルト）
+  { code: '14D7JY', category: '日勤' },
+  { code: '14D8G', category: '日勤' },
+  { code: '14G4GA', category: '日勤' },
+  { code: '14J8D', category: '日勤' },
+  { code: '15A5AA', category: '日勤' },
+  { code: '15A7J', category: '日勤' },
 
-  // T2中央（第2ターミナル国際線検査場） - 5種類
-  { code: '06A6AA', category: 'T2中央' },
-  { code: '19A5AA', category: 'T2中央' },
-  { code: '19A5GA', category: 'T2中央' },
-  { code: '06G5DA', category: 'T2中央' },
-  { code: '14A5AA', category: 'T2中央' },
-
-  // バス案内業務 - 10種類
-  { code: '04J5AA', category: 'バス案内' },
-  { code: '05D8GA', category: 'バス案内' },
-  { code: '06A6AA', category: 'バス案内' },
-  { code: '18J6AA', category: 'バス案内' },
-  { code: '19A5AA', category: 'バス案内' },
-  { code: '19A8AA', category: 'バス案内' },
-  { code: '19G7JA', category: 'バス案内' },
-  { code: '22A5AA', category: 'バス案内' },
-  { code: '22A6AA', category: 'バス案内' },
-  { code: '22A8AA', category: 'バス案内' },
-
-  // 横特業務（東方航空バゲージ） - 1種類
-  { code: '05G4AA', category: '横特' },
+  // 遅番（16-23時台開始）
+  { code: '16G6GG', category: '遅番' },
+  { code: '18G4GA', category: '遅番' },
+  { code: '19A1AO', category: '遅番' },
+  { code: '19A4AA', category: '遅番' },
+  { code: '22A0AY', category: '遅番' },
+  { code: '22A8AW', category: '遅番' },
+  { code: '22A9GY', category: '遅番' },
+  { code: '23A1AO', category: '遅番' },
 ];

@@ -318,33 +318,36 @@ export async function seedDemoData() {
   }
   const defaultRoleId = roles?.find((r) => r.name === '一般社員')?.id || roles?.[0]?.id
 
-  // 3. 勤務地を取得（または作成）
+  // 3. 勤務地を取得（または作成）- 実Excelデータに基づく7箇所
   let { data: locations } = await supabase.from('locations').select('id, location_name, code')
   if (!locations || locations.length === 0) {
     const { data: newLocations } = await supabase
       .from('locations')
       .upsert([
-        { business_type: '保安検査場案内業務', location_name: '第1ターミナル', code: 'T1' },
-        { business_type: '保安検査場案内業務', location_name: '第2ターミナル', code: 'T2' },
-        { business_type: '保安検査場案内業務', location_name: '第3ターミナル北', code: 'T3N' },
-        { business_type: '保安検査場案内業務', location_name: '第3ターミナル南', code: 'T3S' },
-        { business_type: 'バス案内業務', location_name: 'バスゲート', code: 'BUS' },
+        { business_type: '保安検査場案内業務', location_name: 'T3中央', code: 'T3C' },
+        { business_type: '保安検査場案内業務', location_name: 'T3北側', code: 'T3N' },
+        { business_type: '保安検査場案内業務', location_name: 'T2中央検査場', code: 'T2C' },
+        { business_type: 'バス案内業務', location_name: 'T3クリーンバス', code: 'T3CB' },
+        { business_type: 'バス案内業務', location_name: 'T3際際バス', code: 'T3IB' },
+        { business_type: 'バス案内業務', location_name: 'T2クリーンバス', code: 'T2CB' },
+        { business_type: 'バス案内業務', location_name: 'T2際際バス', code: 'T2IB' },
       ], { onConflict: 'code' })
       .select()
     locations = newLocations
   }
   const locationIds = locations?.map((l) => l.id) || []
 
-  // 4. 勤務記号を取得（または作成）
+  // 4. 勤務記号を取得（または作成）- 実Excelデータに基づく主要勤務記号
   let { data: dutyCodes } = await supabase.from('duty_codes').select('id, code')
   if (!dutyCodes || dutyCodes.length === 0) {
     const { data: newDutyCodes } = await supabase
       .from('duty_codes')
       .upsert([
-        { code: '06G5DA', start_time: '06:00', end_time: '15:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, category: '早番' },
-        { code: '07G4D', start_time: '07:00', end_time: '16:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, category: '早番' },
-        { code: '10G5DA', start_time: '10:00', end_time: '19:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, category: '日勤' },
-        { code: '14G4D', start_time: '14:00', end_time: '23:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, category: '遅番' },
+        { code: '06A6AA', start_time: '06:00', end_time: '12:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '早番' },
+        { code: '07A2GY', start_time: '07:00', end_time: '09:30', duration_hours: 2, duration_minutes: 30, break_minutes: 90, category: '早番' },
+        { code: '10A5AA', start_time: '10:00', end_time: '15:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
+        { code: '14A5AA', start_time: '14:00', end_time: '19:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
+        { code: '19A4AA', start_time: '19:00', end_time: '23:00', duration_hours: 4, duration_minutes: 0, break_minutes: 0, category: '遅番' },
       ], { onConflict: 'code' })
       .select()
     dutyCodes = newDutyCodes
@@ -408,19 +411,21 @@ export async function seedDemoData() {
     required_responsible_count: number
   }> = []
 
-  // 43人を配分（5勤務地 × 4勤務記号 = 20スロット、各2-3人）
-  const slotsCount = locationIds.length * dutyCodeIds.length
+  // 43人を配分（5勤務地 × 主要4勤務記号 = 20スロット、各2-3人）
+  // 主要な勤務記号のみを使用（早番・日勤・遅番・夜勤の4パターン）
+  const mainDutyCodeIds = dutyCodeIds.slice(0, 4) // 最初の4つの勤務記号を使用
+  const slotsCount = locationIds.length * mainDutyCodeIds.length
   const baseCount = Math.floor(DAILY_REQUIRED_STAFF / slotsCount)
   const remainder = DAILY_REQUIRED_STAFF % slotsCount
   let slotIndex = 0
 
   locationIds.forEach((locationId) => {
-    dutyCodeIds.forEach((dutyCodeId) => {
+    mainDutyCodeIds.forEach((dutyCodeId) => {
       const extraPerson = slotIndex < remainder ? 1 : 0
       requirements.push({
         location_id: locationId,
         duty_code_id: dutyCodeId,
-        required_staff_count: Math.max(1, baseCount + extraPerson), // 最小1人
+        required_staff_count: baseCount + extraPerson,
         required_responsible_count: 0,
       })
       slotIndex++
