@@ -3,11 +3,27 @@
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Users, AlertTriangle } from 'lucide-react'
 
 // デモ用の1日あたり必要人数
 const DAILY_REQUIRED_STAFF = 43
+
+// 配置箇所ごとの色設定
+const LOCATION_COLORS: Record<string, { bg: string; border: string; header: string }> = {
+  '第1ターミナル': { bg: 'bg-blue-50', border: 'border-blue-200', header: 'bg-blue-100 text-blue-800' },
+  '第2ターミナル': { bg: 'bg-green-50', border: 'border-green-200', header: 'bg-green-100 text-green-800' },
+  '第3ターミナル北': { bg: 'bg-purple-50', border: 'border-purple-200', header: 'bg-purple-100 text-purple-800' },
+  '第3ターミナル南': { bg: 'bg-orange-50', border: 'border-orange-200', header: 'bg-orange-100 text-orange-800' },
+  'バスゲート': { bg: 'bg-pink-50', border: 'border-pink-200', header: 'bg-pink-100 text-pink-800' },
+}
+
+const DEFAULT_COLOR = { bg: 'bg-gray-50', border: 'border-gray-200', header: 'bg-gray-100 text-gray-800' }
+
+// 時間を分に変換（タイムラインバー用）
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
 
 interface Shift {
   id: string
@@ -120,49 +136,73 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
         </div>
       )}
 
-      {/* 配置箇所別テーブル */}
-      <Card className="overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">配置箇所</th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">スタッフ</th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">時間</th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">記号</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {locationEntries.flatMap(([location, locationShifts]) => {
-              const sortedShifts = [...locationShifts].sort((a, b) =>
-                a.duty_code.start_time.localeCompare(b.duty_code.start_time)
-              )
-              return sortedShifts.map((shift, idx) => {
-                const startTime = shift.duty_code.start_time.slice(0, 5)
-                const endTime = shift.duty_code.end_time.slice(0, 5)
-                return (
-                  <tr
-                    key={shift.id}
-                    className={shift.status === '確定' ? 'bg-green-50' : 'bg-yellow-50'}
-                  >
-                    <td className="px-3 py-1.5 text-gray-700">
-                      {idx === 0 ? location : ''}
-                    </td>
-                    <td className="px-3 py-1.5 font-medium text-gray-800">
-                      {shift.staff.name}
-                    </td>
-                    <td className="px-3 py-1.5 text-gray-600">
-                      {startTime}-{endTime}
-                    </td>
-                    <td className="px-3 py-1.5 text-gray-600 font-mono text-xs">
-                      {shift.duty_code.code}
-                    </td>
-                  </tr>
-                )
-              })
-            })}
-          </tbody>
-        </table>
-      </Card>
+      {/* 配置箇所別カード */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {locationEntries.map(([location, locationShifts]) => {
+          const colors = LOCATION_COLORS[location] || DEFAULT_COLOR
+          const sortedShifts = [...locationShifts].sort((a, b) =>
+            a.duty_code.start_time.localeCompare(b.duty_code.start_time)
+          )
+
+          return (
+            <Card key={location} className={`overflow-hidden border-2 ${colors.border}`}>
+              {/* 配置箇所ヘッダー */}
+              <div className={`px-3 py-2 font-semibold text-sm ${colors.header}`}>
+                {location}
+                <span className="ml-2 font-normal opacity-75">({locationShifts.length}人)</span>
+              </div>
+
+              {/* スタッフリスト */}
+              <div className={colors.bg}>
+                {sortedShifts.map((shift, idx) => {
+                  const startTime = shift.duty_code.start_time.slice(0, 5)
+                  const endTime = shift.duty_code.end_time.slice(0, 5)
+                  const startMin = timeToMinutes(shift.duty_code.start_time)
+                  const endMin = timeToMinutes(shift.duty_code.end_time)
+                  // 6:00-23:00 を 0-100% にマッピング
+                  const dayStart = 6 * 60  // 6:00
+                  const dayEnd = 23 * 60   // 23:00
+                  const barStart = Math.max(0, (startMin - dayStart) / (dayEnd - dayStart) * 100)
+                  const barWidth = Math.min(100 - barStart, (endMin - startMin) / (dayEnd - dayStart) * 100)
+
+                  return (
+                    <div
+                      key={shift.id}
+                      className={`px-3 py-1.5 border-b last:border-b-0 ${
+                        idx % 2 === 0 ? 'bg-white/50' : 'bg-white/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className={`w-2 h-2 rounded-full ${
+                          shift.status === '確定' ? 'bg-green-500' : 'bg-yellow-500'
+                        }`} />
+                        <span className="font-medium text-gray-800 min-w-[5rem]">
+                          {shift.staff.name}
+                        </span>
+                        <span className="text-gray-600 text-xs">
+                          {startTime}-{endTime}
+                        </span>
+                        <span className="text-gray-500 font-mono text-xs">
+                          {shift.duty_code.code}
+                        </span>
+                      </div>
+                      {/* タイムラインバー */}
+                      <div className="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            shift.status === '確定' ? 'bg-green-400' : 'bg-yellow-400'
+                          }`}
+                          style={{ marginLeft: `${barStart}%`, width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )
+        })}
+      </div>
     </div>
   )
 }
