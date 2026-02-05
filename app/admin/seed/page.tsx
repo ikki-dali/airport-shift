@@ -2,28 +2,48 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { AlertCircle, CheckCircle2, Database, Loader2 } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Database, Loader2, Users } from 'lucide-react'
 
 interface SeedResult {
   success: boolean
   message?: string
   result?: {
-    roles: number
-    tags: number
-    dutyCodes: number
-    locations: number
+    roles?: number
+    tags?: number
+    dutyCodes?: number
+    locations?: number
+    staff?: number
+    staffTags?: number
+    locationRequirements?: number
+    shiftRequests?: number
+  }
+  error?: string
+}
+
+interface DemoSeedResult {
+  success: boolean
+  message?: string
+  result?: {
     staff: number
-    staffTags: number
-    locationRequirements: number
-    shiftRequests: number
+    contractStaff: number
+    partTimeStaff: number
+    shifts: number
+    confirmedShifts: number
+    pendingShifts: number
+    locations: number
+    dutyCodes: number
+    requirements: number
   }
   error?: string
 }
 
 export default function SeedPage() {
   const [isSeeding, setIsSeeding] = useState(false)
+  const [isSeedingDemo, setIsSeedingDemo] = useState(false)
   const [result, setResult] = useState<SeedResult | null>(null)
+  const [demoResult, setDemoResult] = useState<DemoSeedResult | null>(null)
   const [clearExisting, setClearExisting] = useState(false)
+  const [showDemoConfirm, setShowDemoConfirm] = useState(false)
 
   // 本番環境では無効化
   if (process.env.NODE_ENV === 'production') {
@@ -70,6 +90,31 @@ export default function SeedPage() {
     }
   }
 
+  const handleDemoSeed = async () => {
+    setIsSeedingDemo(true)
+    setDemoResult(null)
+    setShowDemoConfirm(false)
+
+    try {
+      const response = await fetch('/api/seed/demo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      const data = await response.json()
+      setDemoResult(data)
+    } catch (error) {
+      setDemoResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      })
+    } finally {
+      setIsSeedingDemo(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -79,10 +124,144 @@ export default function SeedPage() {
         </p>
       </div>
 
+      {/* デモデータ生成セクション */}
+      <Card className="p-6 border-2 border-blue-200 bg-blue-50">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-600" />
+              デモ用データ生成
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              クライアントへのデモ用に、リアルなダミーデータを生成します。
+            </p>
+            <div className="grid grid-cols-2 gap-4 text-sm bg-white rounded-lg p-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">スタッフ:</span>
+                  <span className="text-gray-600">150名（契約30 + パート120）</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">シフト:</span>
+                  <span className="text-gray-600">今月・来月分（1日43人ベース）</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">人手不足日:</span>
+                  <span className="text-gray-600">あり（赤ハイライト確認用）</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">承認待ち:</span>
+                  <span className="text-gray-600">あり（バッジ確認用）</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">勤務地:</span>
+                  <span className="text-gray-600">5箇所</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">名前:</span>
+                  <span className="text-gray-600">日本人名（リアル）</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-blue-200 pt-4">
+            {showDemoConfirm ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <p className="text-yellow-800 font-medium mb-3">
+                  既存のスタッフ・シフトデータは全て削除されます。続行しますか？
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDemoSeed}
+                    disabled={isSeedingDemo}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    はい、生成する
+                  </button>
+                  <button
+                    onClick={() => setShowDemoConfirm(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowDemoConfirm(true)}
+                disabled={isSeedingDemo}
+                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSeedingDemo ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    生成中...
+                  </>
+                ) : (
+                  <>
+                    <Users className="h-5 w-5" />
+                    デモデータを生成
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+
+          {demoResult && (
+            <div
+              className={`border-t border-blue-200 pt-4 ${
+                demoResult.success ? 'text-green-800' : 'text-red-800'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                {demoResult.success ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-2">
+                    {demoResult.success ? '✅ 生成成功' : '❌ 生成失敗'}
+                  </h3>
+                  {demoResult.error && (
+                    <div className="bg-red-50 border border-red-200 rounded p-3 text-sm">
+                      <p className="font-medium">エラー:</p>
+                      <p className="mt-1 text-red-700">{demoResult.error}</p>
+                    </div>
+                  )}
+                  {demoResult.result && (
+                    <div className="bg-green-50 border border-green-200 rounded p-4">
+                      <p className="font-medium mb-2">生成されたデータ:</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>スタッフ合計: {demoResult.result.staff}名</div>
+                        <div>├ 契約社員: {demoResult.result.contractStaff}名</div>
+                        <div>└ パート: {demoResult.result.partTimeStaff}名</div>
+                        <div>シフト合計: {demoResult.result.shifts}件</div>
+                        <div>├ 確定: {demoResult.result.confirmedShifts}件</div>
+                        <div>└ 承認待ち: {demoResult.result.pendingShifts}件</div>
+                        <div>勤務地: {demoResult.result.locations}箇所</div>
+                        <div>勤務記号: {demoResult.result.dutyCodes}件</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* 既存のシードデータセクション */}
       <Card className="p-6">
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-semibold mb-4">シードデータの内容</h2>
+            <h2 className="text-xl font-semibold mb-4">基本シードデータ</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              開発用の基本データ（少人数）を投入します。
+            </p>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -141,7 +320,7 @@ export default function SeedPage() {
             <button
               onClick={handleSeed}
               disabled={isSeeding}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {isSeeding ? (
                 <>
@@ -151,7 +330,7 @@ export default function SeedPage() {
               ) : (
                 <>
                   <Database className="h-5 w-5" />
-                  シードデータを投入
+                  基本データを投入
                 </>
               )}
             </button>
