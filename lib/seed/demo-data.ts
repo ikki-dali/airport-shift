@@ -226,7 +226,7 @@ function generateShifts(
     const dateStr = format(currentDate, 'yyyy-MM-dd')
     const dayOfMonth = currentDate.getDate()
 
-    // 1日の配置人数を決定（43人ベース、日によって変動）
+    // 1日の配置人数を決定（上限43人、日によって変動）
     let dailyStaffCount: number
     if (dayOfMonth % 7 === 0) {
       // 7の倍数の日は人手不足（デモ用：赤ハイライト確認）
@@ -235,8 +235,8 @@ function generateShifts(
       // 5の倍数の日はやや不足
       dailyStaffCount = Math.floor(DAILY_REQUIRED_STAFF * 0.9) // 39人程度
     } else {
-      // 通常日は充足
-      dailyStaffCount = DAILY_REQUIRED_STAFF + Math.floor(Math.random() * 3) // 43-45人
+      // 通常日は充足（上限43人を超えない）
+      dailyStaffCount = Math.min(DAILY_REQUIRED_STAFF, DAILY_REQUIRED_STAFF + Math.floor(Math.random() * 3))
     }
 
     // シフトに入れるスタッフを選択
