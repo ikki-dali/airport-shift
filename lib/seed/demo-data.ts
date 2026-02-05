@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { format, addDays, startOfMonth, endOfMonth, addMonths } from 'date-fns'
 
 // 日本人の名字（50種）
@@ -27,6 +27,12 @@ const FIRST_NAMES_FEMALE = [
 
 // 1日あたりの必要人数（デモ用）
 export const DAILY_REQUIRED_STAFF = 43
+
+// A〜G時間帯グループ（モバイルアプリと同じ定義）
+const TIME_SLOT_GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+
+// シフト希望タイプ（◯=出勤可能、△=できれば休み、×=出勤不可）
+const REQUEST_TYPES = ['◯', '△', '×'] as const
 
 // 150人のスタッフを生成
 function generateStaff(): Array<{
@@ -77,6 +83,114 @@ function generateStaff(): Array<{
   return staff
 }
 
+// シフト希望を生成（今月と来月）
+function generateShiftRequests(
+  staffIds: string[],
+): Array<{
+  staff_id: string
+  date: string
+  request_type: string
+  note: string | null
+  year_month: string
+}> {
+  const requests: Array<{
+    staff_id: string
+    date: string
+    request_type: string
+    note: string | null
+    year_month: string
+  }> = []
+
+  const today = new Date()
+  const thisMonthStart = startOfMonth(today)
+  const nextMonthEnd = endOfMonth(addMonths(today, 1))
+
+  // 各スタッフについてシフト希望を生成
+  staffIds.forEach((staffId, staffIndex) => {
+    // スタッフごとの傾向を決定（一貫性を持たせる）
+    const staffSeed = staffIndex * 17 // 擬似乱数のシード代わり
+    const preferenceRatio = [0.7, 0.2, 0.1] // ◯70%, △20%, ×10%
+
+    // スタッフごとに好む時間帯を設定（4〜7個をランダムに）
+    const preferredSlotCount = 4 + (staffSeed % 4) // 4-7個
+    const shuffledSlots = [...TIME_SLOT_GROUPS].sort(() =>
+      Math.sin(staffSeed + staffIndex) - 0.5
+    )
+    const preferredSlots = shuffledSlots.slice(0, preferredSlotCount)
+
+    let currentDate = thisMonthStart
+    while (currentDate <= nextMonthEnd) {
+      const dateStr = format(currentDate, 'yyyy-MM-dd')
+      const yearMonthStr = format(currentDate, 'yyyy-MM')
+      const dayOfMonth = currentDate.getDate()
+      const dayOfWeek = currentDate.getDay()
+
+      // 希望提出率を決定（約80%の日に希望を出す）
+      const submitRate = 0.8
+      if (Math.random() > submitRate) {
+        currentDate = addDays(currentDate, 1)
+        continue
+      }
+
+      // 希望タイプを決定
+      let requestType: string
+      const rand = Math.random()
+      if (rand < preferenceRatio[0]) {
+        requestType = '◯'
+      } else if (rand < preferenceRatio[0] + preferenceRatio[1]) {
+        requestType = '△'
+      } else {
+        requestType = '×'
+      }
+
+      // 土日は休み希望が増える
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        if (Math.random() < 0.4) {
+          requestType = '×'
+        }
+      }
+
+      // 時間帯を決定
+      let note: string | null = null
+      if (requestType === '◯') {
+        // 出勤可能な場合、時間帯を指定
+        const isAllSlots = preferredSlots.length === TIME_SLOT_GROUPS.length
+        if (!isAllSlots) {
+          // 日によって時間帯を少し変動させる
+          const dailyVariation = Math.random() < 0.3
+          let daySlots = [...preferredSlots]
+
+          if (dailyVariation) {
+            // 時々、追加の時間帯もOKにする
+            const extraSlot = TIME_SLOT_GROUPS.find(s => !daySlots.includes(s))
+            if (extraSlot) daySlots.push(extraSlot)
+          }
+
+          daySlots.sort()
+          note = `[時間帯:${daySlots.join(',')}]`
+        }
+      } else if (requestType === '△') {
+        // できれば休みだが、時間帯制限付きで出勤可能
+        const limitedSlots = preferredSlots.slice(0, 2 + (dayOfMonth % 2))
+        limitedSlots.sort()
+        note = `[時間帯:${limitedSlots.join(',')}]`
+      }
+
+      requests.push({
+        staff_id: staffId,
+        date: dateStr,
+        request_type: requestType,
+        note,
+        year_month: yearMonthStr,
+      })
+
+      currentDate = addDays(currentDate, 1)
+    }
+  })
+
+  return requests
+}
+
 // シフトを生成（今月と来月）
 function generateShifts(
   staffIds: string[],
@@ -88,14 +202,14 @@ function generateShifts(
   location_id: string
   duty_code_id: string
   date: string
-  status: '確定' | '仮'
+  status: '確定' | '予定'
 }> {
   const shifts: Array<{
     staff_id: string
     location_id: string
     duty_code_id: string
     date: string
-    status: '確定' | '仮'
+    status: '確定' | '予定'
   }> = []
 
   const today = new Date()
@@ -158,7 +272,7 @@ function generateShifts(
 
       // 一部を承認待ち状態にする（デモ用：バッジ確認）
       const isPending = dayOfMonth % 3 === 0 && index % 5 === 0
-      const status: '確定' | '仮' = isPending ? '仮' : '確定'
+      const status: '確定' | '予定' = isPending ? '予定' : '確定'
 
       shifts.push({
         staff_id: staffId,
@@ -176,7 +290,7 @@ function generateShifts(
 }
 
 export async function seedDemoData() {
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   console.log('🎭 Seeding demo data...')
 
@@ -184,7 +298,8 @@ export async function seedDemoData() {
   console.log('🗑️  Clearing existing data...')
   await supabase.from('shifts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   await supabase.from('shift_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  await supabase.from('staff_tags').delete().neq('staff_id', '00000000-0000-0000-0000-000000000000')
+  // staff_tagsテーブルは存在しないためスキップ（staffテーブルにtags text[]カラムで統合済み）
+  // await supabase.from('staff_tags').delete().neq('staff_id', '00000000-0000-0000-0000-000000000000')
   await supabase.from('staff').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   console.log('✅ Existing data cleared')
 
@@ -305,7 +420,7 @@ export async function seedDemoData() {
       requirements.push({
         location_id: locationId,
         duty_code_id: dutyCodeId,
-        required_staff_count: baseCount + extraPerson,
+        required_staff_count: Math.max(1, baseCount + extraPerson), // 最小1人
         required_responsible_count: 0,
       })
       slotIndex++
@@ -319,10 +434,37 @@ export async function seedDemoData() {
   }
   console.log(`✅ Inserted ${requirements.length} location requirements`)
 
+  // 8. シフト希望を生成（今月と来月）
+  console.log('📝 Generating shift requests for all staff...')
+  const requestsData = generateShiftRequests(staffIds)
+
+  // バッチで挿入（1000件ずつ）
+  let insertedRequestsCount = 0
+
+  for (let i = 0; i < requestsData.length; i += BATCH_SIZE) {
+    const batch = requestsData.slice(i, i + BATCH_SIZE)
+    const { error: requestError } = await supabase.from('shift_requests').insert(batch)
+    if (requestError) {
+      console.error('❌ Error inserting shift requests:', requestError)
+      throw requestError
+    }
+    insertedRequestsCount += batch.length
+  }
+
+  console.log(`✅ Inserted ${insertedRequestsCount} shift requests`)
+
+  // 統計情報を計算
+  const requestStats = {
+    total: requestsData.length,
+    available: requestsData.filter(r => r.request_type === '◯').length,
+    preferOff: requestsData.filter(r => r.request_type === '△').length,
+    unavailable: requestsData.filter(r => r.request_type === '×').length,
+  }
+
   console.log('✅ Demo data seeding completed!')
 
   // 統計情報
-  const pendingShifts = shiftsData.filter((s) => s.status === '仮').length
+  const pendingShifts = shiftsData.filter((s) => s.status === '予定').length
   const confirmedShifts = shiftsData.filter((s) => s.status === '確定').length
 
   return {
@@ -335,5 +477,9 @@ export async function seedDemoData() {
     locations: locationIds.length,
     dutyCodes: dutyCodeIds.length,
     requirements: requirements.length,
+    shiftRequests: requestStats.total,
+    shiftRequestsAvailable: requestStats.available,
+    shiftRequestsPreferOff: requestStats.preferOff,
+    shiftRequestsUnavailable: requestStats.unavailable,
   }
 }
