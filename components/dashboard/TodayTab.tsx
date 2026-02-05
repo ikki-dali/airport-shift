@@ -74,11 +74,8 @@ interface LocationRequirement {
   } | null
 }
 
-interface ShortageItem {
+interface LocationShortage {
   locationName: string
-  dutyCode: string
-  startTime: string
-  endTime: string
   required: number
   assigned: number
   shortage: number
@@ -125,44 +122,32 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
   // 配置箇所をソート（人数多い順）
   const locationEntries = Object.entries(byLocation).sort((a, b) => b[1].length - a[1].length)
 
-  // 配置箇所×時間帯ごとの不足を計算
-  const shortages: ShortageItem[] = []
+  // 配置箇所ごとの必要人数合計を計算
+  const locationRequiredMap = new Map<string, number>()
   locationRequirements.forEach((req) => {
     // 今日に適用される要件かチェック
     if (req.day_of_week !== null && req.day_of_week !== dayOfWeek) return
     if (req.specific_date !== null && req.specific_date !== todayStr) return
-    if (!req.locations || !req.duty_codes) return
+    if (!req.locations) return
 
-    // この配置箇所×勤務記号に配置されている人数をカウント
-    const assignedCount = todayShifts.filter(
-      (s) => s.location.id === req.location_id && s.duty_code.id === req.duty_code_id
-    ).length
+    const locationName = req.locations.location_name
+    const current = locationRequiredMap.get(locationName) || 0
+    locationRequiredMap.set(locationName, current + req.required_staff_count)
+  })
 
-    const shortageCount = req.required_staff_count - assignedCount
+  // 配置箇所ごとの不足を計算（シンプルに合計人数で比較）
+  const locationShortageMap = new Map<string, LocationShortage>()
+  locationRequiredMap.forEach((required, locationName) => {
+    const assigned = byLocation[locationName]?.length || 0
+    const shortageCount = required - assigned
     if (shortageCount > 0) {
-      shortages.push({
-        locationName: req.locations.location_name,
-        dutyCode: req.duty_codes.code,
-        startTime: req.duty_codes.start_time?.slice(0, 5) || '',
-        endTime: req.duty_codes.end_time?.slice(0, 5) || '',
-        required: req.required_staff_count,
-        assigned: assignedCount,
+      locationShortageMap.set(locationName, {
+        locationName,
+        required,
+        assigned,
         shortage: shortageCount,
       })
     }
-  })
-
-  // 不足が多い順にソート
-  shortages.sort((a, b) => b.shortage - a.shortage)
-
-  // 配置箇所ごとの不足リストを計算（テーブル表示用）
-  // 配置箇所ごとにShortageItem[]をグループ化
-  const locationShortagesMap = new Map<string, ShortageItem[]>()
-  shortages.forEach((s) => {
-    const current = locationShortagesMap.get(s.locationName) || []
-    // 同じ勤務記号の不足は1エントリにまとめる（複数回カウントを防ぐ）
-    current.push(s)
-    locationShortagesMap.set(s.locationName, current)
   })
 
   if (todayShifts.length === 0) {
@@ -232,11 +217,10 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                   a.duty_code.start_time.localeCompare(b.duty_code.start_time)
                 )
 
-                // この配置箇所の不足リスト
-                const locationShortages = locationShortagesMap.get(location) || []
-                // 不足行数 = 各不足アイテムのshortage数の合計
-                const totalShortageRows = locationShortages.reduce((sum, s) => sum + s.shortage, 0)
-                const totalRows = locationShifts.length + totalShortageRows
+                // この配置箇所の不足数（シンプルに合計で計算）
+                const locationShortage = locationShortageMap.get(location)
+                const shortageCount = locationShortage?.shortage || 0
+                const totalRows = locationShifts.length + shortageCount
 
                 // 通常のシフト行
                 const shiftRows = sortedShifts.map((shift, idx) => {
@@ -304,33 +288,27 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                   )
                 })
 
-                // 不足分の空行を追加（各不足アイテムのshortage数分）
+                // 不足分の空行を追加（シンプルに「要員不足」のみ）
                 const shortageRows: React.ReactNode[] = []
-                locationShortages.forEach((shortageItem) => {
-                  for (let i = 0; i < shortageItem.shortage; i++) {
-                    globalIndex++
-                    shortageRows.push(
-                      <tr key={`shortage-${location}-${shortageItem.dutyCode}-${i}`} className="bg-red-100">
-                        <td className="border border-gray-300 px-1 py-0.5 text-center text-red-400">
-                          {globalIndex}
-                        </td>
-                        <td className="border border-gray-300 px-1.5 py-0.5 text-red-600">
-                          <span className="flex items-center gap-1">
-                            <AlertTriangle className="h-3 w-3" />
-                            要員不足
-                          </span>
-                        </td>
-                        <td className="border border-gray-300 px-1.5 py-0.5 font-mono text-[10px] text-red-600">
-                          {shortageItem.startTime}-{shortageItem.endTime}
-                          <span className="text-red-400 ml-0.5">/{shortageItem.dutyCode}</span>
-                        </td>
-                        <td className="border border-gray-300 px-1 py-0.5">
-                          <div className="h-2 bg-red-200 rounded-sm min-w-[120px]" />
-                        </td>
-                      </tr>
-                    )
-                  }
-                })
+                for (let i = 0; i < shortageCount; i++) {
+                  globalIndex++
+                  shortageRows.push(
+                    <tr key={`shortage-${location}-${i}`} className="bg-red-100">
+                      <td className="border border-gray-300 px-1 py-0.5 text-center text-red-400">
+                        {globalIndex}
+                      </td>
+                      <td className="border border-gray-300 px-1.5 py-0.5 text-red-600" colSpan={2}>
+                        <span className="flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          要員不足
+                        </span>
+                      </td>
+                      <td className="border border-gray-300 px-1 py-0.5">
+                        <div className="h-2 bg-red-200 rounded-sm min-w-[120px]" />
+                      </td>
+                    </tr>
+                  )
+                }
 
                 return [...shiftRows, ...shortageRows]
               })
