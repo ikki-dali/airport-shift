@@ -155,6 +155,13 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
   // 不足が多い順にソート
   shortages.sort((a, b) => b.shortage - a.shortage)
 
+  // 配置箇所ごとの不足数を計算（テーブル表示用）
+  const locationShortageMap = new Map<string, number>()
+  shortages.forEach((s) => {
+    const current = locationShortageMap.get(s.locationName) || 0
+    locationShortageMap.set(s.locationName, current + s.shortage)
+  })
+
   if (todayShifts.length === 0) {
     return (
       <Card className="p-6 text-center text-gray-500">
@@ -241,7 +248,13 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                   a.duty_code.start_time.localeCompare(b.duty_code.start_time)
                 )
 
-                return sortedShifts.map((shift, idx) => {
+                // この配置箇所の不足数
+                const locationShortage = locationShortageMap.get(location) || 0
+                const hasShortage = locationShortage > 0
+                const totalRows = locationShifts.length + locationShortage
+
+                // 通常のシフト行
+                const shiftRows = sortedShifts.map((shift, idx) => {
                   globalIndex++
                   const startTime = shift.duty_code.start_time.slice(0, 5)
                   const endTime = shift.duty_code.end_time.slice(0, 5)
@@ -272,11 +285,16 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                       </td>
                       {idx === 0 ? (
                         <td
-                          className={`border border-gray-300 px-1.5 py-0.5 font-semibold ${colors.headerBg} ${colors.headerText}`}
-                          rowSpan={locationShifts.length}
+                          className={`border border-gray-300 px-1.5 py-0.5 font-semibold ${
+                            hasShortage ? 'bg-red-600 text-white' : `${colors.headerBg} ${colors.headerText}`
+                          }`}
+                          rowSpan={totalRows}
                         >
                           <div className="leading-tight">{location}</div>
-                          <div className="font-normal opacity-75 text-[10px]">{locationShifts.length}人</div>
+                          <div className="font-normal opacity-75 text-[10px]">
+                            {locationShifts.length}人
+                            {hasShortage && <span className="text-yellow-200"> (-{locationShortage})</span>}
+                          </div>
                         </td>
                       ) : null}
                       <td className={`border border-gray-300 px-1.5 py-0.5 ${colors.rowBg}`}>
@@ -305,6 +323,26 @@ export function TodayTab({ shifts, locationRequirements }: TodayTabProps) {
                     </tr>
                   )
                 })
+
+                // 不足分の空行を追加
+                const shortageRows = Array.from({ length: locationShortage }, (_, i) => {
+                  globalIndex++
+                  return (
+                    <tr key={`shortage-${location}-${i}`} className="bg-red-100">
+                      <td className="border border-gray-300 px-1 py-0.5 text-center text-red-400">
+                        {globalIndex}
+                      </td>
+                      <td className="border border-gray-300 px-1.5 py-0.5 text-red-600 font-medium" colSpan={3}>
+                        <span className="flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          要員不足
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })
+
+                return [...shiftRows, ...shortageRows]
               })
             })()}
           </tbody>
