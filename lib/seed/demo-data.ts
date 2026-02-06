@@ -191,11 +191,14 @@ function generateShiftRequests(
   return requests
 }
 
-// シフトを生成（今月と来月）
-function generateShifts(
+// location_requirementsに基づいてシフトを生成（今月と来月）
+function generateShiftsFromRequirements(
   staffIds: string[],
-  locationIds: string[],
-  dutyCodeIds: string[],
+  requirements: Array<{
+    location_id: string
+    duty_code_id: string
+    required_staff_count: number
+  }>,
   contractStaffCount: number,
 ): Array<{
   staff_id: string
@@ -226,62 +229,74 @@ function generateShifts(
     const dateStr = format(currentDate, 'yyyy-MM-dd')
     const dayOfMonth = currentDate.getDate()
 
-    // 1日の配置人数を決定（上限43人、日によって変動）
-    let dailyStaffCount: number
+    // 充足率を決定（日によって変動、よりリアルに）
+    let fillRate: number
     if (dayOfMonth % 7 === 0) {
       // 7の倍数の日は人手不足（デモ用：赤ハイライト確認）
-      dailyStaffCount = Math.floor(DAILY_REQUIRED_STAFF * 0.7) // 30人程度
+      // 85-92%くらいのランダム（3-6人不足）
+      fillRate = 0.85 + (dayOfMonth % 3) * 0.02
     } else if (dayOfMonth % 5 === 0) {
-      // 5の倍数の日はやや不足
-      dailyStaffCount = Math.floor(DAILY_REQUIRED_STAFF * 0.9) // 39人程度
+      // 5の倍数の日はやや不足（1-2人不足）
+      fillRate = 0.95 + (dayOfMonth % 2) * 0.02
     } else {
-      // 通常日は充足（上限43人を超えない）
-      dailyStaffCount = Math.min(DAILY_REQUIRED_STAFF, DAILY_REQUIRED_STAFF + Math.floor(Math.random() * 3))
+      // 通常日は充足
+      fillRate = 1.0
     }
 
-    // シフトに入れるスタッフを選択
-    // 契約社員は週5程度、パートは週2-4程度入るように調整
+    // その日に既にシフトが入っているスタッフを追跡
+    const assignedToday = new Set<string>()
+
+    // 利用可能なスタッフをシャッフル
     const availableStaff = [...staffIds].sort(() => Math.random() - 0.5)
-    const selectedStaff: string[] = []
+    let staffIndex = 0
 
-    for (const staffId of availableStaff) {
-      if (selectedStaff.length >= dailyStaffCount) break
+    // 各requirement（配置箇所×勤務記号）に対してシフトを作成
+    for (const req of requirements) {
+      // 充足率に応じて実際に配置する人数を決定（最低1人保証）
+      const actualCount = Math.max(1, Math.floor(req.required_staff_count * fillRate))
 
-      const currentWorkDays = staffWorkDays.get(staffId) || 0
-      const staffIndex = staffIds.indexOf(staffId)
-      const isContract = staffIndex < contractStaffCount
+      for (let i = 0; i < actualCount; i++) {
+        // 次のスタッフを探す（月間勤務日数制限 + 同日重複を考慮）
+        let assigned = false
+        let attempts = 0
+        const maxAttempts = staffIds.length
 
-      // 契約社員は月22日程度（週5）、パートは月12日程度（週2-4）
-      const maxWorkDays = isContract ? 22 : 12
-      const workProbability = isContract ? 0.75 : 0.4
+        while (!assigned && attempts < maxAttempts) {
+          const staffId = availableStaff[staffIndex % availableStaff.length]
+          staffIndex++
+          attempts++
 
-      // よく入る人、あまり入らない人の偏りを再現
-      const staffVariance = (staffIndex % 10) / 10 // 0-0.9の偏り
-      const adjustedProbability = workProbability * (0.7 + staffVariance * 0.6)
+          // 同じ日に既に割り当て済みならスキップ
+          if (assignedToday.has(staffId)) {
+            continue
+          }
 
-      if (currentWorkDays < maxWorkDays && Math.random() < adjustedProbability) {
-        selectedStaff.push(staffId)
-        staffWorkDays.set(staffId, currentWorkDays + 1)
+          const currentWorkDays = staffWorkDays.get(staffId) || 0
+          const isContract = staffIds.indexOf(staffId) < contractStaffCount
+
+          // 契約社員は月22日程度、パートは月12日程度
+          const maxWorkDays = isContract ? 22 : 12
+
+          if (currentWorkDays < maxWorkDays) {
+            // 今日以前は全て確定、未来の一部だけ予定（デモ用：バッジ確認）
+            const isFutureDate = currentDate > today
+            const isPending = isFutureDate && dayOfMonth % 3 === 0 && i === 0
+            const status: '確定' | '予定' = isPending ? '予定' : '確定'
+
+            shifts.push({
+              staff_id: staffId,
+              location_id: req.location_id,
+              duty_code_id: req.duty_code_id,
+              date: dateStr,
+              status,
+            })
+            staffWorkDays.set(staffId, currentWorkDays + 1)
+            assignedToday.add(staffId)
+            assigned = true
+          }
+        }
       }
     }
-
-    // シフトを作成
-    selectedStaff.forEach((staffId, index) => {
-      const locationId = locationIds[index % locationIds.length]
-      const dutyCodeId = dutyCodeIds[index % dutyCodeIds.length]
-
-      // 一部を承認待ち状態にする（デモ用：バッジ確認）
-      const isPending = dayOfMonth % 3 === 0 && index % 5 === 0
-      const status: '確定' | '予定' = isPending ? '予定' : '確定'
-
-      shifts.push({
-        staff_id: staffId,
-        location_id: locationId,
-        duty_code_id: dutyCodeId,
-        date: dateStr,
-        status,
-      })
-    })
 
     currentDate = addDays(currentDate, 1)
   }
@@ -337,21 +352,38 @@ export async function seedDemoData() {
   }
   const locationIds = locations?.map((l) => l.id) || []
 
-  // 4. 勤務記号を取得（または作成）- 実Excelデータに基づく主要勤務記号
-  let { data: dutyCodes } = await supabase.from('duty_codes').select('id, code')
-  if (!dutyCodes || dutyCodes.length === 0) {
-    const { data: newDutyCodes } = await supabase
-      .from('duty_codes')
-      .upsert([
-        { code: '06A6AA', start_time: '06:00', end_time: '12:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '早番' },
-        { code: '07A2GY', start_time: '07:00', end_time: '09:30', duration_hours: 2, duration_minutes: 30, break_minutes: 90, category: '早番' },
-        { code: '10A5AA', start_time: '10:00', end_time: '15:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
-        { code: '14A5AA', start_time: '14:00', end_time: '19:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
-        { code: '19A4AA', start_time: '19:00', end_time: '23:00', duration_hours: 4, duration_minutes: 0, break_minutes: 0, category: '遅番' },
-      ], { onConflict: 'code' })
-      .select()
-    dutyCodes = newDutyCodes
+  // 4. 勤務記号をリセット＆作成 - 実Excelデータに基づく12種類
+  console.log('⏰ Resetting duty codes...')
+  await supabase.from('duty_codes').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+
+  const { data: dutyCodes, error: dutyError } = await supabase
+    .from('duty_codes')
+    .insert([
+      // 深夜・早朝
+      { code: '22A9GY', start_time: '22:00', end_time: '07:00', duration_hours: 9, duration_minutes: 0, break_minutes: 90, category: '深夜' },
+      { code: '03G6AA', start_time: '03:00', end_time: '09:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '早朝' },
+      { code: '04J5JA', start_time: '04:00', end_time: '09:45', duration_hours: 5, duration_minutes: 45, break_minutes: 0, category: '早朝' },
+      // 早番
+      { code: '06A6AA', start_time: '06:00', end_time: '12:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '早番' },
+      { code: '06J0AW', start_time: '06:00', end_time: '14:00', duration_hours: 8, duration_minutes: 0, break_minutes: 120, category: '早番' },
+      // 日勤
+      { code: '09G5AA', start_time: '09:00', end_time: '14:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
+      { code: '10A5AA', start_time: '10:00', end_time: '15:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
+      { code: '11A5AA', start_time: '11:00', end_time: '16:15', duration_hours: 5, duration_minutes: 15, break_minutes: 0, category: '日勤' },
+      // 遅番
+      { code: '14G5AA', start_time: '14:00', end_time: '19:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '遅番' },
+      { code: '16A6AA', start_time: '16:00', end_time: '22:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '遅番' },
+      { code: '18A5AA', start_time: '18:00', end_time: '23:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '遅番' },
+      { code: '19A4AA', start_time: '19:00', end_time: '23:00', duration_hours: 4, duration_minutes: 0, break_minutes: 0, category: '遅番' },
+    ])
+    .select()
+
+  if (dutyError) {
+    console.error('❌ Error inserting duty codes:', dutyError)
+    throw dutyError
   }
+  console.log(`✅ Inserted ${dutyCodes?.length} duty codes`)
+
   const dutyCodeIds = dutyCodes?.map((d) => d.id) || []
 
   // 5. スタッフ150人を生成
@@ -378,28 +410,8 @@ export async function seedDemoData() {
   const staffIds = insertedStaff?.map((s) => s.id) || []
   const contractStaffCount = 30 // 最初の30人が契約社員
 
-  // 6. シフトを生成（今月と来月）
-  console.log('📅 Generating shifts for this month and next month...')
-  const shiftsData = generateShifts(staffIds, locationIds, dutyCodeIds, contractStaffCount)
-
-  // バッチで挿入（1000件ずつ）
-  const BATCH_SIZE = 1000
-  let insertedShiftsCount = 0
-
-  for (let i = 0; i < shiftsData.length; i += BATCH_SIZE) {
-    const batch = shiftsData.slice(i, i + BATCH_SIZE)
-    const { error: shiftError } = await supabase.from('shifts').insert(batch)
-    if (shiftError) {
-      console.error('❌ Error inserting shifts:', shiftError)
-      throw shiftError
-    }
-    insertedShiftsCount += batch.length
-  }
-
-  console.log(`✅ Inserted ${insertedShiftsCount} shifts`)
-
-  // 7. 配属箇所要件を更新（1日43人ベース）
-  console.log('📋 Updating location requirements...')
+  // 6. 配属箇所要件を作成（1日43人ベース）- シフト生成の前に必要
+  console.log('📋 Creating location requirements...')
   // 既存要件を削除
   await supabase.from('location_requirements').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
@@ -411,9 +423,12 @@ export async function seedDemoData() {
     required_responsible_count: number
   }> = []
 
-  // 43人を配分（5勤務地 × 主要4勤務記号 = 20スロット、各2-3人）
-  // 主要な勤務記号のみを使用（早番・日勤・遅番・夜勤の4パターン）
-  const mainDutyCodeIds = dutyCodeIds.slice(0, 4) // 最初の4つの勤務記号を使用
+  // 43人を配分（7勤務地 × 主要4勤務記号 = 28スロット）
+  // 主要な勤務記号: 早番(06A6AA)、日勤(10A5AA)、遅番(14G5AA)、深夜(22A9GY)
+  const mainDutyCodes = ['06A6AA', '10A5AA', '14G5AA', '22A9GY']
+  const mainDutyCodeIds = mainDutyCodes
+    .map(code => dutyCodes?.find(d => d.code === code)?.id)
+    .filter((id): id is string => id !== undefined)
   const slotsCount = locationIds.length * mainDutyCodeIds.length
   const baseCount = Math.floor(DAILY_REQUIRED_STAFF / slotsCount)
   const remainder = DAILY_REQUIRED_STAFF % slotsCount
@@ -438,6 +453,26 @@ export async function seedDemoData() {
     throw reqError
   }
   console.log(`✅ Inserted ${requirements.length} location requirements`)
+
+  // 7. シフトを生成（今月と来月）- location_requirementsに基づく
+  console.log('📅 Generating shifts based on location requirements...')
+  const shiftsData = generateShiftsFromRequirements(staffIds, requirements, contractStaffCount)
+
+  // バッチで挿入（1000件ずつ）
+  const BATCH_SIZE = 1000
+  let insertedShiftsCount = 0
+
+  for (let i = 0; i < shiftsData.length; i += BATCH_SIZE) {
+    const batch = shiftsData.slice(i, i + BATCH_SIZE)
+    const { error: shiftError } = await supabase.from('shifts').insert(batch)
+    if (shiftError) {
+      console.error('❌ Error inserting shifts:', shiftError)
+      throw shiftError
+    }
+    insertedShiftsCount += batch.length
+  }
+
+  console.log(`✅ Inserted ${insertedShiftsCount} shifts`)
 
   // 8. シフト希望を生成（今月と来月）
   console.log('📝 Generating shift requests for all staff...')
