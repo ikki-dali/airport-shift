@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Calendar } from 'lucide-react'
+import Image from 'next/image'
 import { login } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,12 +38,12 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md hover-lift">
       <CardHeader className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground ring-2 ring-navy-200/50">
-          <Calendar className="h-8 w-8" />
+        <div className="mx-auto mb-4">
+          <Image src="/logo.svg" alt="HAS-G" width={200} height={56} priority />
         </div>
-        <CardTitle className="text-2xl">シフト管理システム</CardTitle>
+        <CardTitle className="text-2xl">シフト管理</CardTitle>
         <CardDescription>
-          Airport Shift Manager にログイン
+          HAS-G シフト管理システムにログイン
         </CardDescription>
       </CardHeader>
       <CardContent>
