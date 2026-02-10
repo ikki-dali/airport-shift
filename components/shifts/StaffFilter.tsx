@@ -72,10 +72,10 @@ export function StaffFilter({
           value={filter.search}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="スタッフ検索..."
-          className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none"
+          className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none"
         />
         <svg
-          className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+          className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -96,7 +96,7 @@ export function StaffFilter({
           <select
             value={filter.roleId}
             onChange={(e) => handleRoleChange(e.target.value)}
-            className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none"
+            className="rounded border border-gray-200 px-2 py-1 text-xs focus:border-primary focus:outline-none"
           >
             <option value="">全役職</option>
             {roles.map((role) => (
@@ -113,8 +113,8 @@ export function StaffFilter({
               onClick={() => handleTagToggle(tag)}
               className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
                 filter.tags.includes(tag)
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
               }`}
             >
               {tag}
@@ -124,7 +124,7 @@ export function StaffFilter({
           {hasActiveFilters && (
             <button
               onClick={handleClear}
-              className="text-xs text-gray-500 hover:text-gray-700"
+              className="text-xs text-muted-foreground hover:text-foreground"
             >
               クリア
             </button>
@@ -136,8 +136,8 @@ export function StaffFilter({
           onClick={() => onCompactChange(!compact)}
           className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
             compact
-              ? 'bg-blue-100 text-blue-700'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-primary/10 text-primary'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
           title={compact ? '通常表示' : 'コンパクト表示'}
         >

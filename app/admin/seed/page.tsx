@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { AlertCircle, CheckCircle2, Database, Loader2, Users } from 'lucide-react'
 
 interface SeedResult {
@@ -119,81 +120,80 @@ export default function SeedPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">データベースシード管理</h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-muted-foreground mt-1">
           テストデータをデータベースに投入します
         </p>
       </div>
 
       {/* デモデータ生成セクション */}
-      <Card className="p-6 border-2 border-blue-200 bg-blue-50">
+      <Card className="p-6 border-2 border-primary/20 bg-primary/5">
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
+              <Users className="h-5 w-5 text-primary" />
               デモ用データ生成
             </h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               クライアントへのデモ用に、リアルなダミーデータを生成します。
             </p>
-            <div className="grid grid-cols-2 gap-4 text-sm bg-white rounded-lg p-4">
+            <div className="grid grid-cols-2 gap-4 text-sm bg-card rounded-lg p-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">スタッフ:</span>
-                  <span className="text-gray-600">150名（契約30 + パート120）</span>
+                  <span className="text-muted-foreground">150名（契約30 + パート120）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">シフト:</span>
-                  <span className="text-gray-600">今月・来月分（1日43人ベース）</span>
+                  <span className="text-muted-foreground">今月・来月分（1日43人ベース）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">人手不足日:</span>
-                  <span className="text-gray-600">あり（赤ハイライト確認用）</span>
+                  <span className="text-muted-foreground">あり（赤ハイライト確認用）</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">承認待ち:</span>
-                  <span className="text-gray-600">あり（バッジ確認用）</span>
+                  <span className="text-muted-foreground">あり（バッジ確認用）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">勤務地:</span>
-                  <span className="text-gray-600">5箇所</span>
+                  <span className="text-muted-foreground">5箇所</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">名前:</span>
-                  <span className="text-gray-600">日本人名（リアル）</span>
+                  <span className="text-muted-foreground">日本人名（リアル）</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-blue-200 pt-4">
+          <div className="border-t border-primary/20 pt-4">
             {showDemoConfirm ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                 <p className="text-yellow-800 font-medium mb-3">
                   既存のスタッフ・シフトデータは全て削除されます。続行しますか？
                 </p>
                 <div className="flex gap-3">
-                  <button
+                  <Button
+                    variant="destructive"
                     onClick={handleDemoSeed}
                     disabled={isSeedingDemo}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     はい、生成する
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => setShowDemoConfirm(false)}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                   >
                     キャンセル
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <button
+              <Button
                 onClick={() => setShowDemoConfirm(true)}
                 disabled={isSeedingDemo}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {isSeedingDemo ? (
                   <>
@@ -206,13 +206,13 @@ export default function SeedPage() {
                     デモデータを生成
                   </>
                 )}
-              </button>
+              </Button>
             )}
           </div>
 
           {demoResult && (
             <div
-              className={`border-t border-blue-200 pt-4 ${
+              className={`border-t border-primary/20 pt-4 ${
                 demoResult.success ? 'text-green-800' : 'text-red-800'
               }`}
             >
@@ -259,40 +259,40 @@ export default function SeedPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold mb-4">基本シードデータ</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               開発用の基本データ（少人数）を投入します。
             </p>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">役職:</span>
-                  <span className="text-gray-600">4件（一般社員、サブリーダー、リーダー、管理者）</span>
+                  <span className="text-muted-foreground">4件（一般社員、サブリーダー、リーダー、管理者）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">タグ:</span>
-                  <span className="text-gray-600">5件（保安検査、バス案内、横特、OSS、番台）</span>
+                  <span className="text-muted-foreground">5件（保安検査、バス案内、横特、OSS、番台）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">勤務記号:</span>
-                  <span className="text-gray-600">28件</span>
+                  <span className="text-muted-foreground">28件</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">配属箇所:</span>
-                  <span className="text-gray-600">5件（T3中央、T3北、T2中央、バス案内、横特）</span>
+                  <span className="text-muted-foreground">5件（T3中央、T3北、T2中央、バス案内、横特）</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">スタッフ:</span>
-                  <span className="text-gray-600">15名</span>
+                  <span className="text-muted-foreground">15名</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">配属箇所要件:</span>
-                  <span className="text-gray-600">6件</span>
+                  <span className="text-muted-foreground">6件</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">シフト希望:</span>
-                  <span className="text-gray-600">2025年12月分（約100件）</span>
+                  <span className="text-muted-foreground">2025年12月分（約100件）</span>
                 </div>
               </div>
             </div>
@@ -311,16 +311,16 @@ export default function SeedPage() {
                 <label htmlFor="clearExisting" className="font-medium cursor-pointer">
                   既存データをクリア
                 </label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   チェックすると、投入前に既存のデータを全て削除します（注意: 復元できません）
                 </p>
               </div>
             </div>
 
-            <button
+            <Button
+              variant="secondary"
               onClick={handleSeed}
               disabled={isSeeding}
-              className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {isSeeding ? (
                 <>
@@ -333,7 +333,7 @@ export default function SeedPage() {
                   基本データを投入
                 </>
               )}
-            </button>
+            </Button>
           </div>
 
           {result && (

@@ -70,7 +70,7 @@ export function AutoAssignButton({
         onClick={handleAutoAssign}
         disabled={isLoading}
         variant="default"
-        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+        className="bg-gradient-to-r from-navy-500 to-navy-700 hover:from-navy-600 hover:to-navy-800"
       >
         {isLoading ? (
           <>
@@ -80,7 +80,7 @@ export function AutoAssignButton({
         ) : (
           <>
             <Wand2 className="mr-2 h-4 w-4" />
-            AI自動割り当て
+            再最適化
           </>
         )}
       </Button>

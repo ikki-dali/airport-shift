@@ -48,7 +48,18 @@ export async function getStaffShiftsByToken(token: string) {
         code,
         start_time,
         end_time,
-        category
+        category,
+        total_hours
+      ),
+      shift_tasks (
+        id,
+        hours,
+        notes,
+        task_types (
+          id,
+          code,
+          name
+        )
       )
     `)
     .eq('staff_id', staff.id)

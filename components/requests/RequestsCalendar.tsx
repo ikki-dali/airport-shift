@@ -25,10 +25,10 @@ interface RequestsCalendarProps {
 // 希望タイプ別の色
 const REQUEST_TYPE_COLORS: Record<string, string> = {
   '◯': 'bg-green-100 text-green-800 border-green-300',
-  '休': 'bg-gray-100 text-gray-800 border-gray-300',
+  '休': 'bg-gray-100 text-gray-800 border-gray-200',
   '早朝': 'bg-yellow-100 text-yellow-800 border-yellow-300',
   '早番': 'bg-orange-100 text-orange-800 border-orange-300',
-  '遅番': 'bg-blue-100 text-blue-800 border-blue-300',
+  '遅番': 'bg-primary/10 text-primary border-primary/30',
   '夜勤': 'bg-purple-100 text-purple-800 border-purple-300',
 }
 
@@ -52,14 +52,14 @@ export function RequestsCalendar({ requests, yearMonth }: RequestsCalendarProps)
   const getDayOfWeekClass = (date: Date) => {
     const dayOfWeek = getDay(date)
     if (dayOfWeek === 0) return 'bg-red-50' // 日曜日
-    if (dayOfWeek === 6) return 'bg-blue-50' // 土曜日
+    if (dayOfWeek === 6) return 'bg-navy-50' // 土曜日
     return 'bg-white'
   }
 
   const getDayOfWeekTextClass = (date: Date) => {
     const dayOfWeek = getDay(date)
     if (dayOfWeek === 0) return 'text-red-600' // 日曜日
-    if (dayOfWeek === 6) return 'text-blue-600' // 土曜日
+    if (dayOfWeek === 6) return 'text-navy-600' // 土曜日
     return 'text-gray-700'
   }
 
@@ -72,9 +72,9 @@ export function RequestsCalendar({ requests, yearMonth }: RequestsCalendarProps)
               {['日', '月', '火', '水', '木', '金', '土'].map((day, i) => (
                 <th
                   key={i}
-                  className={`border-b-2 border-gray-300 p-2 text-xs font-semibold min-w-[150px] ${
+                  className={`border-b-2 border-gray-200 p-2 text-xs font-semibold min-w-[150px] ${
                     i === 0 ? 'bg-red-50 text-red-600' :
-                    i === 6 ? 'bg-blue-50 text-blue-600' :
+                    i === 6 ? 'bg-navy-50 text-navy-600' :
                     'bg-gray-50 text-gray-700'
                   }`}
                 >
@@ -111,7 +111,7 @@ export function RequestsCalendar({ requests, yearMonth }: RequestsCalendarProps)
                             <div
                               key={req.id}
                               className={`px-2 py-1 rounded text-xs font-medium border ${
-                                REQUEST_TYPE_COLORS[req.request_type] || 'bg-gray-100 text-gray-800 border-gray-300'
+                                REQUEST_TYPE_COLORS[req.request_type] || 'bg-gray-100 text-gray-800 border-gray-200'
                               }`}
                             >
                               <div className="flex items-center gap-1">

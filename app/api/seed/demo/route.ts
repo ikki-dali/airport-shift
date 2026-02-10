@@ -20,10 +20,12 @@ export async function POST() {
     })
   } catch (error) {
     console.error('Demo seeding error:', error)
+    const errorDetails = typeof error === 'object' ? JSON.stringify(error, null, 2) : String(error)
     return NextResponse.json(
       {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
+        details: errorDetails,
       },
       { status: 500 }
     )

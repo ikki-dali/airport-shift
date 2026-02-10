@@ -117,9 +117,9 @@ export function ShiftCalendarView({
                 {weekDays.map((day, i) => (
                   <th
                     key={i}
-                    className={`border-b-2 border-gray-300 p-3 text-sm font-semibold ${
+                    className={`border-b-2 border-gray-200 p-3 text-sm font-semibold ${
                       i === 5
-                        ? 'bg-blue-50 text-blue-600'
+                        ? 'bg-navy-50 text-navy-600'
                         : i === 6
                         ? 'bg-red-50 text-red-600'
                         : 'bg-gray-50 text-gray-700'
@@ -165,9 +165,9 @@ export function ShiftCalendarView({
                               : dayOfWeek === 0
                               ? 'bg-red-50/30 hover:bg-red-50'
                               : dayOfWeek === 6
-                              ? 'bg-blue-50/30 hover:bg-blue-50'
+                              ? 'bg-navy-50/30 hover:bg-navy-50'
                               : 'bg-white hover:bg-gray-50'
-                          } ${isTodayCell ? 'ring-2 ring-inset ring-blue-500' : ''} ${
+                          } ${isTodayCell ? 'ring-2 ring-inset ring-ring' : ''} ${
                             onDayClick ? 'cursor-pointer' : ''
                           }`}
                         >
@@ -178,7 +178,7 @@ export function ShiftCalendarView({
                                 dayOfWeek === 0
                                   ? 'text-red-600'
                                   : dayOfWeek === 6
-                                  ? 'text-blue-600'
+                                  ? 'text-navy-600'
                                   : 'text-gray-700'
                               }`}
                             >
@@ -251,7 +251,7 @@ export function ShiftCalendarView({
           <span>仮・予定</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-4 w-4 rounded ring-2 ring-blue-500" />
+          <div className="h-4 w-4 rounded ring-2 ring-ring" />
           <span>今日</span>
         </div>
       </div>

@@ -18,7 +18,7 @@ export default async function TagsPage() {
           <p className="text-gray-600 mt-1">技能・資格タグの登録・編集・削除</p>
         </div>
         <Link href="/tags/new">
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button>
             <Plus className="h-4 w-4 mr-2" />
             新規タグ追加
           </Button>

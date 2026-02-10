@@ -1,29 +1,19 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import dynamic from 'next/dynamic'
 import { format } from 'date-fns'
 import { ShiftListTable } from '@/components/shifts/ShiftListTable'
 import {
   getShiftsWithDetails,
-  confirmShifts,
-  confirmMonthShifts,
   deleteShift,
-  unconfirmShifts,
 } from '@/lib/actions/shifts'
 import { getStaff } from '@/lib/actions/staff'
 import { getLocations } from '@/lib/actions/locations'
 import { getAllLocationRequirements } from '@/lib/actions/location-requirements'
-import { ConstraintViolation } from '@/lib/validators/shift-validator'
 import { ExportButton } from '@/components/shifts/ExportButton'
 import { ShiftCalendarView } from '@/components/shifts/ShiftCalendarView'
+import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-
-// モーダルは表示時のみロード
-const ConfirmDialog = dynamic(
-  () => import('@/components/shifts/ConfirmDialog').then(mod => ({ default: mod.ConfirmDialog })),
-  { ssr: false }
-)
 
 export default function ShiftsPage() {
   const [shifts, setShifts] = useState<any[]>([])
@@ -40,16 +30,6 @@ export default function ShiftsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [staffFilter, setStaffFilter] = useState<string>('all')
   const [locationFilter, setLocationFilter] = useState<string>('all')
-
-  // 確定ダイアログ状態
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-  const [confirmTarget, setConfirmTarget] = useState<{
-    type: 'selected' | 'month'
-    shiftIds: string[]
-    description: string
-  } | null>(null)
-  const [violations, setViolations] = useState<ConstraintViolation[]>([])
-  const [isConfirming, setIsConfirming] = useState(false)
 
   // データ取得
   const loadData = useCallback(async (ym: string) => {
@@ -99,63 +79,6 @@ export default function ShiftsPage() {
     setYearMonth(newYearMonth)
   }
 
-  const handleConfirm = async (shiftIds: string[]) => {
-    // TODO: 実際の制約チェックを実装
-    // 現時点ではダミーの検証結果
-    const dummyViolations: ConstraintViolation[] = []
-
-    setConfirmTarget({
-      type: 'selected',
-      shiftIds,
-      description: `選択したシフト`,
-    })
-    setViolations(dummyViolations)
-    setConfirmDialogOpen(true)
-  }
-
-  const handleMonthConfirm = async () => {
-    const pendingShifts = shifts.filter((s) => s.status === '予定')
-
-    if (pendingShifts.length === 0) {
-      toast.warning('確定対象の予定シフトがありません')
-      return
-    }
-
-    // TODO: 実際の制約チェックを実装
-    const dummyViolations: ConstraintViolation[] = []
-
-    setConfirmTarget({
-      type: 'month',
-      shiftIds: pendingShifts.map((s) => s.id),
-      description: `${yearMonth}の全シフト`,
-    })
-    setViolations(dummyViolations)
-    setConfirmDialogOpen(true)
-  }
-
-  const handleConfirmExecute = async () => {
-    if (!confirmTarget) return
-
-    try {
-      setIsConfirming(true)
-
-      if (confirmTarget.type === 'month') {
-        await confirmMonthShifts(yearMonth)
-      } else {
-        await confirmShifts(confirmTarget.shiftIds, { skipWarnings: true })
-      }
-
-      toast.success('シフトを確定しました')
-      setConfirmDialogOpen(false)
-      setConfirmTarget(null)
-      await loadData(yearMonth)
-    } catch (error: any) {
-      toast.error(`確定に失敗しました: ${error.message}`)
-    } finally {
-      setIsConfirming(false)
-    }
-  }
-
   const handleDelete = async (shiftId: string) => {
     if (!confirm('このシフトを削除しますか？')) return
 
@@ -168,34 +91,19 @@ export default function ShiftsPage() {
     }
   }
 
-  const handleUnconfirm = async (shiftIds: string[]) => {
-    if (!confirm(`${shiftIds.length}件のシフトの確定を解除しますか？`)) return
-
-    try {
-      await unconfirmShifts(shiftIds)
-      toast.success('確定を解除しました')
-      await loadData(yearMonth)
-    } catch (error: any) {
-      toast.error(`確定解除に失敗しました: ${error.message}`)
-    }
-  }
-
-  const pendingCount = shifts.filter((s) => s.status === '予定').length
-  const confirmedCount = shifts.filter((s) => s.status === '確定').length
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">シフト一覧・確定</h1>
+          <h1 className="text-2xl font-bold">シフト一覧</h1>
           <div className="flex gap-2">
             {/* ビュー切り替え */}
-            <div className="flex rounded-lg border border-gray-300 bg-white">
+            <div className="flex rounded-lg border border-gray-200 bg-white">
               <button
                 onClick={() => setViewMode('table')}
-                className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                className={`px-4 py-2 text-sm font-medium rounded-l-lg transition-colors ${
                   viewMode === 'table'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -203,9 +111,9 @@ export default function ShiftsPage() {
               </button>
               <button
                 onClick={() => setViewMode('calendar')}
-                className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                className={`px-4 py-2 text-sm font-medium rounded-r-lg transition-colors ${
                   viewMode === 'calendar'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-primary text-primary-foreground'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -213,12 +121,13 @@ export default function ShiftsPage() {
               </button>
             </div>
             <ExportButton yearMonth={yearMonth} />
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => (window.location.href = '/shifts/create')}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               シフト作成画面へ
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -232,7 +141,7 @@ export default function ShiftsPage() {
                 type="month"
                 value={yearMonth}
                 onChange={(e) => handleYearMonthChange(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -242,10 +151,9 @@ export default function ShiftsPage() {
                 id="filter-status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-primary focus:outline-none"
               >
                 <option value="all">全て</option>
-                <option value="予定">予定</option>
                 <option value="確定">確定</option>
                 <option value="変更">変更</option>
                 <option value="キャンセル">キャンセル</option>
@@ -258,7 +166,7 @@ export default function ShiftsPage() {
                 id="filter-staff"
                 value={staffFilter}
                 onChange={(e) => setStaffFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-primary focus:outline-none"
               >
                 <option value="all">全員</option>
                 {staff.map((s) => (
@@ -275,7 +183,7 @@ export default function ShiftsPage() {
                 id="filter-location"
                 value={locationFilter}
                 onChange={(e) => setLocationFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:border-primary focus:outline-none"
               >
                 <option value="all">全て</option>
                 {locations.map((l) => (
@@ -287,22 +195,10 @@ export default function ShiftsPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t pt-4">
+          <div className="mt-4 flex items-center border-t pt-4">
             <div className="text-sm text-gray-600">
-              <span className="font-medium">予定: {pendingCount}件</span>
-              <span className="mx-2">|</span>
-              <span className="font-medium">確定: {confirmedCount}件</span>
-              <span className="mx-2">|</span>
               <span className="font-medium">合計: {shifts.length}件</span>
             </div>
-            {pendingCount > 0 && (
-              <button
-                onClick={handleMonthConfirm}
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-              >
-                月次一括確定 ({pendingCount}件)
-              </button>
-            )}
           </div>
         </div>
 
@@ -320,28 +216,10 @@ export default function ShiftsPage() {
         ) : (
           <ShiftListTable
             shifts={filteredShifts}
-            onConfirm={handleConfirm}
             onDelete={handleDelete}
-            onUnconfirm={handleUnconfirm}
           />
         )}
 
-        {/* 確定ダイアログ */}
-        {confirmTarget && (
-          <ConfirmDialog
-            isOpen={confirmDialogOpen}
-            onClose={() => {
-              setConfirmDialogOpen(false)
-              setConfirmTarget(null)
-            }}
-            onConfirm={handleConfirmExecute}
-            title="シフト確定確認"
-            targetDescription={confirmTarget.description}
-            shiftCount={confirmTarget.shiftIds.length}
-            violations={violations}
-            isLoading={isConfirming}
-          />
-        )}
       </div>
     </div>
   )

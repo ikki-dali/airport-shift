@@ -161,7 +161,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       {/* 検索フィルター */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="スタッフ名または社員番号で検索..."
             value={search}
@@ -205,11 +205,11 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
 
       {/* 検索結果サマリーと一括操作 */}
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-muted-foreground">
           {filteredStaff.length} 件 / 全 {staff.length} 件のスタッフ（在籍中:{' '}
           {filteredStaff.filter((s) => s.is_active).length} 名）
           {selectedStaffIds.size > 0 && (
-            <span className="ml-4 text-blue-600 font-medium">
+            <span className="ml-4 text-primary font-medium">
               {selectedStaffIds.size} 名選択中
             </span>
           )}
@@ -245,7 +245,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow className="bg-muted/50">
               <TableHead className="w-12">
                 <Checkbox
                   checked={selectedStaffIds.size === eligibleStaff.length && eligibleStaff.length > 0}
@@ -266,7 +266,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
           <TableBody>
             {filteredStaff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-12 text-gray-500">
+                <TableCell colSpan={9} className="text-center py-12 text-muted-foreground">
                   該当するスタッフが見つかりません
                 </TableCell>
               </TableRow>
@@ -281,7 +281,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                 return (
                   <TableRow
                     key={s.id}
-                    className={`hover:bg-gray-50 ${!s.is_active ? 'opacity-60' : ''}`}
+                    className={`hover:bg-muted/30 ${!s.is_active ? 'opacity-60' : ''}`}
                   >
                     <TableCell>
                       <Checkbox
@@ -293,7 +293,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                     <TableCell>
                       <Link
                         href={`/staff/${s.id}`}
-                        className="font-mono text-blue-600 hover:underline"
+                        className="font-mono text-primary hover:underline"
                       >
                         {s.employee_number}
                       </Link>
@@ -303,7 +303,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                       {role ? (
                         <Badge variant="secondary">{role.name}</Badge>
                       ) : (
-                        <span className="text-gray-400 text-sm">未設定</span>
+                        <span className="text-muted-foreground text-sm">未設定</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -315,7 +315,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-sm text-muted-foreground">-</span>
                         )}
                         {staffTags.length > 3 && (
                           <Badge variant="outline" className="text-xs">
@@ -350,7 +350,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                           )}
                         </Button>
                       ) : (
-                        <span className="text-xs text-gray-400">未発行</span>
+                        <span className="text-xs text-muted-foreground">未発行</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -366,7 +366,7 @@ export function StaffSearch({ staff, roles, tags }: StaffSearchProps) {
                           {sendingEmailId === s.id ? '送信中...' : 'メール送信'}
                         </Button>
                       ) : (
-                        <span className="text-xs text-gray-400">メールアドレス未登録</span>
+                        <span className="text-xs text-muted-foreground">メールアドレス未登録</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">

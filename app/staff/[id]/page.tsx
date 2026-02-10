@@ -1,5 +1,6 @@
 import { getStaffById } from '@/lib/actions/staff'
 import { notFound } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -22,18 +23,12 @@ export default async function StaffDetailPage({
     <div className="container mx-auto p-8 max-w-4xl">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">スタッフ詳細</h1>
-        <div className="flex gap-4">
-          <Link
-            href={`/staff/${staff.id}/edit`}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            編集
+        <div className="flex gap-2">
+          <Link href={`/staff/${staff.id}/edit`}>
+            <Button>編集</Button>
           </Link>
-          <Link
-            href="/staff"
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-          >
-            一覧に戻る
+          <Link href="/staff">
+            <Button variant="outline">一覧に戻る</Button>
           </Link>
         </div>
       </div>
@@ -45,7 +40,7 @@ export default async function StaffDetailPage({
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <dt className="text-sm font-medium text-gray-500">社員番号</dt>
-              <dd className="mt-1 text-lg font-mono font-semibold text-blue-600">
+              <dd className="mt-1 text-lg font-mono font-semibold text-primary">
                 {staff.employee_number}
               </dd>
             </div>
@@ -59,7 +54,7 @@ export default async function StaffDetailPage({
                 {staff.email ? (
                   <a
                     href={`mailto:${staff.email}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {staff.email}
                   </a>
@@ -74,7 +69,7 @@ export default async function StaffDetailPage({
                 {staff.phone ? (
                   <a
                     href={`tel:${staff.phone}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {staff.phone}
                   </a>
@@ -87,7 +82,7 @@ export default async function StaffDetailPage({
               <dt className="text-sm font-medium text-gray-500">役職</dt>
               <dd className="mt-1">
                 {staff.roles ? (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
                     {staff.roles.name}
                     {staff.roles.is_responsible && (
                       <span className="ml-1 text-xs">(責任者)</span>

@@ -32,14 +32,14 @@ export function ShiftCalendar({
   const getDayOfWeekClass = (date: Date) => {
     const dayOfWeek = getDay(date)
     if (dayOfWeek === 0) return 'bg-red-50' // 日曜日
-    if (dayOfWeek === 6) return 'bg-blue-50' // 土曜日
+    if (dayOfWeek === 6) return 'bg-navy-50' // 土曜日
     return 'bg-white'
   }
 
   const getDayOfWeekTextClass = (date: Date) => {
     const dayOfWeek = getDay(date)
     if (dayOfWeek === 0) return 'text-red-600' // 日曜日
-    if (dayOfWeek === 6) return 'text-blue-600' // 土曜日
+    if (dayOfWeek === 6) return 'text-navy-600' // 土曜日
     return 'text-gray-700'
   }
 
@@ -49,15 +49,15 @@ export function ShiftCalendar({
         <table className="w-full border-collapse min-w-max">
           <thead>
             <tr>
-              <th className="sticky left-0 z-20 bg-gray-50 border-b-2 border-gray-300 p-2 text-xs font-semibold text-gray-700 min-w-[120px]">
+              <th className="sticky left-0 z-20 bg-gray-50 border-b-2 border-gray-200 p-2 text-xs font-semibold text-gray-700 min-w-[120px]">
                 配属箇所
               </th>
               {days.map((day) => (
                 <th
                   key={day.toISOString()}
-                  className={`border-b-2 border-gray-300 p-2 text-xs font-semibold min-w-[120px] ${getDayOfWeekClass(
+                  className={`border-b-2 border-gray-200 p-2 text-xs font-semibold min-w-[120px] ${getDayOfWeekClass(
                     day
-                  )} ${onDateClick ? 'cursor-pointer hover:bg-blue-100 transition-colors' : ''}`}
+                  )} ${onDateClick ? 'cursor-pointer hover:bg-primary/10 transition-colors' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     onDateClick?.(day)
@@ -76,7 +76,7 @@ export function ShiftCalendar({
           <tbody>
             {locations.map((location) => (
               <tr key={location.id} className="border-b border-gray-200">
-                <td className="sticky left-0 z-10 bg-gray-50 border-r border-gray-300 p-2 font-medium text-sm">
+                <td className="sticky left-0 z-10 bg-gray-50 border-r border-gray-200 p-2 font-medium text-sm">
                   <div>{location.location_name}</div>
                   <div className="text-xs text-gray-500">{location.code}</div>
                 </td>

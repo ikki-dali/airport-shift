@@ -47,16 +47,16 @@ export function RequestsFilter({
   const hasActiveFilters = selectedStaffIds.length > 0 || selectedRequestTypes.length > 0
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white">
+    <div className="rounded-lg border border-border bg-card">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex w-full items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+        className="flex w-full items-center justify-between p-4 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4" />
           <span className="font-medium">フィルター</span>
           {hasActiveFilters && (
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               {selectedStaffIds.length + selectedRequestTypes.length}
             </span>
           )}
@@ -67,7 +67,7 @@ export function RequestsFilter({
               e.stopPropagation()
               clearFilters()
             }}
-            className="text-sm text-gray-600 hover:text-gray-900"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
             クリア
           </button>
@@ -75,10 +75,10 @@ export function RequestsFilter({
       </button>
 
       {isExpanded && (
-        <div className="border-t border-gray-200 p-4 space-y-4">
+        <div className="border-t border-border p-4 space-y-4">
           {/* スタッフフィルター */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               スタッフ
             </label>
             <div className="flex flex-wrap gap-2">
@@ -88,8 +88,8 @@ export function RequestsFilter({
                   onClick={() => handleStaffToggle(s.id)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     selectedStaffIds.includes(s.id)
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                      ? 'bg-primary/10 text-primary border-primary/30'
+                      : 'bg-muted text-foreground border-border hover:bg-muted/80'
                   } border`}
                 >
                   {s.name}
@@ -100,7 +100,7 @@ export function RequestsFilter({
 
           {/* 希望タイプフィルター */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               希望タイプ
             </label>
             <div className="flex flex-wrap gap-2">
@@ -110,8 +110,8 @@ export function RequestsFilter({
                   onClick={() => handleRequestTypeToggle(type)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     selectedRequestTypes.includes(type)
-                      ? 'bg-blue-100 text-blue-700 border-blue-300'
-                      : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                      ? 'bg-primary/10 text-primary border-primary/30'
+                      : 'bg-muted text-foreground border-border hover:bg-muted/80'
                   } border`}
                 >
                   {type}

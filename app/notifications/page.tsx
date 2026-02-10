@@ -154,7 +154,7 @@ export default function NotificationsPage() {
               <Card
                 key={notification.id}
                 className={`transition-colors ${
-                  notification.is_read ? 'bg-white' : 'bg-blue-50 border-blue-200'
+                  notification.is_read ? 'bg-white' : 'bg-primary/5 border-primary/20'
                 }`}
               >
                 <CardContent className="p-4">
@@ -181,7 +181,7 @@ export default function NotificationsPage() {
                           {!notification.is_read && (
                             <button
                               onClick={() => handleMarkAsRead(notification.id)}
-                              className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                              className="p-2 text-primary hover:bg-primary/10 rounded transition-colors"
                               title="既読にする"
                             >
                               <Check className="h-4 w-4" />

@@ -9,6 +9,8 @@ export interface Staff {
   role_id: string | null;
   tags: string[] | null;
   is_active: boolean;
+  employment_type: 'contract' | 'part_time';
+  expo_push_token: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +40,27 @@ export interface DutyCode {
   break_minutes: number;
   is_overnight: boolean;
   category: string;
+  total_hours: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskType {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShiftTask {
+  id: string;
+  shift_id: string;
+  task_type_id: string;
+  hours: number;
+  notes: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,7 +91,7 @@ export interface ShiftRequest {
   id: string;
   staff_id: string;
   date: string;
-  request_type: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤';
+  request_type: '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
   note: string | null;
   year_month: string;
   created_at: string;
@@ -100,5 +123,5 @@ export interface ConstraintViolation {
 }
 
 // Utility Types
-export type RequestType = '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤';
+export type RequestType = '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 export type ShiftStatus = '予定' | '確定' | '変更' | 'キャンセル';

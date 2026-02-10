@@ -8,6 +8,8 @@ import type { ParsedRequest } from '@/lib/parsers/excel-parser'
 import { handleSupabaseError } from '@/lib/errors/helpers'
 import { ValidationError } from '@/lib/errors'
 import { requireAuth } from '@/lib/auth'
+import { autoAssignForStaff } from '@/lib/actions/auto-assign-progressive'
+import { logger } from '@/lib/errors/logger'
 
 type ShiftRequest = Database['public']['Tables']['shift_requests']['Row']
 
@@ -26,41 +28,64 @@ export async function getShiftRequests(filters?: {
 }): Promise<ShiftRequestWithStaff[]> {
   const supabase = await createClient()
 
-  let query = supabase
-    .from('shift_requests')
-    .select(`
-      *,
-      staff (
-        id,
-        employee_number,
-        name
-      )
-    `)
-    .order('date', { ascending: true })
-
+  // フィルタ条件を事前計算
+  let startDate: string | undefined
+  let endDate: string | undefined
   if (filters?.yearMonth) {
-    // 月の最初と最後の日を正しく計算
     const year = parseInt(filters.yearMonth.split('-')[0])
     const month = parseInt(filters.yearMonth.split('-')[1])
-    const startDate = `${filters.yearMonth}-01`
-    // 次の月の0日 = 今月の最終日
+    startDate = `${filters.yearMonth}-01`
     const lastDay = new Date(year, month, 0).getDate()
-    const endDate = `${filters.yearMonth}-${String(lastDay).padStart(2, '0')}`
-    query = query.gte('date', startDate).lte('date', endDate)
+    endDate = `${filters.yearMonth}-${String(lastDay).padStart(2, '0')}`
   }
 
-  if (filters?.date) {
-    query = query.eq('date', filters.date)
+  // ページネーションで全件取得
+  const PAGE_SIZE = 1000
+  let allData: ShiftRequestWithStaff[] = []
+  let page = 0
+  let hasMore = true
+
+  while (hasMore) {
+    let query = supabase
+      .from('shift_requests')
+      .select(`
+        *,
+        staff (
+          id,
+          employee_number,
+          name
+        )
+      `)
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+      .order('date', { ascending: true })
+
+    if (startDate && endDate) {
+      query = query.gte('date', startDate).lte('date', endDate)
+    }
+
+    if (filters?.date) {
+      query = query.eq('date', filters.date)
+    }
+
+    if (filters?.staffId) {
+      query = query.eq('staff_id', filters.staffId)
+    }
+
+    const { data, error } = await query
+
+    if (error) handleSupabaseError(error, { action: 'getShiftRequests', entity: 'シフト希望' })
+
+    if (data && data.length > 0) {
+      allData = [...allData, ...(data as ShiftRequestWithStaff[])]
+      hasMore = data.length === PAGE_SIZE
+      page++
+    } else {
+      hasMore = false
+    }
+    if (page >= 10) break // 安全ブレーク（最大10000件）
   }
 
-  if (filters?.staffId) {
-    query = query.eq('staff_id', filters.staffId)
-  }
-
-  const { data, error } = await query
-
-  if (error) handleSupabaseError(error, { action: 'getShiftRequests', entity: 'シフト希望' })
-  return data as ShiftRequestWithStaff[]
+  return allData
 }
 
 export async function importShiftRequests(
@@ -124,6 +149,17 @@ export async function importShiftRequests(
   }
 
   revalidatePath('/requests')
+
+  // プログレッシブ自動配置: 取り込んだスタッフのシフトを自動配置
+  try {
+    const uniqueStaffIds = [...new Set(requests.map((r) => r.staffId))]
+    for (const sid of uniqueStaffIds) {
+      await autoAssignForStaff(sid, yearMonth)
+    }
+  } catch (err) {
+    logger.error('Progressive auto-assign failed after import', { error: err })
+  }
+
   return { insertedCount, overwrittenCount: overwrite ? count || 0 : 0 }
 }
 
@@ -152,7 +188,7 @@ export async function bulkUpsertShiftRequests(
   requests: Array<{
     staff_id: string
     date: string
-    request_type: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤'
+    request_type: '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
     note?: string
   }>
 ) {
@@ -180,6 +216,18 @@ export async function bulkUpsertShiftRequests(
   if (error) handleSupabaseError(error, { action: 'bulkUpsertShiftRequests', entity: 'シフト希望' })
 
   revalidatePath('/shifts/create')
+
+  // プログレッシブ自動配置: 更新されたスタッフのシフトを自動配置
+  try {
+    const uniqueStaffIds = [...new Set(requests.map((r) => r.staff_id))]
+    for (const sid of uniqueStaffIds) {
+      const ym = requests.find((r) => r.staff_id === sid)?.date.substring(0, 7)
+      if (ym) await autoAssignForStaff(sid, ym)
+    }
+  } catch (err) {
+    logger.error('Progressive auto-assign failed after bulk upsert', { error: err })
+  }
+
   return data
 }
 
@@ -276,7 +324,7 @@ export async function upsertShiftRequestsForToken(
   requests: Array<{
     staff_id: string
     date: string
-    request_type: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤'
+    request_type: '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
     note?: string
   }>
 ) {
@@ -296,6 +344,17 @@ export async function upsertShiftRequestsForToken(
     .select()
 
   if (error) handleSupabaseError(error, { action: 'upsertShiftRequestsForToken', entity: 'シフト希望' })
+
+  // プログレッシブ自動配置: トークン経由で希望を出したスタッフのシフトを自動配置
+  try {
+    if (requests.length > 0) {
+      const staffId = requests[0].staff_id
+      const ym = requests[0].date.substring(0, 7)
+      await autoAssignForStaff(staffId, ym)
+    }
+  } catch (err) {
+    logger.error('Progressive auto-assign failed after token upsert', { error: err })
+  }
 
   return data
 }

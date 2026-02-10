@@ -62,7 +62,7 @@ export function RequirementList({
       return 'bg-orange-100 text-orange-800'
     }
     if (req.day_of_week !== null) {
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-primary/10 text-primary'
     }
     return 'bg-gray-100 text-gray-800'
   }
@@ -106,7 +106,7 @@ export function RequirementList({
               <tr key={req.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex flex-col">
-                    <span className="font-mono font-semibold text-blue-600">
+                    <span className="font-mono font-semibold text-primary">
                       {req.duty_codes?.code}
                     </span>
                     {req.duty_codes?.start_time && req.duty_codes?.end_time && (
@@ -153,7 +153,7 @@ export function RequirementList({
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => onEdit && onEdit(req)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary hover:text-primary/80"
                     >
                       編集
                     </button>

@@ -22,6 +22,8 @@ export interface Database {
           tags: string[] | null
           request_token: string | null
           is_active: boolean
+          employment_type: string
+          expo_push_token: string | null
           created_at: string
           updated_at: string
         }
@@ -35,6 +37,8 @@ export interface Database {
           tags?: string[] | null
           request_token?: string | null
           is_active?: boolean
+          employment_type?: string
+          expo_push_token?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -48,6 +52,8 @@ export interface Database {
           tags?: string[] | null
           request_token?: string | null
           is_active?: boolean
+          employment_type?: string
+          expo_push_token?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -118,6 +124,7 @@ export interface Database {
           break_minutes: number
           is_overnight: boolean
           category: string
+          total_hours: number | null
           created_at: string
           updated_at: string
         }
@@ -132,6 +139,7 @@ export interface Database {
           break_minutes: number
           is_overnight?: boolean
           category: string
+          total_hours?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -146,10 +154,86 @@ export interface Database {
           break_minutes?: number
           is_overnight?: boolean
           category?: string
+          total_hours?: number | null
           created_at?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      task_types: {
+        Row: {
+          id: string
+          code: string
+          name: string
+          description: string | null
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          name: string
+          description?: string | null
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          name?: string
+          description?: string | null
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shift_tasks: {
+        Row: {
+          id: string
+          shift_id: string
+          task_type_id: string
+          hours: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          shift_id: string
+          task_type_id: string
+          hours: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          shift_id?: string
+          task_type_id?: string
+          hours?: number
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_tasks_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_tasks_task_type_id_fkey"
+            columns: ["task_type_id"]
+            isOneToOne: false
+            referencedRelation: "task_types"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       locations: {
         Row: {
@@ -416,6 +500,30 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      }
+      system_settings: {
+        Row: {
+          key: string
+          value: string
+          description: string | null
+          category: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value: string
+          description?: string | null
+          category?: string
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          value?: string
+          description?: string | null
+          category?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

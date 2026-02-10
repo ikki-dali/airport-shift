@@ -1,7 +1,7 @@
-import { format, startOfMonth, endOfMonth, addDays } from 'date-fns'
+import { format, startOfMonth, endOfMonth, addDays, addMonths } from 'date-fns'
 import { getShiftsWithDetails } from '@/lib/actions/shifts'
 import { getAllLocationRequirements } from '@/lib/actions/location-requirements'
-import { StatBar } from '@/components/dashboard/StatBar'
+import { getSettingsAsMap } from '@/lib/actions/settings'
 import { DashboardTabs } from '@/components/dashboard/DashboardTabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -10,19 +10,28 @@ export const dynamic = 'force-dynamic'
 export default async function HomePage() {
   let shifts: Awaited<ReturnType<typeof getShiftsWithDetails>> = []
   let locationRequirements: Awaited<ReturnType<typeof getAllLocationRequirements>> = []
+  let settingsMap: Awaited<ReturnType<typeof getSettingsAsMap>> = {}
   let error: string | null = null
 
   const today = new Date()
   const currentYearMonth = format(today, 'yyyy-MM')
+  const nextMonth = addMonths(today, 1)
+  const nextYearMonth = format(nextMonth, 'yyyy-MM')
+  const rangeStart = format(startOfMonth(today), 'yyyy-MM-dd')
+  const rangeEnd = format(endOfMonth(nextMonth), 'yyyy-MM-dd')
 
   try {
-    ;[shifts, locationRequirements] = await Promise.all([
-      getShiftsWithDetails({ yearMonth: currentYearMonth }),
+    ;[shifts, locationRequirements, settingsMap] = await Promise.all([
+      getShiftsWithDetails({ startDate: rangeStart, endDate: rangeEnd }),
       getAllLocationRequirements(),
+      getSettingsAsMap(),
     ])
   } catch (e: unknown) {
     error = e instanceof Error ? e.message : 'Unknown error'
   }
+
+  // 今月分のみで統計・StatBar用のシフトを計算
+  const shiftsThisMonth = shifts.filter((s) => s.date >= rangeStart && s.date <= format(endOfMonth(today), 'yyyy-MM-dd'))
 
   // 今月の統計を計算
   const monthStart = startOfMonth(today)
@@ -40,8 +49,8 @@ export default async function HomePage() {
     const dateStr = format(date, 'yyyy-MM-dd')
     const dayOfWeek = date.getDay()
 
-    // この日のシフト
-    const dayShifts = shifts.filter((s) => s.date === dateStr)
+    // この日のシフト（今月分のみで統計計算）
+    const dayShifts = shiftsThisMonth.filter((s) => s.date === dateStr)
 
     // この日の必要人数
     let dayRequiredCount = 0
@@ -72,8 +81,6 @@ export default async function HomePage() {
   const fillRate =
     totalSlotsNeeded > 0 ? Math.round((totalSlotsFilled / totalSlotsNeeded) * 100) : 0
 
-  const pendingShifts = shifts.filter((s) => s.status === '予定').length
-
   // エラー表示
   if (error) {
     return (
@@ -95,18 +102,16 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6">
-      {/* 統計バー */}
-      <StatBar
-        fillRate={fillRate}
-        shortageDays={shortageDays}
-        pendingShifts={pendingShifts}
-      />
-
       {/* タブ切り替えコンテンツ */}
       <DashboardTabs
         shifts={shifts}
         locationRequirements={locationRequirements}
         yearMonth={currentYearMonth}
+        nextYearMonth={nextYearMonth}
+        todayStr={format(today, 'yyyy-MM-dd')}
+        settings={settingsMap}
+        fillRate={fillRate}
+        shortageDays={shortageDays}
       />
     </div>
   )

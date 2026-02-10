@@ -90,16 +90,16 @@ export function AssignmentPreview({
         <div className="space-y-6">
           {/* 統計サマリー */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Calendar className="h-4 w-4" />
                 割り当て数
               </div>
               <div className="text-2xl font-bold">{result.stats.totalAssignments}件</div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <TrendingUp className="h-4 w-4" />
                 希望充足率
               </div>
@@ -108,8 +108,8 @@ export function AssignmentPreview({
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <Users className="h-4 w-4" />
                 平均勤務日数
               </div>
@@ -118,8 +118,8 @@ export function AssignmentPreview({
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+            <div className="rounded-lg border border-border bg-muted/50 p-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                 <TrendingUp className="h-4 w-4" />
                 合計スコア
               </div>
@@ -176,9 +176,9 @@ export function AssignmentPreview({
                     type="checkbox"
                     checked={overwriteExisting}
                     onChange={(e) => setOverwriteExisting(e.target.checked)}
-                    className="rounded border-gray-300"
+                    className="rounded border-border"
                   />
-                  <span className="text-gray-700">
+                  <span className="text-foreground">
                     既存のシフトを上書きして実行する
                   </span>
                 </label>
@@ -188,12 +188,12 @@ export function AssignmentPreview({
 
           {/* 警告表示 */}
           {hasWarnings && (
-            <div className="rounded-lg border border-blue-300 bg-blue-50 p-4">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
               <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="h-5 w-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900">警告</h3>
+                <AlertTriangle className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-primary">警告</h3>
               </div>
-              <ul className="space-y-1 text-sm text-blue-800">
+              <ul className="space-y-1 text-sm text-primary/80">
                 {result.warnings.map((warning, i) => (
                   <li key={i} className="ml-4">
                     • {warning}
@@ -204,17 +204,17 @@ export function AssignmentPreview({
           )}
 
           {/* 詳細情報 */}
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">詳細統計</h3>
+          <div className="rounded-lg border border-border bg-muted/50 p-4">
+            <h3 className="font-semibold text-foreground mb-3">詳細統計</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">勤務日数 標準偏差:</span>
+                <span className="text-muted-foreground">勤務日数 標準偏差:</span>
                 <span className="ml-2 font-medium">
                   {result.stats.workDaysStdDev.toFixed(2)}日
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">処理時間:</span>
+                <span className="text-muted-foreground">処理時間:</span>
                 <span className="ml-2 font-medium">
                   {(result.processingTimeMs / 1000).toFixed(2)}秒
                 </span>

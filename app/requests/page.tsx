@@ -1,4 +1,6 @@
 import { getShiftRequestsGroupedByYearMonth } from '@/lib/actions/shift-requests'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -12,19 +14,19 @@ export default async function ShiftRequestsPage() {
   }
 
   return (
-    <div className="container mx-auto p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">希望データ一覧</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900">希望データ一覧</h1>
+          <p className="text-gray-600 mt-1">
             取り込まれたシフト希望データを月別に確認できます
           </p>
         </div>
-        <Link
-          href="/requests/upload"
-          className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium"
-        >
-          + Excel取り込み
+        <Link href="/requests/upload">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Excel取り込み
+          </Button>
         </Link>
       </div>
 
@@ -37,11 +39,11 @@ export default async function ShiftRequestsPage() {
           <p className="text-gray-600 mb-6">
             まずはExcelファイルから希望データを取り込んでください
           </p>
-          <Link
-            href="/requests/upload"
-            className="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition font-medium"
-          >
-            Excel取り込みを開始
+          <Link href="/requests/upload">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Excel取り込みを開始
+            </Button>
           </Link>
         </div>
       ) : (

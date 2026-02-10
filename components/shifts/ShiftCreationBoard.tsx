@@ -20,7 +20,6 @@ import { AlertCircle } from 'lucide-react'
 import { ViewModeSwitcher } from './ViewModeSwitcher'
 import { toast } from 'sonner'
 import { ShiftListView } from './ShiftListView'
-import { ShiftRequestsPanel } from './ShiftRequestsPanel'
 import { AutoAssignButton } from './AutoAssignButton'
 
 interface ShiftCreationBoardProps {
@@ -231,13 +230,9 @@ export function ShiftCreationBoard({
             )}
           </div>
 
-          {/* 右サイドバー: 希望提出表示 */}
+          {/* 右サイドバー: 希望提出表示（未使用） */}
           <div className="col-span-3">
-            <ShiftRequestsPanel
-              selectedDate={selectedDate}
-              staff={staff}
-              onClose={() => setSelectedDate(null)}
-            />
+            {/* ShiftRequestsPanel は V3 ボードで新インターフェースに移行済み */}
           </div>
         </div>
       </div>
@@ -245,7 +240,7 @@ export function ShiftCreationBoard({
       {/* ドラッグ中のオーバーレイ */}
       <DragOverlay>
         {activeStaff ? (
-          <Card className="p-3 bg-blue-50 border-blue-300 shadow-lg">
+          <Card className="p-3 bg-primary/5 border-primary/30 shadow-lg">
             <div className="font-medium text-sm">{activeStaff.name}</div>
             <div className="text-xs text-gray-500">{activeStaff.employee_number}</div>
           </Card>

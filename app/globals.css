@@ -4,48 +4,48 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 200 33% 99%;
+    --foreground: 210 7% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 7% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --popover-foreground: 210 7% 11%;
+    --primary: 207 100% 41%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 5% 22%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 10% 96%;
+    --muted-foreground: 213 5% 39%;
+    --accent: 207 71% 93%;
+    --accent-foreground: 207 100% 17%;
+    --destructive: 1 76% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 10% 90%;
+    --input: 220 10% 90%;
+    --ring: 207 100% 41%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --background: 210 7% 11%;
+    --foreground: 210 10% 96%;
+    --card: 210 7% 11%;
+    --card-foreground: 210 10% 96%;
+    --popover: 210 7% 11%;
+    --popover-foreground: 210 10% 96%;
+    --primary: 207 100% 55%;
+    --primary-foreground: 210 7% 11%;
+    --secondary: 210 5% 18%;
+    --secondary-foreground: 210 10% 96%;
+    --muted: 210 5% 18%;
+    --muted-foreground: 210 5% 60%;
+    --accent: 207 50% 18%;
+    --accent-foreground: 207 71% 93%;
+    --destructive: 1 63% 31%;
+    --destructive-foreground: 210 10% 96%;
+    --border: 210 5% 18%;
+    --input: 210 5% 18%;
+    --ring: 207 100% 55%;
   }
 }
 
@@ -55,5 +55,31 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* 全インタラクティブ要素にスムーズトランジション */
+  button, a, input, select, textarea, [role="button"] {
+    @apply transition-colors duration-150;
+  }
+}
+
+@layer utilities {
+  /* テーブル密度 */
+  .table-density-compact th, .table-density-compact td { @apply px-2 py-1.5 text-xs; }
+  .table-density-default th, .table-density-default td { @apply px-4 py-2.5 text-sm; }
+  .table-density-comfortable th, .table-density-comfortable td { @apply px-6 py-4 text-sm; }
+
+  /* 標準テーブルヘッダー */
+  .table-header-standard { @apply bg-muted/50 text-muted-foreground text-xs font-medium tracking-wide; }
+
+  /* ホバーリフト（カード用） */
+  .hover-lift { @apply transition-all duration-150; }
+  .hover-lift:hover { @apply shadow-md -translate-y-px; }
+
+  /* フォームフィールド標準（select/textarea用） */
+  .form-field-standard {
+    @apply w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm
+           shadow-xs transition-[color,box-shadow]
+           focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]
+           focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50;
   }
 }

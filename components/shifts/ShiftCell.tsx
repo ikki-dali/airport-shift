@@ -53,7 +53,7 @@ export function ShiftCell({
     <td
       ref={setNodeRef}
       className={`border border-gray-200 p-1 min-h-[120px] align-top transition-colors ${
-        isOver ? 'bg-blue-100 border-blue-400' : 'bg-white'
+        isOver ? 'bg-primary/10 border-primary/60' : 'bg-white'
       }`}
     >
       <div className="space-y-2 min-h-[120px]">
@@ -66,7 +66,7 @@ export function ShiftCell({
           return (
             <div
               key={dutyCodeId}
-              className="bg-gray-50 border border-gray-300 rounded p-2 space-y-2"
+              className="bg-gray-50 border border-gray-200 rounded p-2 space-y-2"
             >
               {/* 勤務記号情報 */}
               <div className="flex items-center justify-between">
@@ -136,7 +136,7 @@ export function ShiftCell({
         )}
 
         {isOver && shifts.length === 0 && (
-          <div className="flex items-center justify-center h-[120px] text-xs text-blue-600 font-medium">
+          <div className="flex items-center justify-center h-[120px] text-xs text-primary font-medium">
             ここに配置
           </div>
         )}

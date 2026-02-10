@@ -69,7 +69,6 @@ async function generateMonthlyRequirements(
       duty_codes (
         id,
         code,
-        name,
         start_time,
         end_time,
         category
@@ -122,7 +121,6 @@ async function generateMonthlyRequirements(
           dutyCode: {
             id: req.duty_codes.id,
             code: req.duty_codes.code,
-            name: req.duty_codes.name,
             start_time: req.duty_codes.start_time,
             end_time: req.duty_codes.end_time,
             category: req.duty_codes.category,

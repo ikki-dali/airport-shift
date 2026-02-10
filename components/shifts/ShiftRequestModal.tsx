@@ -24,16 +24,20 @@ interface ShiftRequestModalProps {
   onSuccess: () => void
 }
 
-type RequestType = '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤' | ''
+type RequestType = '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | ''
 
 const REQUEST_TYPES: { value: RequestType; label: string; color: string }[] = [
   { value: '', label: '-', color: 'bg-gray-100' },
   { value: '◯', label: '◯', color: 'bg-green-100 text-green-800' },
   { value: '休', label: '休', color: 'bg-red-100 text-red-800' },
-  { value: '早朝', label: '早朝', color: 'bg-blue-100 text-blue-800' },
-  { value: '早番', label: '早番', color: 'bg-cyan-100 text-cyan-800' },
-  { value: '遅番', label: '遅番', color: 'bg-purple-100 text-purple-800' },
-  { value: '夜勤', label: '夜勤', color: 'bg-indigo-100 text-indigo-800' },
+  { value: '有給', label: '有給', color: 'bg-orange-100 text-orange-800' },
+  { value: 'A', label: 'A', color: 'bg-primary/10 text-primary' },
+  { value: 'B', label: 'B', color: 'bg-cyan-100 text-cyan-800' },
+  { value: 'C', label: 'C', color: 'bg-green-100 text-green-800' },
+  { value: 'D', label: 'D', color: 'bg-purple-100 text-purple-800' },
+  { value: 'E', label: 'E', color: 'bg-indigo-100 text-indigo-800' },
+  { value: 'F', label: 'F', color: 'bg-amber-100 text-amber-800' },
+  { value: 'G', label: 'G', color: 'bg-teal-100 text-teal-800' },
 ]
 
 export function ShiftRequestModal({
@@ -106,7 +110,7 @@ export function ShiftRequestModal({
       const validRequests: Array<{
         staff_id: string
         date: string
-        request_type: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤'
+        request_type: Exclude<RequestType, ''>
       }> = []
 
       Object.entries(requests).forEach(([key, type]) => {

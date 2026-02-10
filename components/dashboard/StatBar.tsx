@@ -1,51 +1,33 @@
 'use client'
 
-import { TrendingUp, AlertTriangle, Clock } from 'lucide-react'
+import { TrendingUp, AlertTriangle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 interface StatBarProps {
   fillRate: number
   shortageDays: number
-  pendingShifts: number
 }
 
-export function StatBar({ fillRate, shortageDays, pendingShifts }: StatBarProps) {
+export function StatBar({ fillRate, shortageDays }: StatBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* 充足率 */}
-      <div
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
-          fillRate >= 90
-            ? 'bg-green-100 text-green-800'
-            : fillRate >= 70
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-red-100 text-red-800'
-        }`}
+      <Badge
+        variant={fillRate >= 100 ? 'accent' : fillRate >= 90 ? 'success' : fillRate >= 70 ? 'warning' : 'destructive'}
+        className="gap-2 px-4 py-2 text-sm"
       >
         <TrendingUp className="h-4 w-4" />
         充足率 {fillRate}%
-      </div>
+      </Badge>
 
       {/* 人手不足 */}
-      <div
-        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
-          shortageDays === 0
-            ? 'bg-green-100 text-green-800'
-            : shortageDays <= 3
-            ? 'bg-yellow-100 text-yellow-800'
-            : 'bg-red-100 text-red-800'
-        }`}
+      <Badge
+        variant={shortageDays === 0 ? 'success' : shortageDays <= 3 ? 'warning' : 'destructive'}
+        className="gap-2 px-4 py-2 text-sm"
       >
         <AlertTriangle className="h-4 w-4" />
         人手不足 {shortageDays}日
-      </div>
-
-      {/* 承認待ち */}
-      {pendingShifts > 0 && (
-        <div className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-800">
-          <Clock className="h-4 w-4" />
-          承認待ち {pendingShifts}件
-        </div>
-      )}
+      </Badge>
     </div>
   )
 }

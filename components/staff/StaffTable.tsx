@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 
 type Staff = Database['public']['Tables']['staff']['Row'] & {
   roles: {
@@ -55,89 +56,86 @@ export function StaffTable({ staff }: StaffTableProps) {
 
   if (staff.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
+      <div className="bg-card rounded-lg shadow-card p-12 text-center text-muted-foreground">
         スタッフが見つかりません
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-card rounded-lg shadow-card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 社員番号
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 氏名
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 メール
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 電話
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 役職
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 タグ
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 状態
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground tracking-wide">
                 操作
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-border">
             {staff.map((s) => (
               <tr
                 key={s.id}
-                className={`hover:bg-gray-50 ${!s.is_active ? 'opacity-50 bg-gray-50' : ''}`}
+                className={`hover:bg-muted/30 transition-colors ${!s.is_active ? 'opacity-50 bg-muted/50' : ''}`}
               >
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link
                     href={`/staff/${s.id}`}
-                    className="text-blue-600 hover:underline font-mono"
+                    className="text-primary hover:underline font-mono"
                   >
                     {s.employee_number}
                   </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="font-medium text-gray-900">{s.name}</div>
+                  <div className="font-medium text-foreground">{s.name}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {s.email || '-'}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                   {s.phone || '-'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {s.roles ? (
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                    <Badge variant="info">
                       {s.roles.name}
-                    </span>
+                    </Badge>
                   ) : (
-                    <span className="text-gray-400 text-sm">未設定</span>
+                    <span className="text-muted-foreground text-sm">未設定</span>
                   )}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
                     {s.tags && s.tags.length > 0 ? (
                       s.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700"
-                        >
+                        <Badge key={tag} variant="muted">
                           {tag}
-                        </span>
+                        </Badge>
                       ))
                     ) : (
-                      <span className="text-gray-400 text-sm">なし</span>
+                      <span className="text-muted-foreground text-sm">なし</span>
                     )}
                   </div>
                 </td>
@@ -158,14 +156,14 @@ export function StaffTable({ staff }: StaffTableProps) {
                   <div className="flex justify-end gap-2">
                     <Link
                       href={`/staff/${s.id}/edit`}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary hover:text-primary/80"
                     >
                       編集
                     </Link>
                     <button
                       onClick={() => handleDelete(s.id, s.name)}
                       disabled={deleting === s.id}
-                      className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                      className="text-destructive hover:text-destructive/80 disabled:opacity-50"
                     >
                       {deleting === s.id ? '削除中...' : '削除'}
                     </button>
@@ -176,8 +174,8 @@ export function StaffTable({ staff }: StaffTableProps) {
           </tbody>
         </table>
       </div>
-      <div className="px-6 py-4 bg-gray-50 border-t">
-        <p className="text-sm text-gray-600">
+      <div className="px-4 py-3 bg-muted/30 border-t">
+        <p className="text-sm text-muted-foreground">
           表示中: {staff.filter((s) => s.is_active).length} 件（在籍中） / 全{' '}
           {staff.length} 件
         </p>

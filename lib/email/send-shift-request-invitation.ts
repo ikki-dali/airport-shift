@@ -54,7 +54,7 @@ export async function sendShiftRequestInvitation({
                 <img src="${process.env.NEXT_PUBLIC_APP_URL}/ana-logo.png" alt="ANA" style="height: 60px;">
               </div>
 
-              <h2 style="color: #2563eb;">シフト希望提出のお願い</h2>
+              <h2 style="color: #1B3A5C;">シフト希望提出のお願い</h2>
 
               <p>${staffName} 様</p>
 
@@ -69,7 +69,7 @@ export async function sendShiftRequestInvitation({
 
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${requestUrl}"
-                   style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                   style="display: inline-block; background-color: #1B3A5C; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold;">
                   シフト希望を提出する
                 </a>
               </div>

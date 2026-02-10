@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
 import { toast } from 'sonner'
+import { Badge } from '@/components/ui/badge'
 
 type Location = Database['public']['Tables']['locations']['Row'] & {
   location_requirements: { count: number }[]
@@ -35,75 +36,71 @@ export function LocationTable({ locations }: LocationTableProps) {
 
   if (locations.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
+      <div className="bg-card rounded-lg shadow-card p-12 text-center text-muted-foreground">
         配属箇所が見つかりません
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-card rounded-lg shadow-card overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 業務種別
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 配属箇所名
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 コード
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 要件設定数
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground tracking-wide">
                 状態
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground tracking-wide">
                 操作
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-border">
             {locations.map((location) => {
               const requirementCount = location.location_requirements?.[0]?.count || 0
               return (
                 <tr
                   key={location.id}
-                  className={`hover:bg-gray-50 ${!location.is_active ? 'opacity-50 bg-gray-50' : ''}`}
+                  className={`hover:bg-muted/30 transition-colors ${!location.is_active ? 'opacity-50 bg-muted/50' : ''}`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                    <Badge variant="purple">
                       {location.business_type}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">{location.location_name}</div>
+                    <div className="font-medium text-foreground">{location.location_name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-mono text-blue-600">{location.code}</span>
+                    <span className="font-mono text-primary">{location.code}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <Link
                       href={`/locations/${location.id}/requirements`}
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {requirementCount} 件
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        location.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {location.is_active ? '使用中' : '非使用'}
-                    </span>
+                    {location.is_active ? (
+                      <Badge variant="success">使用中</Badge>
+                    ) : (
+                      <Badge variant="muted">非使用</Badge>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end gap-2">
@@ -115,14 +112,14 @@ export function LocationTable({ locations }: LocationTableProps) {
                       </Link>
                       <Link
                         href={`/locations/${location.id}/edit`}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary hover:text-primary/80"
                       >
                         編集
                       </Link>
                       <button
                         onClick={() => handleDelete(location.id, location.location_name)}
                         disabled={deleting === location.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        className="text-destructive hover:text-destructive/80 disabled:opacity-50"
                       >
                         {deleting === location.id ? '削除中...' : '削除'}
                       </button>
@@ -134,8 +131,8 @@ export function LocationTable({ locations }: LocationTableProps) {
           </tbody>
         </table>
       </div>
-      <div className="px-6 py-4 bg-gray-50 border-t">
-        <p className="text-sm text-gray-600">
+      <div className="px-4 py-3 bg-muted/30 border-t">
+        <p className="text-sm text-muted-foreground">
           表示中: {locations.filter((l) => l.is_active).length} 件（使用中） / 全{' '}
           {locations.length} 件
         </p>

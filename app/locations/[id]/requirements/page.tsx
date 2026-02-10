@@ -7,6 +7,8 @@ import { getDutyCodes } from '@/lib/actions/duty-codes'
 import { getTags } from '@/lib/actions/tags'
 import { RequirementList } from '@/components/locations/RequirementList'
 import { RequirementForm } from '@/components/locations/RequirementForm'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import type { Database } from '@/types/database'
 
@@ -86,7 +88,7 @@ export default function LocationRequirementsPage({
         <div className="flex items-center gap-4 mb-2">
           <Link
             href="/locations"
-            className="text-blue-600 hover:underline text-sm"
+            className="text-primary hover:underline text-sm"
           >
             ← 配属箇所一覧に戻る
           </Link>
@@ -98,7 +100,7 @@ export default function LocationRequirementsPage({
           <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
             {location.business_type}
           </span>
-          <span className="font-mono text-blue-600">{location.code}</span>
+          <span className="font-mono text-primary">{location.code}</span>
         </div>
       </div>
 
@@ -117,15 +119,15 @@ export default function LocationRequirementsPage({
         </div>
       ) : (
         <div className="mb-6">
-          <button
+          <Button
             onClick={() => {
               setEditingRequirement(undefined)
               setShowForm(true)
             }}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
           >
-            + 新規要件設定を追加
-          </button>
+            <Plus className="h-4 w-4 mr-2" />
+            新規要件設定を追加
+          </Button>
         </div>
       )}
 

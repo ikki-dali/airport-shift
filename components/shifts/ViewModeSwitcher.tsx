@@ -7,13 +7,13 @@ interface ViewModeSwitcherProps {
 
 export function ViewModeSwitcher({ viewMode, onViewModeChange }: ViewModeSwitcherProps) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
+    <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-1">
       <button
         onClick={() => onViewModeChange('grid')}
         className={`flex items-center gap-2 rounded px-3 py-2 text-sm font-medium transition-colors ${
           viewMode === 'grid'
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-muted'
         }`}
       >
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,8 +30,8 @@ export function ViewModeSwitcher({ viewMode, onViewModeChange }: ViewModeSwitche
         onClick={() => onViewModeChange('list')}
         className={`flex items-center gap-2 rounded px-3 py-2 text-sm font-medium transition-colors ${
           viewMode === 'list'
-            ? 'bg-blue-100 text-blue-700'
-            : 'text-gray-600 hover:bg-gray-100'
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-muted'
         }`}
       >
         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

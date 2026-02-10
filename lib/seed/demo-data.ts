@@ -31,8 +31,9 @@ export const DAILY_REQUIRED_STAFF = 43
 // A〜G時間帯グループ（モバイルアプリと同じ定義）
 const TIME_SLOT_GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
-// シフト希望タイプ（◯=出勤可能、△=できれば休み、×=出勤不可）
-const REQUEST_TYPES = ['◯', '△', '×'] as const
+// シフト希望タイプ
+// ◯=どの時間帯でも出勤可、休=休み希望、有給=有給休暇、A〜G=その時間帯に出勤可能
+const REQUEST_TYPES = ['◯', '休', '有給', 'A', 'B', 'C', 'D', 'E', 'F', 'G'] as const
 
 // 150人のスタッフを生成
 function generateStaff(): Array<{
@@ -109,10 +110,9 @@ function generateShiftRequests(
   staffIds.forEach((staffId, staffIndex) => {
     // スタッフごとの傾向を決定（一貫性を持たせる）
     const staffSeed = staffIndex * 17 // 擬似乱数のシード代わり
-    const preferenceRatio = [0.7, 0.2, 0.1] // ◯70%, △20%, ×10%
-
-    // スタッフごとに好む時間帯を設定（4〜7個をランダムに）
-    const preferredSlotCount = 4 + (staffSeed % 4) // 4-7個
+    
+    // スタッフごとに好む時間帯を設定（1〜3個をランダムに）
+    const preferredSlotCount = 1 + (staffSeed % 3) // 1-3個
     const shuffledSlots = [...TIME_SLOT_GROUPS].sort(() =>
       Math.sin(staffSeed + staffIndex) - 0.5
     )
@@ -122,11 +122,10 @@ function generateShiftRequests(
     while (currentDate <= nextMonthEnd) {
       const dateStr = format(currentDate, 'yyyy-MM-dd')
       const yearMonthStr = format(currentDate, 'yyyy-MM')
-      const dayOfMonth = currentDate.getDate()
       const dayOfWeek = currentDate.getDay()
 
-      // 希望提出率を決定（約80%の日に希望を出す）
-      const submitRate = 0.8
+      // 希望提出率を決定（約70%の日に希望を出す）
+      const submitRate = 0.7
       if (Math.random() > submitRate) {
         currentDate = addDays(currentDate, 1)
         continue
@@ -135,52 +134,45 @@ function generateShiftRequests(
       // 希望タイプを決定
       let requestType: string
       const rand = Math.random()
-      if (rand < preferenceRatio[0]) {
-        requestType = '◯'
-      } else if (rand < preferenceRatio[0] + preferenceRatio[1]) {
-        requestType = '△'
-      } else {
-        requestType = '×'
-      }
-
+      
       // 土日は休み希望が増える
       if (dayOfWeek === 0 || dayOfWeek === 6) {
-        if (Math.random() < 0.4) {
-          requestType = '×'
+        if (rand < 0.5) {
+          requestType = '休'
+        } else if (rand < 0.55) {
+          requestType = '有給'
+        } else if (rand < 0.65) {
+          requestType = '◯' // どの時間帯でもOK
+        } else {
+          // 好みの時間帯から選択
+          requestType = preferredSlots[Math.floor(Math.random() * preferredSlots.length)]
         }
-      }
-
-      // 時間帯を決定
-      let note: string | null = null
-      if (requestType === '◯') {
-        // 出勤可能な場合、時間帯を指定
-        const isAllSlots = preferredSlots.length === TIME_SLOT_GROUPS.length
-        if (!isAllSlots) {
-          // 日によって時間帯を少し変動させる
-          const dailyVariation = Math.random() < 0.3
-          let daySlots = [...preferredSlots]
-
-          if (dailyVariation) {
-            // 時々、追加の時間帯もOKにする
-            const extraSlot = TIME_SLOT_GROUPS.find(s => !daySlots.includes(s))
-            if (extraSlot) daySlots.push(extraSlot)
+      } else {
+        // 平日
+        if (rand < 0.15) {
+          requestType = '休'
+        } else if (rand < 0.18) {
+          requestType = '有給'
+        } else if (rand < 0.30) {
+          requestType = '◯' // どの時間帯でもOK
+        } else {
+          // 好みの時間帯から選択（日によって少し変動）
+          const dailyVariation = Math.random() < 0.2
+          if (dailyVariation && preferredSlots.length < TIME_SLOT_GROUPS.length) {
+            // たまに別の時間帯も選ぶ
+            const otherSlots = TIME_SLOT_GROUPS.filter(s => !preferredSlots.includes(s))
+            requestType = otherSlots[Math.floor(Math.random() * otherSlots.length)]
+          } else {
+            requestType = preferredSlots[Math.floor(Math.random() * preferredSlots.length)]
           }
-
-          daySlots.sort()
-          note = `[時間帯:${daySlots.join(',')}]`
         }
-      } else if (requestType === '△') {
-        // できれば休みだが、時間帯制限付きで出勤可能
-        const limitedSlots = preferredSlots.slice(0, 2 + (dayOfMonth % 2))
-        limitedSlots.sort()
-        note = `[時間帯:${limitedSlots.join(',')}]`
       }
 
       requests.push({
         staff_id: staffId,
         date: dateStr,
         request_type: requestType,
-        note,
+        note: null,
         year_month: yearMonthStr,
       })
 
@@ -205,23 +197,19 @@ function generateShiftsFromRequirements(
   location_id: string
   duty_code_id: string
   date: string
-  status: '確定' | '予定'
+  status: '確定'
 }> {
   const shifts: Array<{
     staff_id: string
     location_id: string
     duty_code_id: string
     date: string
-    status: '確定' | '予定'
+    status: '確定'
   }> = []
 
   const today = new Date()
   const thisMonthStart = startOfMonth(today)
   const nextMonthEnd = endOfMonth(addMonths(today, 1))
-
-  // スタッフごとの月間勤務日数を追跡
-  const staffWorkDays: Map<string, number> = new Map()
-  staffIds.forEach((id) => staffWorkDays.set(id, 0))
 
   // 各日にシフトを割り当て
   let currentDate = thisMonthStart
@@ -229,72 +217,53 @@ function generateShiftsFromRequirements(
     const dateStr = format(currentDate, 'yyyy-MM-dd')
     const dayOfMonth = currentDate.getDate()
 
-    // 充足率を決定（日によって変動、よりリアルに）
-    let fillRate: number
-    if (dayOfMonth % 7 === 0) {
-      // 7の倍数の日は人手不足（デモ用：赤ハイライト確認）
-      // 85-92%くらいのランダム（3-6人不足）
-      fillRate = 0.85 + (dayOfMonth % 3) * 0.02
-    } else if (dayOfMonth % 5 === 0) {
-      // 5の倍数の日はやや不足（1-2人不足）
-      fillRate = 0.95 + (dayOfMonth % 2) * 0.02
+    // 不足人数を決定（日によって変動）
+    // 目標: ほとんど充足（43/43）、月に2-3日だけ少し不足
+    let shortageCount: number
+    // 特定の日だけ不足（7日、14日、21日）
+    if (dayOfMonth === 7 || dayOfMonth === 14 || dayOfMonth === 21) {
+      shortageCount = 7 // 7人不足で固定
     } else {
-      // 通常日は充足
-      fillRate = 1.0
+      shortageCount = 0
     }
 
-    // その日に既にシフトが入っているスタッフを追跡
-    const assignedToday = new Set<string>()
-
-    // 利用可能なスタッフをシャッフル
-    const availableStaff = [...staffIds].sort(() => Math.random() - 0.5)
-    let staffIndex = 0
+    // その日に割り当てるスタッフのリスト（シャッフルして先頭から使う）
+    const shuffledStaff = [...staffIds].sort(() => Math.random() - 0.5)
+    let staffPoolIndex = 0
 
     // 各requirement（配置箇所×勤務記号）に対してシフトを作成
-    for (const req of requirements) {
-      // 充足率に応じて実際に配置する人数を決定（最低1人保証）
-      const actualCount = Math.max(1, Math.floor(req.required_staff_count * fillRate))
+    // スロットをシャッフルして、shortageCount分をスキップ対象に
+    const shuffledReqs = [...requirements].sort(() => Math.random() - 0.5)
+    let skippedSlots = 0
+
+    for (const req of shuffledReqs) {
+      let actualCount: number
+      if (shortageCount === 0) {
+        actualCount = req.required_staff_count
+      } else {
+        // 不足日: 一部のスロットで1人減らす
+        if (skippedSlots < shortageCount && req.required_staff_count > 0) {
+          actualCount = req.required_staff_count - 1
+          skippedSlots++
+        } else {
+          actualCount = req.required_staff_count
+        }
+      }
 
       for (let i = 0; i < actualCount; i++) {
-        // 次のスタッフを探す（月間勤務日数制限 + 同日重複を考慮）
-        let assigned = false
-        let attempts = 0
-        const maxAttempts = staffIds.length
+        // スタッフプールから次のスタッフを取得
+        const staffId = shuffledStaff[staffPoolIndex % shuffledStaff.length]
+        staffPoolIndex++
 
-        while (!assigned && attempts < maxAttempts) {
-          const staffId = availableStaff[staffIndex % availableStaff.length]
-          staffIndex++
-          attempts++
+        const status = '確定' as const
 
-          // 同じ日に既に割り当て済みならスキップ
-          if (assignedToday.has(staffId)) {
-            continue
-          }
-
-          const currentWorkDays = staffWorkDays.get(staffId) || 0
-          const isContract = staffIds.indexOf(staffId) < contractStaffCount
-
-          // 契約社員は月22日程度、パートは月12日程度
-          const maxWorkDays = isContract ? 22 : 12
-
-          if (currentWorkDays < maxWorkDays) {
-            // 今日以前は全て確定、未来の一部だけ予定（デモ用：バッジ確認）
-            const isFutureDate = currentDate > today
-            const isPending = isFutureDate && dayOfMonth % 3 === 0 && i === 0
-            const status: '確定' | '予定' = isPending ? '予定' : '確定'
-
-            shifts.push({
-              staff_id: staffId,
-              location_id: req.location_id,
-              duty_code_id: req.duty_code_id,
-              date: dateStr,
-              status,
-            })
-            staffWorkDays.set(staffId, currentWorkDays + 1)
-            assignedToday.add(staffId)
-            assigned = true
-          }
-        }
+        shifts.push({
+          staff_id: staffId,
+          location_id: req.location_id,
+          duty_code_id: req.duty_code_id,
+          date: dateStr,
+          status,
+        })
       }
     }
 
@@ -309,12 +278,11 @@ export async function seedDemoData() {
 
   console.log('🎭 Seeding demo data...')
 
-  // 1. 既存データをクリア
+  // 1. 既存データをクリア（外部キー制約の順序で削除）
   console.log('🗑️  Clearing existing data...')
   await supabase.from('shifts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   await supabase.from('shift_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-  // staff_tagsテーブルは存在しないためスキップ（staffテーブルにtags text[]カラムで統合済み）
-  // await supabase.from('staff_tags').delete().neq('staff_id', '00000000-0000-0000-0000-000000000000')
+  await supabase.from('location_requirements').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   await supabase.from('staff').delete().neq('id', '00000000-0000-0000-0000-000000000000')
   console.log('✅ Existing data cleared')
 
@@ -394,6 +362,7 @@ export async function seedDemoData() {
     name: s.name,
     email: s.email,
     role_id: defaultRoleId,
+    employment_type: s.employment_type,
   }))
 
   const { data: insertedStaff, error: staffError } = await supabase
@@ -503,17 +472,11 @@ export async function seedDemoData() {
 
   console.log('✅ Demo data seeding completed!')
 
-  // 統計情報
-  const pendingShifts = shiftsData.filter((s) => s.status === '予定').length
-  const confirmedShifts = shiftsData.filter((s) => s.status === '確定').length
-
   return {
     staff: insertedStaff?.length || 0,
     contractStaff: contractStaffCount,
     partTimeStaff: (insertedStaff?.length || 0) - contractStaffCount,
     shifts: insertedShiftsCount,
-    confirmedShifts,
-    pendingShifts,
     locations: locationIds.length,
     dutyCodes: dutyCodeIds.length,
     requirements: requirements.length,

@@ -56,10 +56,10 @@ export function ShiftListView({
         if (dayShifts.length === 0) return null
 
         return (
-          <div key={dateStr} className="rounded-lg border border-gray-200 bg-white">
+          <div key={dateStr} className="rounded-lg border border-border bg-card">
             {/* 日付ヘッダー */}
             <div
-              className={`border-b border-gray-200 bg-gray-50 px-4 py-3 ${onDateClick ? 'cursor-pointer hover:bg-blue-50 transition-colors' : ''}`}
+              className={`border-b border-border bg-muted/50 px-4 py-3 ${onDateClick ? 'cursor-pointer hover:bg-primary/5 transition-colors' : ''}`}
               onClick={(e) => {
                 e.stopPropagation()
                 onDateClick?.(date)
@@ -70,16 +70,16 @@ export function ShiftListView({
                   <span className="text-lg font-bold">
                     {format(date, 'M月d日', { locale: ja })}
                   </span>
-                  <span className="ml-2 text-sm text-gray-600">
+                  <span className="ml-2 text-sm text-muted-foreground">
                     ({format(date, 'EEEE', { locale: ja })})
                   </span>
                 </div>
-                <div className="text-sm text-gray-600">{dayShifts.length}件のシフト</div>
+                <div className="text-sm text-muted-foreground">{dayShifts.length}件のシフト</div>
               </div>
             </div>
 
             {/* 配属箇所ごとの表示 */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-border">
               {Object.entries(byLocation).map(([locationId, locationShifts]) => {
                 const location = locations.find((l) => l.id === locationId)
                 if (!location) return null
@@ -97,9 +97,9 @@ export function ShiftListView({
 
                 return (
                   <div key={locationId} className="p-4">
-                    <div className="mb-3 font-medium text-gray-900">
+                    <div className="mb-3 font-medium text-foreground">
                       {location.location_name}
-                      <span className="ml-2 text-xs text-gray-500">{location.code}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{location.code}</span>
                     </div>
 
                     <div className="space-y-3">
@@ -110,21 +110,21 @@ export function ShiftListView({
                         return (
                           <div
                             key={dutyCodeId}
-                            className="rounded-lg border border-gray-200 bg-gray-50 p-3"
+                            className="rounded-lg border border-border bg-muted/50 p-3"
                           >
                             <div className="mb-2 flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <span className="font-mono text-sm font-medium text-gray-900">
+                                <span className="font-mono text-sm font-medium text-foreground">
                                   {dutyCode.code}
                                 </span>
-                                <span className="text-xs text-gray-600">
+                                <span className="text-xs text-muted-foreground">
                                   {dutyCode.start_time} - {dutyCode.end_time}
                                 </span>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-muted-foreground">
                                   ({dutyCode.duration_hours}h{dutyCode.duration_minutes}m)
                                 </span>
                               </div>
-                              <span className="text-xs font-medium text-gray-600">
+                              <span className="text-xs font-medium text-muted-foreground">
                                 {dutyShifts.length}名
                               </span>
                             </div>
@@ -139,14 +139,14 @@ export function ShiftListView({
                                 return (
                                   <div
                                     key={shift.id}
-                                    className="group relative inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
+                                    className="group relative inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-sm border border-border hover:border-primary/30 hover:shadow-sm transition-all"
                                   >
-                                    <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">
+                                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                                       {staffMember.name.charAt(0)}
                                     </div>
                                     <span className="font-medium">{staffMember.name}</span>
                                     {isResponsible && (
-                                      <span className="inline-flex items-center rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-medium text-purple-800">
+                                      <span className="inline-flex items-center rounded bg-purple-100 px-1.5 py-0.5 text-xxs font-medium text-purple-800">
                                         責任者
                                       </span>
                                     )}

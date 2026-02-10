@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { ParseResult } from '@/lib/parsers/excel-parser'
+import { Button } from '@/components/ui/button'
 
 interface ParsePreviewProps {
   parseResult: ParseResult
@@ -28,14 +29,14 @@ export function ParsePreview({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-card rounded-lg shadow p-6">
       <h2 className="text-2xl font-semibold mb-6">パース結果プレビュー</h2>
 
       {/* サマリー */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="text-sm text-blue-600 font-medium mb-1">対象年月</div>
-          <div className="text-2xl font-bold text-blue-900">
+        <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="text-sm text-primary font-medium mb-1">対象年月</div>
+          <div className="text-2xl font-bold text-foreground">
             {formatYearMonth(parseResult.yearMonth)}
           </div>
         </div>
@@ -59,7 +60,7 @@ export function ParsePreview({
 
       {/* エラー */}
       {hasErrors && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">❌</span>
             <h3 className="font-semibold text-red-900">
@@ -122,19 +123,19 @@ export function ParsePreview({
 
       {/* 上書きオプション */}
       {!hasErrors && (
-        <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+        <div className="mb-6 p-4 border border-border rounded-lg">
           <label className="flex items-start cursor-pointer">
             <input
               type="checkbox"
               checked={overwrite}
               onChange={(e) => setOverwrite(e.target.checked)}
-              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              className="mt-1 w-4 h-4 text-primary border-border rounded focus:ring-primary"
             />
             <div className="ml-3">
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-foreground">
                 既存データの上書き
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-muted-foreground">
                 {formatYearMonth(parseResult.yearMonth)}
                 のデータが既に存在する場合、削除して新しいデータを取り込みます
               </div>
@@ -145,20 +146,20 @@ export function ParsePreview({
 
       {/* アクションボタン */}
       <div className="flex gap-4">
-        <button
+        <Button
           onClick={() => onConfirm(overwrite)}
           disabled={hasErrors || loading}
-          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+          className="flex-1"
         >
           {loading ? '取り込み中...' : '取り込み実行'}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="outline"
           onClick={onCancel}
           disabled={loading}
-          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition"
         >
           キャンセル
-        </button>
+        </Button>
       </div>
     </div>
   )

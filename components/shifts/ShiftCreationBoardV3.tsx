@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, addDays, startOfWeek } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Calendar, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, X, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import {
@@ -21,12 +21,18 @@ import type { StaffWithRole } from '@/lib/actions/staff'
 import type { Location } from '@/lib/actions/locations'
 import type { DutyCode } from '@/lib/actions/duty-codes'
 import type { Shift } from '@/lib/actions/shifts'
+import type { ShiftRequestWithStaff } from '@/lib/actions/shift-requests'
 import { AIGenerateButton } from './AIGenerateButton'
-import { ShiftRequestModal } from './ShiftRequestModal'
+import { AssignmentPreview } from './AssignmentPreview'
 import { StaffSelectorModal } from './StaffSelectorModal'
 import { DeleteShiftModal } from './DeleteShiftModal'
 import { DraggableSlot } from './DraggableSlot'
-import { deleteShift, deleteStaffShiftsByDateRange, updateShift, getStaffShiftByDate } from '@/lib/actions/shifts'
+import { ShiftRequestsPanel } from './ShiftRequestsPanel'
+import { ShiftProgressBanner } from './ShiftProgressBanner'
+import { ConfirmMonthDialog } from './ConfirmMonthDialog'
+import { deleteShift, deleteStaffShiftsByDateRange, updateShift, getStaffShiftByDate, confirmMonthShifts } from '@/lib/actions/shifts'
+import { previewAutoAssign } from '@/lib/actions/auto-assign'
+import type { OptimizationResult } from '@/lib/ai/shift-optimizer'
 import { toast } from 'sonner'
 
 interface ShiftCreationBoardV3Props {
@@ -35,6 +41,7 @@ interface ShiftCreationBoardV3Props {
   dutyCodes: DutyCode[]
   shifts: Shift[]
   locationRequirements: any[]
+  shiftRequests: ShiftRequestWithStaff[]
 }
 
 interface SlotData {
@@ -51,6 +58,7 @@ export function ShiftCreationBoardV3({
   dutyCodes,
   shifts,
   locationRequirements,
+  shiftRequests,
 }: ShiftCreationBoardV3Props) {
   const router = useRouter()
   const [, startTransition] = useTransition()
@@ -60,7 +68,7 @@ export function ShiftCreationBoardV3({
     return new Date(today.getFullYear(), today.getMonth(), 1) // 月の初日
   })
 
-  const [requestModalOpen, setRequestModalOpen] = useState(false)
+  const [requestsPanelOpen, setRequestsPanelOpen] = useState(false)
   const [staffSelectorOpen, setStaffSelectorOpen] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<{
     date: string
@@ -82,6 +90,10 @@ export function ShiftCreationBoardV3({
     shiftId: string
     staffName: string
   } | null>(null)
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [isReoptimizing, setIsReoptimizing] = useState(false)
+  const [reoptimizePreview, setReoptimizePreview] = useState<(OptimizationResult & { warnings: string[]; conflicts: any[] }) | null>(null)
+  const [showReoptimizePreview, setShowReoptimizePreview] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -207,17 +219,62 @@ export function ShiftCreationBoardV3({
     }
   }
 
-  // 月の1日〜10日の日付を生成
-  const displayDays = Array.from({ length: 10 }, (_, i) =>
+  const handleConfirmMonth = async () => {
+    try {
+      const ym = format(currentMonth, 'yyyy-MM')
+      await confirmMonthShifts(ym)
+      toast.success('シフトを確定しました')
+      handleRefresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'シフトの確定に失敗しました')
+    }
+  }
+
+  const handleReoptimize = async () => {
+    setIsReoptimizing(true)
+    try {
+      const ym = format(currentMonth, 'yyyy-MM')
+      const result = await previewAutoAssign({
+        yearMonth: ym,
+        overwriteExisting: false,
+      })
+      setReoptimizePreview(result)
+      setShowReoptimizePreview(true)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '再最適化に失敗しました')
+    } finally {
+      setIsReoptimizing(false)
+    }
+  }
+
+  const handleReoptimizeComplete = () => {
+    setShowReoptimizePreview(false)
+    setReoptimizePreview(null)
+    handleRefresh()
+  }
+
+  // 月の全日付を生成（その月の日数分）
+  const daysInMonth = new Date(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1,
+    0
+  ).getDate()
+  
+  const displayDays = Array.from({ length: daysInMonth }, (_, i) =>
     addDays(currentMonth, i)
   )
 
   const periodStartDate = format(currentMonth, 'yyyy-MM-dd')
-  const periodEndDate = format(addDays(currentMonth, 9), 'yyyy-MM-dd')
+  const periodEndDate = format(addDays(currentMonth, daysInMonth - 1), 'yyyy-MM-dd')
 
   // その期間のシフトをフィルタ
   const periodShifts = shifts.filter(
     (s) => s.date >= periodStartDate && s.date <= periodEndDate
+  )
+
+  // その期間のシフト希望をフィルタ
+  const periodRequests = shiftRequests.filter(
+    (r) => r.date >= periodStartDate && r.date <= periodEndDate
   )
 
   // 月を移動
@@ -309,14 +366,53 @@ export function ShiftCreationBoardV3({
     })
   })
 
+  // 必要スロット総数を計算
+  const totalRequiredSlots = tableRows.reduce(
+    (sum, row) => sum + row.requiredCount * displayDays.length,
+    0
+  )
+
+  // スタッフ×日付の希望マップを作成（quality判定用）
+  const requestMap = new Map<string, string>()
+  periodRequests.forEach((r) => {
+    requestMap.set(`${r.staff_id}_${r.date}`, r.request_type)
+  })
+
+  // スロットのquality判定
+  const getSlotQuality = (
+    staffId: string | undefined,
+    date: string,
+    isEmpty: boolean
+  ): 'good' | 'warning' | 'unfilled' | undefined => {
+    if (isEmpty) return 'unfilled'
+    if (!staffId) return undefined
+    const key = `${staffId}_${date}`
+    const requestType = requestMap.get(key)
+    if (requestType === '休') return 'warning'
+    if (requestType === '◯') return 'good'
+    return undefined
+  }
+
   return (
     <DndContext
+      id="shift-creation-board"
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
+      {/* サマリーバナー */}
+      <ShiftProgressBanner
+        currentMonth={currentMonth}
+        shifts={periodShifts}
+        shiftRequests={periodRequests}
+        totalRequiredSlots={totalRequiredSlots}
+        onReoptimize={handleReoptimize}
+        onConfirm={() => setConfirmDialogOpen(true)}
+        isReoptimizing={isReoptimizing}
+      />
+
       {/* ヘッダー */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -324,7 +420,7 @@ export function ShiftCreationBoardV3({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="text-lg font-semibold">
-            {format(currentMonth, 'yyyy年M月', { locale: ja })} 1日〜10日
+            {format(currentMonth, 'yyyy年M月', { locale: ja })}
           </div>
           <Button variant="outline" size="icon" onClick={goToNextMonth}>
             <ChevronRight className="h-4 w-4" />
@@ -336,13 +432,20 @@ export function ShiftCreationBoardV3({
 
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            onClick={() => setRequestModalOpen(true)}
+            variant={requestsPanelOpen ? 'default' : 'outline'}
+            onClick={() => setRequestsPanelOpen(!requestsPanelOpen)}
             className="gap-2"
+          >
+            <Users className="h-4 w-4" />
+            希望一覧
+          </Button>
+          <a
+            href={`/shifts/requests?month=${format(currentMonth, 'yyyy-MM')}`}
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <Calendar className="h-4 w-4" />
             希望設定
-          </Button>
+          </a>
 
           <AIGenerateButton
             weekStart={new Date(periodStartDate)}
@@ -361,33 +464,43 @@ export function ShiftCreationBoardV3({
         <div className="min-w-max">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b-2 border-gray-300">
-                <th className="px-3 py-3 text-left font-semibold bg-gray-50 border-r sticky left-0 z-20 min-w-[100px]">
+              <tr className="border-b border-border">
+                <th className="px-3 py-3 text-left font-semibold bg-muted border-r sticky left-0 z-20 min-w-[100px]">
                   配属箇所
                 </th>
-                <th className="px-3 py-3 text-left font-semibold bg-gray-50 border-r sticky left-[100px] z-20 min-w-[100px]">
+                <th className="px-3 py-3 text-left font-semibold bg-muted border-r sticky left-[100px] z-20 min-w-[100px]">
                   勤務記号
                 </th>
                 {displayDays.map((day) => {
                   const dateStr = format(day, 'yyyy-MM-dd')
                   const dayOfWeek = format(day, 'E', { locale: ja })
                   const isWeekend = dayOfWeek === '土' || dayOfWeek === '日'
+
+                  // その日の全行の充足率を計算
+                  let dayRequired = 0
+                  let dayFilled = 0
+                  tableRows.forEach((row) => {
+                    const slots = row.slots[dateStr] || []
+                    dayRequired += row.requiredCount
+                    dayFilled += slots.filter((s) => !s.isEmpty).length
+                  })
+                  const dayFillRate = dayRequired > 0 ? Math.round((dayFilled / dayRequired) * 100) : 100
+
                   return (
                     <th
                       key={dateStr}
                       className={`px-3 py-3 text-center font-semibold border-r min-w-[120px] ${
-                        isWeekend ? 'bg-blue-50' : 'bg-gray-50'
+                        isWeekend ? 'bg-navy-50' : 'bg-muted/50'
                       }`}
                     >
-                      <div className="text-sm">
-                        {format(day, 'M/d', { locale: ja })}
+                      <div className={`text-sm ${isWeekend ? 'text-navy-600' : ''}`}>
+                        {format(day, 'M/d', { locale: ja })} {dayOfWeek}
                       </div>
-                      <div
-                        className={`text-xs ${
-                          isWeekend ? 'text-blue-600' : 'text-gray-500'
-                        }`}
-                      >
-                        {dayOfWeek}
+                      <div className={`text-xs font-bold mt-0.5 ${
+                        dayFillRate === 100 ? 'text-green-600' :
+                        dayFillRate >= 80 ? 'text-amber-600' : 'text-red-600'
+                      }`}>
+                        {dayFillRate}%
                       </div>
                     </th>
                   )
@@ -397,7 +510,7 @@ export function ShiftCreationBoardV3({
             <tbody>
               {tableRows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
                     配置箇所の要件が設定されていません
                   </td>
                 </tr>
@@ -422,19 +535,19 @@ export function ShiftCreationBoardV3({
                   }
 
                   return (
-                    <tr key={`${row.locationId}-${row.dutyCodeId}-${index}`} className="border-b hover:bg-gray-50">
+                    <tr key={`${row.locationId}-${row.dutyCodeId}-${index}`} className="border-b hover:bg-muted/30 transition-colors">
                       {isFirstRowOfLocation ? (
                         <td
                           rowSpan={rowspan}
-                          className="px-3 py-3 border-r font-medium bg-white sticky left-0 z-10 min-w-[100px]"
+                          className="px-3 py-3 border-r font-medium bg-background sticky left-0 z-10 min-w-[100px]"
                         >
                           <div className="text-sm">{row.locationName}</div>
-                          <div className="text-xs text-gray-500">{row.locationCode}</div>
+                          <div className="text-xs text-muted-foreground">{row.locationCode}</div>
                         </td>
                       ) : null}
-                      <td className="px-3 py-3 border-r bg-white sticky left-[100px] z-10 min-w-[100px]">
+                      <td className="px-3 py-3 border-r bg-background sticky left-[100px] z-10 min-w-[100px]">
                       <div className="text-sm font-medium">{row.dutyCode}</div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         {row.requiredCount}人必要
                       </div>
                     </td>
@@ -466,6 +579,7 @@ export function ShiftCreationBoardV3({
                                     locationId: row.locationId,
                                     dutyCodeId: row.dutyCodeId,
                                   }}
+                                  quality={getSlotQuality(slot.staffId, dateStr, slot.isEmpty)}
                                   onClick={() => {
                                     handleOpenStaffSelector(
                                       dateStr,
@@ -491,18 +605,13 @@ export function ShiftCreationBoardV3({
                                 />
                               )
                             })}
-                            {/* 充足率 */}
-                            <div className="text-center pt-1">
-                              <span
-                                className={`text-xs font-semibold ${
-                                  fillRate === 100
-                                    ? 'text-green-600'
-                                    : 'text-red-600'
-                                }`}
-                              >
-                                {fillRate.toFixed(0)}%
-                              </span>
-                            </div>
+                            {fillRate < 100 && (
+                              <div className="text-center pt-1">
+                                <span className="text-xs font-semibold text-red-600">
+                                  {fillRate.toFixed(0)}%
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </td>
                       )
@@ -515,15 +624,6 @@ export function ShiftCreationBoardV3({
           </table>
         </div>
       </Card>
-
-      {/* 希望設定モーダル */}
-      <ShiftRequestModal
-        open={requestModalOpen}
-        onOpenChange={setRequestModalOpen}
-        weekDays={displayDays}
-        staff={staff}
-        onSuccess={handleRefresh}
-      />
 
       {/* スタッフ選択モーダル */}
       {selectedSlot && (
@@ -543,9 +643,19 @@ export function ShiftCreationBoardV3({
               .filter((s) => s.date === selectedSlot.date)
               .map((s) => s.staff_id)
           }
+          shiftRequests={shiftRequests.filter((r) => r.date === selectedSlot.date)}
           onSuccess={handleRefresh}
         />
       )}
+
+      {/* シフト希望一覧パネル */}
+      <ShiftRequestsPanel
+        open={requestsPanelOpen}
+        onOpenChange={setRequestsPanelOpen}
+        shiftRequests={periodRequests}
+        staff={staff}
+        displayDays={displayDays}
+      />
 
       {/* 削除確認モーダル */}
       {shiftToDelete && (
@@ -558,10 +668,32 @@ export function ShiftCreationBoardV3({
         />
       )}
 
+      {/* 確定確認ダイアログ */}
+      <ConfirmMonthDialog
+        open={confirmDialogOpen}
+        onOpenChange={setConfirmDialogOpen}
+        pendingCount={periodShifts.filter((s) => s.status === '予定').length}
+        yearMonth={format(currentMonth, 'yyyy-MM')}
+        onConfirm={handleConfirmMonth}
+      />
+
+      {/* 再最適化プレビュー */}
+      {showReoptimizePreview && reoptimizePreview && (
+        <AssignmentPreview
+          yearMonth={format(currentMonth, 'yyyy-MM')}
+          result={reoptimizePreview}
+          onClose={() => {
+            setShowReoptimizePreview(false)
+            setReoptimizePreview(null)
+          }}
+          onConfirm={handleReoptimizeComplete}
+        />
+      )}
+
       {/* ドラッグオーバーレイ */}
       <DragOverlay>
         {activeShift ? (
-          <div className="px-2 py-1.5 rounded text-xs text-center font-medium bg-blue-100 border border-blue-400 shadow-lg">
+          <div className="px-2 py-1.5 rounded text-xs text-center font-medium bg-primary/10 border border-primary shadow-lg">
             {activeShift.staffName}
           </div>
         ) : null}

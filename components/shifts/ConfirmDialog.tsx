@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ConstraintSummary } from './ConstraintSummary'
 import { ConstraintViolation } from '@/lib/validators/shift-validator'
+import { Button } from '@/components/ui/button'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -31,16 +32,16 @@ export function ConfirmDialog({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="w-full max-w-2xl rounded-lg bg-card p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-bold">{title}</h2>
 
         <div className="mb-4 space-y-2">
-          <p className="text-sm text-gray-600">
-            対象: <span className="font-medium text-gray-900">{targetDescription}</span>
+          <p className="text-sm text-muted-foreground">
+            対象: <span className="font-medium text-foreground">{targetDescription}</span>
           </p>
-          <p className="text-sm text-gray-600">
-            件数: <span className="font-medium text-gray-900">{shiftCount}件</span>
+          <p className="text-sm text-muted-foreground">
+            件数: <span className="font-medium text-foreground">{shiftCount}件</span>
           </p>
         </div>
 
@@ -50,21 +51,20 @@ export function ConfirmDialog({
         </div>
 
         <div className="flex justify-end gap-3">
-          <button
+          <Button
+            variant="outline"
             onClick={onClose}
             disabled={isLoading}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
             キャンセル
-          </button>
+          </Button>
           {errors.length === 0 && (
-            <button
+            <Button
               onClick={onConfirm}
               disabled={isLoading}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {isLoading ? '処理中...' : warnings.length > 0 ? '警告を無視して確定' : '確定する'}
-            </button>
+            </Button>
           )}
         </div>
       </div>

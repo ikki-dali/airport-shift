@@ -37,9 +37,9 @@ export function StaffMonthlyCalendar({
     <div className="overflow-x-auto">
       <div className="min-w-max">
         {/* ヘッダー */}
-        <div className="flex border-b-2 border-gray-300 bg-gray-50 sticky top-0 z-10">
+        <div className="flex border-b-2 border-gray-200 bg-gray-50 sticky top-0 z-10">
           {/* スタッフ列ヘッダー */}
-          <div className="w-32 flex-shrink-0 border-r-2 border-gray-300 p-2 font-bold">
+          <div className="w-32 flex-shrink-0 border-r-2 border-gray-200 p-2 font-bold">
             社員番号/氏名
           </div>
 
@@ -49,7 +49,7 @@ export function StaffMonthlyCalendar({
               key={day}
               className={`w-28 flex-shrink-0 border-r border-gray-200 text-center ${
                 dayOfWeeks[index] === '土'
-                  ? 'bg-blue-50'
+                  ? 'bg-navy-50'
                   : dayOfWeeks[index] === '日'
                     ? 'bg-red-50'
                     : ''
@@ -65,7 +65,7 @@ export function StaffMonthlyCalendar({
         {staffWithShifts.map((staff) => (
           <div key={staff.id} className="flex border-b border-gray-200 hover:bg-gray-50">
             {/* スタッフ情報 */}
-            <div className="w-32 flex-shrink-0 border-r-2 border-gray-300 p-2">
+            <div className="w-32 flex-shrink-0 border-r-2 border-gray-200 p-2">
               <div className="font-mono text-xs text-gray-600">{staff.employee_number}</div>
               <div className="font-medium text-sm truncate">{staff.name}</div>
             </div>
@@ -85,7 +85,7 @@ export function StaffMonthlyCalendar({
                   {shift ? (
                     <div className="space-y-0.5">
                       {/* 勤務記号 */}
-                      <div className="font-mono font-semibold text-xs text-blue-900">
+                      <div className="font-mono font-semibold text-xs text-foreground">
                         {shift.duty_codes?.code || '-'}
                       </div>
                       {/* 配属箇所 */}

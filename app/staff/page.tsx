@@ -28,7 +28,7 @@ export default async function StaffPage() {
         <div className="flex gap-2">
           <BulkImportButton roles={roles} tags={tags} />
           <Link href="/staff/new">
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button>
               <Plus className="h-4 w-4 mr-2" />
               新規登録
             </Button>

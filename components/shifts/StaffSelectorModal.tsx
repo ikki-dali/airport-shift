@@ -9,7 +9,9 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import type { StaffWithRole } from '@/lib/actions/staff'
+import type { ShiftRequestWithStaff } from '@/lib/actions/shift-requests'
 import { createShift, updateShift } from '@/lib/actions/shifts'
 import { toast } from 'sonner'
 
@@ -25,7 +27,36 @@ interface StaffSelectorModalProps {
   currentShiftId?: string
   currentStaffId?: string
   existingShiftIds: string[] // その日にすでにシフトが入っているスタッフIDのリスト
+  shiftRequests?: ShiftRequestWithStaff[] // その日のシフト希望
   onSuccess: () => void
+}
+
+// 希望タイプに応じたバッジスタイルを返す
+function getRequestBadgeStyle(requestType: string): string {
+  switch (requestType) {
+    case '◯':
+      return 'bg-green-100 text-green-800 border-green-300'
+    case '休':
+      return 'bg-red-100 text-red-800 border-red-300'
+    case '有給':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+    case 'A':
+      return 'bg-pink-100 text-pink-800 border-pink-300'
+    case 'B':
+      return 'bg-orange-100 text-orange-800 border-orange-300'
+    case 'C':
+      return 'bg-amber-100 text-amber-800 border-amber-300'
+    case 'D':
+      return 'bg-lime-100 text-lime-800 border-lime-300'
+    case 'E':
+      return 'bg-cyan-100 text-cyan-800 border-cyan-300'
+    case 'F':
+      return 'bg-primary/10 text-primary border-primary/30'
+    case 'G':
+      return 'bg-indigo-100 text-indigo-800 border-indigo-300'
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200'
+  }
 }
 
 export function StaffSelectorModal({
@@ -40,10 +71,16 @@ export function StaffSelectorModal({
   currentShiftId,
   currentStaffId,
   existingShiftIds,
+  shiftRequests = [],
   onSuccess,
 }: StaffSelectorModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // スタッフIDごとの希望をマップ化
+  const requestByStaffId = new Map(
+    shiftRequests.map((r) => [r.staff_id, r])
+  )
 
   const availableStaff = staff.filter((s) => {
     // 検索クエリでフィルタ
@@ -57,6 +94,27 @@ export function StaffSelectorModal({
       s.id === currentStaffId || !existingShiftIds.includes(s.id)
 
     return matchesSearch && isAvailable
+  })
+
+  // 希望のあるスタッフを優先してソート（◯が最優先、休は最後）
+  const sortedStaff = [...availableStaff].sort((a, b) => {
+    const requestA = requestByStaffId.get(a.id)
+    const requestB = requestByStaffId.get(b.id)
+    
+    // 希望がないスタッフは後ろに
+    if (!requestA && !requestB) return 0
+    if (!requestA) return 1
+    if (!requestB) return -1
+    
+    // ◯希望を最優先
+    if (requestA.request_type === '◯' && requestB.request_type !== '◯') return -1
+    if (requestA.request_type !== '◯' && requestB.request_type === '◯') return 1
+    
+    // 休希望は最後に
+    if (requestA.request_type === '休' && requestB.request_type !== '休') return 1
+    if (requestA.request_type !== '休' && requestB.request_type === '休') return -1
+    
+    return 0
   })
 
   const handleSelectStaff = async (staffId: string) => {
@@ -111,27 +169,39 @@ export function StaffSelectorModal({
 
           {/* スタッフリスト */}
           <div className="flex-1 overflow-y-auto space-y-2">
-            {availableStaff.length === 0 ? (
+            {sortedStaff.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 利用可能なスタッフがいません
               </div>
             ) : (
-              availableStaff.map((s) => (
-                <Button
-                  key={s.id}
-                  variant={s.id === currentStaffId ? 'default' : 'outline'}
-                  className="w-full justify-start h-auto py-3"
-                  onClick={() => handleSelectStaff(s.id)}
-                  disabled={isSubmitting}
-                >
-                  <div className="text-left">
-                    <div className="font-medium">{s.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {s.employee_number} - {s.roles?.name || '役割なし'}
+              sortedStaff.map((s) => {
+                const request = requestByStaffId.get(s.id)
+                const isRestDay = request?.request_type === '休'
+                
+                return (
+                  <Button
+                    key={s.id}
+                    variant={s.id === currentStaffId ? 'default' : 'outline'}
+                    className={`w-full justify-between h-auto py-3 ${
+                      isRestDay ? 'opacity-50 bg-red-50 hover:bg-red-100' : ''
+                    }`}
+                    onClick={() => handleSelectStaff(s.id)}
+                    disabled={isSubmitting}
+                  >
+                    <div className="text-left">
+                      <div className="font-medium">{s.name}</div>
+                      <div className="text-xs text-gray-500">
+                        {s.employee_number} - {s.roles?.name || '役割なし'}
+                      </div>
                     </div>
-                  </div>
-                </Button>
-              ))
+                    {request && (
+                      <Badge variant="outline" className={getRequestBadgeStyle(request.request_type)}>
+                        希望: {request.request_type}
+                      </Badge>
+                    )}
+                  </Button>
+                )
+              })
             )}
           </div>
         </div>

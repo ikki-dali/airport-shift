@@ -37,6 +37,7 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
     duration_minutes: dutyCode?.duration_minutes || 0,
     break_minutes: dutyCode?.break_minutes || 0,
     is_overnight: dutyCode?.is_overnight || false,
+    total_hours: dutyCode?.total_hours ?? null,
   })
 
   // コード入力時に自動パース
@@ -83,6 +84,7 @@ export function DutyCodeFormDialog({ open, onOpenChange, dutyCode, mode }: DutyC
         duration_minutes: 0,
         break_minutes: 0,
         is_overnight: false,
+        total_hours: null,
       })
     } catch (error: unknown) {
       toast.error(`エラーが発生しました: ${error instanceof Error ? error.message : 'Unknown error'}`)

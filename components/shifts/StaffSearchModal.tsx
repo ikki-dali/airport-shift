@@ -115,7 +115,7 @@ export function StaffSearchModal({
           {/* 左側：スタッフ選択 */}
           <div className="flex flex-col gap-3 overflow-hidden">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="スタッフ名・社員番号・役職で検索..."
                 value={searchQuery}
@@ -132,14 +132,14 @@ export function StaffSearchModal({
                     onClick={() => setSelectedStaffId(s.id)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       selectedStaffId === s.id
-                        ? 'bg-blue-100 border-2 border-blue-500'
-                        : 'bg-white border border-gray-200 hover:bg-gray-50'
+                        ? 'bg-primary/10 border-2 border-primary'
+                        : 'bg-card border border-border hover:bg-muted/50'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-medium">{s.name}</div>
-                        <div className="text-xs text-gray-500">{s.employee_number}</div>
+                        <div className="text-xs text-muted-foreground">{s.employee_number}</div>
                       </div>
                       {s.roles && (
                         <Badge variant="outline" className="text-xs">
@@ -150,7 +150,7 @@ export function StaffSearchModal({
                   </button>
                 ))}
                 {filteredStaff.length === 0 && (
-                  <div className="text-center text-gray-500 py-8">
+                  <div className="text-center text-muted-foreground py-8">
                     該当するスタッフが見つかりません
                   </div>
                 )}
@@ -165,7 +165,7 @@ export function StaffSearchModal({
               <div className="p-2 space-y-4">
                 {Array.from(dutyCodesByCategory.entries()).map(([category, codes]) => (
                   <div key={category}>
-                    <div className="text-sm font-semibold text-gray-700 mb-2 px-2">
+                    <div className="text-sm font-semibold text-foreground mb-2 px-2">
                       {category}
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -175,12 +175,12 @@ export function StaffSearchModal({
                           onClick={() => setSelectedDutyCodeId(dc.id)}
                           className={`p-3 rounded-lg border text-left transition-colors ${
                             selectedDutyCodeId === dc.id
-                              ? 'bg-blue-100 border-blue-500 border-2'
-                              : 'bg-white border-gray-200 hover:bg-gray-50'
+                              ? 'bg-primary/10 border-primary border-2'
+                              : 'bg-card border-border hover:bg-muted/50'
                           }`}
                         >
                           <div className="font-mono font-bold text-lg">{dc.code}</div>
-                          <div className="text-xs text-gray-600 mt-1">
+                          <div className="text-xs text-muted-foreground mt-1">
                             {dc.start_time} - {dc.end_time}
                           </div>
                         </button>

@@ -73,9 +73,9 @@ export function ShiftCellV2({
         {/* 追加ボタン */}
         <button
           onClick={() => onAddClick(locationId, locationName, date)}
-          className="w-full border border-dashed border-gray-300 rounded p-2 hover:border-blue-500 hover:bg-blue-50 transition-colors group"
+          className="w-full border border-dashed border-gray-200 rounded p-2 hover:border-primary hover:bg-primary/5 transition-colors group"
         >
-          <div className="flex items-center justify-center gap-1 text-xs text-gray-400 group-hover:text-blue-600">
+          <div className="flex items-center justify-center gap-1 text-xs text-gray-400 group-hover:text-primary">
             <Plus className="h-3 w-3" />
             <span>追加</span>
           </div>

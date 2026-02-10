@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createLocationRequirement, updateLocationRequirement } from '@/lib/actions/location-requirements'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 import type { Database } from '@/types/database'
 
 type LocationRequirement = Database['public']['Tables']['location_requirements']['Row']
@@ -93,7 +94,7 @@ export function RequirementForm({
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded text-red-600">
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded text-destructive">
           {error}
         </div>
       )}
@@ -101,16 +102,16 @@ export function RequirementForm({
       <div>
         <label
           htmlFor="duty_code_id"
-          className="block text-sm font-medium text-gray-700 mb-2"
+          className="block text-sm font-medium text-foreground mb-2"
         >
-          勤務記号 <span className="text-red-500">*</span>
+          勤務記号 <span className="text-destructive">*</span>
         </label>
         <select
           id="duty_code_id"
           name="duty_code_id"
           defaultValue={requirement?.duty_code_id || ''}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
         >
           <option value="">選択してください</option>
           {dutyCodes.map((dutyCode) => (
@@ -125,9 +126,9 @@ export function RequirementForm({
         <div>
           <label
             htmlFor="required_staff_count"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-foreground mb-2"
           >
-            必要人数 <span className="text-red-500">*</span>
+            必要人数 <span className="text-destructive">*</span>
           </label>
           <div className="relative">
             <input
@@ -138,17 +139,17 @@ export function RequirementForm({
               required
               min="1"
               max="100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <span className="absolute right-3 top-2 text-gray-500">名</span>
+            <span className="absolute right-3 top-2 text-muted-foreground">名</span>
           </div>
-          <p className="mt-1 text-sm text-gray-500">1-100名</p>
+          <p className="mt-1 text-xs text-muted-foreground">1-100名</p>
         </div>
 
         <div>
           <label
             htmlFor="required_responsible_count"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-foreground mb-2"
           >
             必要責任者数
           </label>
@@ -160,72 +161,72 @@ export function RequirementForm({
               defaultValue={requirement?.required_responsible_count || 0}
               min="0"
               max="10"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <span className="absolute right-3 top-2 text-gray-500">名</span>
+            <span className="absolute right-3 top-2 text-muted-foreground">名</span>
           </div>
-          <p className="mt-1 text-sm text-gray-500">0-10名</p>
+          <p className="mt-1 text-xs text-muted-foreground">0-10名</p>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-foreground mb-2">
           必要タグ
         </label>
-        <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-300 rounded-lg p-3">
+        <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
           {tags.map((tag) => (
             <label
               key={tag.id}
-              className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+              className="flex items-center p-2 hover:bg-muted/50 transition-colors rounded cursor-pointer"
             >
               <input
                 type="checkbox"
                 checked={selectedTags.includes(tag.name)}
                 onChange={() => handleTagToggle(tag.name)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                className="w-4 h-4 text-primary border-gray-200 rounded focus:ring-primary"
               />
               <span className="ml-3 text-sm font-medium text-gray-900">
                 {tag.name}
               </span>
               {tag.description && (
-                <span className="ml-2 text-sm text-gray-500">
+                <span className="ml-2 text-sm text-muted-foreground">
                   ({tag.description})
                 </span>
               )}
             </label>
           ))}
         </div>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-xs text-muted-foreground">
           選択中: {selectedTags.length > 0 ? selectedTags.join(', ') : 'なし'}
         </p>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          適用パターン <span className="text-red-500">*</span>
+        <label className="block text-sm font-medium text-foreground mb-3">
+          適用パターン <span className="text-destructive">*</span>
         </label>
         <div className="space-y-3">
-          <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
             <input
               type="radio"
               checked={patternType === 'default'}
               onChange={() => setPatternType('default')}
-              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              className="mt-1 w-4 h-4 text-primary border-gray-200 focus:ring-primary"
             />
             <div className="ml-3">
               <div className="font-medium text-gray-900">デフォルト</div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-muted-foreground">
                 特に指定がない日に適用される要件
               </div>
             </div>
           </label>
 
-          <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
             <input
               type="radio"
               checked={patternType === 'day_of_week'}
               onChange={() => setPatternType('day_of_week')}
-              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              className="mt-1 w-4 h-4 text-primary border-gray-200 focus:ring-primary"
             />
             <div className="ml-3 flex-1">
               <div className="font-medium text-gray-900 mb-2">曜日指定</div>
@@ -234,7 +235,7 @@ export function RequirementForm({
                   name="day_of_week"
                   defaultValue={requirement?.day_of_week?.toString() || ''}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <option value="">曜日を選択</option>
                   {DAYS_OF_WEEK.map((day) => (
@@ -247,12 +248,12 @@ export function RequirementForm({
             </div>
           </label>
 
-          <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <label className="flex items-start p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
             <input
               type="radio"
               checked={patternType === 'specific_date'}
               onChange={() => setPatternType('specific_date')}
-              className="mt-1 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              className="mt-1 w-4 h-4 text-primary border-gray-200 focus:ring-primary"
             />
             <div className="ml-3 flex-1">
               <div className="font-medium text-gray-900 mb-2">特定日指定</div>
@@ -262,7 +263,7 @@ export function RequirementForm({
                   name="specific_date"
                   defaultValue={requirement?.specific_date || ''}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               )}
             </div>
@@ -271,20 +272,21 @@ export function RequirementForm({
       </div>
 
       <div className="flex gap-4 pt-4">
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="flex-1"
         >
           {loading ? '保存中...' : requirement ? '更新' : '作成'}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
           onClick={() => (onClose ? onClose() : router.back())}
-          className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+          className="flex-1"
         >
           キャンセル
-        </button>
+        </Button>
       </div>
     </form>
   )

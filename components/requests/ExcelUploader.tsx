@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 
 interface ExcelUploaderProps {
   onFileSelect: (file: File) => void
@@ -79,10 +80,10 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-card rounded-lg shadow p-6">
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-2">Excel希望表のアップロード</h2>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           スタッフの希望提出データをExcelファイルから取り込みます
         </p>
       </div>
@@ -93,22 +94,22 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
         onDragLeave={handleDragLeave}
         className={`border-2 border-dashed rounded-lg p-12 text-center transition ${
           isDragging
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-primary bg-primary/5'
+            : 'border-gray-200 hover:border-gray-400'
         }`}
       >
         {selectedFile ? (
           <div>
             <div className="text-6xl mb-4">📄</div>
-            <p className="text-lg font-medium text-gray-900 mb-2">
+            <p className="text-lg font-medium text-foreground mb-2">
               {selectedFile.name}
             </p>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {(selectedFile.size / 1024).toFixed(1)} KB
             </p>
             <button
               onClick={() => setSelectedFile(null)}
-              className="text-sm text-red-600 hover:underline"
+              className="text-sm text-destructive hover:underline"
             >
               ファイルを変更
             </button>
@@ -116,10 +117,10 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
         ) : (
           <div>
             <div className="text-6xl mb-4">📁</div>
-            <p className="text-lg font-medium text-gray-900 mb-2">
+            <p className="text-lg font-medium text-foreground mb-2">
               ファイルをドロップ、または
             </p>
-            <label className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition">
+            <label className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 cursor-pointer transition font-medium text-sm">
               ファイルを選択
               <input
                 type="file"
@@ -128,7 +129,7 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
                 className="hidden"
               />
             </label>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-muted-foreground">
               対応形式: Excel (.xlsx, .xls) / 最大10MB
             </p>
           </div>
@@ -137,26 +138,26 @@ export function ExcelUploader({ onFileSelect }: ExcelUploaderProps) {
 
       {selectedFile && (
         <div className="mt-6 flex gap-4">
-          <button
+          <Button
             onClick={handleSubmit}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+            className="flex-1"
           >
             次へ（パース処理）
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => setSelectedFile(null)}
-            className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
           >
             キャンセル
-          </button>
+          </Button>
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">
+      <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        <h3 className="font-semibold text-foreground mb-2">
           📋 Excel希望表のフォーマット
         </h3>
-        <ul className="text-sm text-blue-800 space-y-1">
+        <ul className="text-sm text-foreground/80 space-y-1">
           <li>• 1行目: ヘッダー行（日付は M/D 形式、例: 12/1, 12/2）</li>
           <li>• 1列目: 社員番号（4桁）または氏名</li>
           <li>• 2列目以降: 各日付の希望（◯/休/早朝/早番/遅番/夜勤）</li>

@@ -33,25 +33,45 @@ export interface Shift {
 export async function getShifts(yearMonth?: string): Promise<Shift[]> {
   const supabase = await createClient()
 
-  let query = supabase
-    .from('shifts')
-    .select('*')
-    .order('date', { ascending: true })
+  // ページネーションで全データを取得（Supabaseのデフォルト制限は1000件）
+  const PAGE_SIZE = 1000
+  let allData: Shift[] = []
+  let page = 0
+  let hasMore = true
 
-  // 年月フィルター（YYYY-MM形式）
-  if (yearMonth) {
-    const [year, month] = yearMonth.split('-')
-    const startDate = `${yearMonth}-01`
-    const lastDay = endOfMonth(new Date(parseInt(year), parseInt(month) - 1))
-    const endDate = format(lastDay, 'yyyy-MM-dd')
-    query = query.gte('date', startDate).lte('date', endDate)
+  while (hasMore) {
+    let query = supabase
+      .from('shifts')
+      .select('*')
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+      .order('date', { ascending: true })
+
+    // 年月フィルター（YYYY-MM形式）
+    if (yearMonth) {
+      const [year, month] = yearMonth.split('-')
+      const startDate = `${yearMonth}-01`
+      const lastDay = endOfMonth(new Date(parseInt(year), parseInt(month) - 1))
+      const endDate = format(lastDay, 'yyyy-MM-dd')
+      query = query.gte('date', startDate).lte('date', endDate)
+    }
+
+    const { data, error } = await query
+
+    if (error) handleSupabaseError(error, { action: 'getShifts', entity: 'シフト' })
+
+    if (data && data.length > 0) {
+      allData = [...allData, ...(data as Shift[])]
+      hasMore = data.length === PAGE_SIZE
+      page++
+    } else {
+      hasMore = false
+    }
+
+    // 安全のため最大5ページ（5000件）まで
+    if (page >= 5) break
   }
 
-  const { data, error } = await query
-
-  if (error) handleSupabaseError(error, { action: 'getShifts', entity: 'シフト' })
-
-  return data as Shift[]
+  return allData
 }
 
 /**
@@ -134,7 +154,7 @@ export async function createShift(
     location_id: validated.location_id,
     duty_code_id: validated.duty_code_id,
     date: validated.date,
-    status: '予定',
+    status: '確定',
     note: validated.note || null,
     created_by: user.id,
     updated_by: user.id,
@@ -287,73 +307,93 @@ export async function getShiftsWithDetails(filters?: {
 }) {
   const supabase = await createClient()
 
-  let query = supabase
-    .from('shifts')
-    .select(`
-      *,
-      staff:staff_id (
-        id,
-        employee_number,
-        name,
-        role_id,
-        roles (
+  // ページネーションで全データを取得（Supabaseのデフォルト制限は1000件）
+  const PAGE_SIZE = 1000
+  let allData: any[] = []
+  let page = 0
+  let hasMore = true
+
+  while (hasMore) {
+    let query = supabase
+      .from('shifts')
+      .select(`
+        *,
+        staff:staff_id (
           id,
+          employee_number,
           name,
-          is_responsible
+          role_id,
+          roles (
+            id,
+            name,
+            is_responsible
+          )
+        ),
+        location:location_id (
+          id,
+          business_type,
+          location_name,
+          code
+        ),
+        duty_code:duty_code_id (
+          id,
+          code,
+          start_time,
+          end_time,
+          duration_hours,
+          duration_minutes,
+          category
         )
-      ),
-      location:location_id (
-        id,
-        business_type,
-        location_name,
-        code
-      ),
-      duty_code:duty_code_id (
-        id,
-        code,
-        start_time,
-        end_time,
-        duration_hours,
-        duration_minutes,
-        category
-      )
-    `)
-    .order('date', { ascending: true })
-    .order('created_at', { ascending: true })
+      `)
+      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+      .order('date', { ascending: true })
+      .order('created_at', { ascending: true })
 
-  if (filters?.yearMonth) {
-    const [year, month] = filters.yearMonth.split('-')
-    const startDate = `${filters.yearMonth}-01`
-    const lastDay = endOfMonth(new Date(parseInt(year), parseInt(month) - 1))
-    const endDate = format(lastDay, 'yyyy-MM-dd')
-    query = query.gte('date', startDate).lte('date', endDate)
+    if (filters?.yearMonth) {
+      const [year, month] = filters.yearMonth.split('-')
+      const startDate = `${filters.yearMonth}-01`
+      const lastDay = endOfMonth(new Date(parseInt(year), parseInt(month) - 1))
+      const endDate = format(lastDay, 'yyyy-MM-dd')
+      query = query.gte('date', startDate).lte('date', endDate)
+    }
+
+    if (filters?.startDate) {
+      query = query.gte('date', filters.startDate)
+    }
+
+    if (filters?.endDate) {
+      query = query.lte('date', filters.endDate)
+    }
+
+    if (filters?.status) {
+      query = query.eq('status', filters.status)
+    }
+
+    if (filters?.staffId) {
+      query = query.eq('staff_id', filters.staffId)
+    }
+
+    if (filters?.locationId) {
+      query = query.eq('location_id', filters.locationId)
+    }
+
+    const { data, error } = await query
+
+    if (error) handleSupabaseError(error, { action: 'getShiftsWithDetails', entity: 'シフト' })
+
+    if (data && data.length > 0) {
+      allData = [...allData, ...data]
+      hasMore = data.length === PAGE_SIZE
+      page++
+    } else {
+      hasMore = false
+    }
+
+    // 安全のため最大5ページ（5000件）まで
+    if (page >= 5) break
   }
 
-  if (filters?.startDate) {
-    query = query.gte('date', filters.startDate)
-  }
-
-  if (filters?.endDate) {
-    query = query.lte('date', filters.endDate)
-  }
-
-  if (filters?.status) {
-    query = query.eq('status', filters.status)
-  }
-
-  if (filters?.staffId) {
-    query = query.eq('staff_id', filters.staffId)
-  }
-
-  if (filters?.locationId) {
-    query = query.eq('location_id', filters.locationId)
-  }
-
-  const { data, error } = await query
-
-  if (error) handleSupabaseError(error, { action: 'getShiftsWithDetails', entity: 'シフト' })
-
-  return data
+  return allData
 }
 
 /**
@@ -369,23 +409,32 @@ export async function confirmShifts(
   const user = await requireAuth()
   const supabase = await createClient()
 
-  // RPC呼び出し（トランザクション内でバリデーション+更新を実行）
-  const { data: rpcResult, error: rpcError } = await supabase
-    .rpc('confirm_shifts', {
-      p_shift_ids: shiftIds,
-      p_updated_by: user.id,
-    })
+  // 対象シフトのバリデーション
+  const { data: targetShifts, error: fetchError } = await supabase
+    .from('shifts')
+    .select('id, status')
+    .in('id', shiftIds)
 
-  if (rpcError) {
-    // RPC内のバリデーションエラーを判別
-    if (rpcError.message?.includes('VALIDATION:')) {
-      const cleanMessage = rpcError.message.replace(/^.*VALIDATION:\s*/, '')
-      throw new ValidationError(cleanMessage)
-    }
-    handleSupabaseError(rpcError, { action: 'confirmShifts', entity: 'シフト' })
+  if (fetchError) handleSupabaseError(fetchError, { action: 'confirmShifts', entity: 'シフト' })
+  if (!targetShifts || targetShifts.length === 0) {
+    throw new ValidationError('確定対象のシフトが見つかりません')
   }
 
-  const confirmedCount = rpcResult?.[0]?.confirmed_count ?? shiftIds.length
+  const alreadyConfirmed = targetShifts.filter((s) => s.status === '確定')
+  if (alreadyConfirmed.length > 0) {
+    throw new ValidationError(`既に確定済みのシフトが${alreadyConfirmed.length}件含まれています`)
+  }
+
+  // 一括更新
+  const { error: updateError } = await supabase
+    .from('shifts')
+    .update({ status: '確定', updated_by: user.id })
+    .in('id', shiftIds)
+    .neq('status', '確定')
+
+  if (updateError) handleSupabaseError(updateError, { action: 'confirmShifts', entity: 'シフト' })
+
+  const confirmedCount = targetShifts.length
 
   // 確定済みシフトの詳細を取得（通知・メール用、トランザクション外）
   const { data: shifts } = await supabase

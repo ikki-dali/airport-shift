@@ -20,16 +20,20 @@ interface ShiftRequestFormProps {
   }>
 }
 
-type RequestType = '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤' | ''
+type RequestType = '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | ''
 
 const REQUEST_OPTIONS: { value: RequestType; label: string; description: string; color: string; textColor: string }[] = [
   { value: '', label: '-', description: '希望なし', color: 'bg-gray-100', textColor: 'text-gray-800' },
   { value: '◯', label: '◯', description: '勤務希望', color: 'bg-green-100', textColor: 'text-green-800' },
   { value: '休', label: '休', description: '休み希望', color: 'bg-red-100', textColor: 'text-red-800' },
-  { value: '早朝', label: '早朝', description: '早朝シフト', color: 'bg-blue-100', textColor: 'text-blue-800' },
-  { value: '早番', label: '早番', description: '早番シフト', color: 'bg-cyan-100', textColor: 'text-cyan-800' },
-  { value: '遅番', label: '遅番', description: '遅番シフト', color: 'bg-purple-100', textColor: 'text-purple-800' },
-  { value: '夜勤', label: '夜勤', description: '夜勤シフト', color: 'bg-indigo-100', textColor: 'text-indigo-800' },
+  { value: '有給', label: '有給', description: '有給休暇', color: 'bg-orange-100', textColor: 'text-orange-800' },
+  { value: 'A', label: 'A', description: '早朝シフト', color: 'bg-primary/10', textColor: 'text-primary' },
+  { value: 'B', label: 'B', description: '早番シフト', color: 'bg-cyan-100', textColor: 'text-cyan-800' },
+  { value: 'C', label: 'C', description: '日勤シフト', color: 'bg-green-100', textColor: 'text-green-800' },
+  { value: 'D', label: 'D', description: '遅番シフト', color: 'bg-purple-100', textColor: 'text-purple-800' },
+  { value: 'E', label: 'E', description: '夜勤シフト', color: 'bg-indigo-100', textColor: 'text-indigo-800' },
+  { value: 'F', label: 'F', description: 'Fシフト', color: 'bg-amber-100', textColor: 'text-amber-800' },
+  { value: 'G', label: 'G', description: 'Gシフト', color: 'bg-teal-100', textColor: 'text-teal-800' },
 ]
 
 export function ShiftRequestForm({

@@ -43,11 +43,49 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Brand blue scale (matching HAS-G logo #007BD0)
+        navy: {
+          50: '#E1F0FF',
+          100: '#B3D9FF',
+          200: '#80BFFF',
+          300: '#4DA6FF',
+          400: '#1A8CFF',
+          500: '#007BD0',
+          600: '#006AB5',
+          700: '#005A9E',
+          800: '#004580',
+          900: '#003566',
+        },
+      },
+      fontSize: {
+        xxs: ['0.6875rem', { lineHeight: '1rem' }],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        card: '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+      },
+      keyframes: {
+        "fade-in": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "slide-in-right": {
+          from: { transform: "translateX(1rem)", opacity: "0" },
+          to: { transform: "translateX(0)", opacity: "1" },
+        },
+        "scale-in": {
+          from: { transform: "scale(0.95)", opacity: "0" },
+          to: { transform: "scale(1)", opacity: "1" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.2s ease-out",
+        "slide-in-right": "slide-in-right 0.2s ease-out",
+        "scale-in": "scale-in 0.15s ease-out",
       },
     },
   },

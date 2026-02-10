@@ -27,7 +27,7 @@ const REQUEST_TYPE_COLORS: Record<string, string> = {
   '休': 'bg-gray-100 text-gray-800',
   '早朝': 'bg-yellow-100 text-yellow-800',
   '早番': 'bg-orange-100 text-orange-800',
-  '遅番': 'bg-blue-100 text-blue-800',
+  '遅番': 'bg-primary/10 text-primary',
   '夜勤': 'bg-purple-100 text-purple-800',
 }
 
@@ -56,7 +56,7 @@ export function RequestsTable({ requests, yearMonth }: RequestsTableProps) {
   if (staffList.length === 0) {
     return (
       <Card className="p-12 text-center">
-        <div className="text-gray-400 text-sm">
+        <div className="text-muted-foreground text-sm">
           フィルター条件に一致する希望データがありません
         </div>
       </Card>
@@ -69,13 +69,13 @@ export function RequestsTable({ requests, yearMonth }: RequestsTableProps) {
         <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="sticky left-0 z-20 bg-gray-50 border-b-2 border-gray-300 p-2 text-xs font-semibold text-gray-700 min-w-[120px]">
+              <th className="sticky left-0 z-20 bg-muted/50 border-b border-border p-2 text-xs font-medium text-muted-foreground tracking-wide min-w-[120px]">
                 スタッフ
               </th>
               {daysInMonth.map((day) => (
                 <th
                   key={day.toISOString()}
-                  className="border-b-2 border-gray-300 p-2 text-xs font-semibold text-gray-700 bg-gray-50 min-w-[60px]"
+                  className="border-b border-border p-2 text-xs font-medium text-muted-foreground tracking-wide bg-muted/50 min-w-[60px]"
                 >
                   {format(day, 'd')}日
                 </th>
@@ -84,10 +84,10 @@ export function RequestsTable({ requests, yearMonth }: RequestsTableProps) {
           </thead>
           <tbody>
             {staffList.map(({ staff, requests }) => (
-              <tr key={staff?.id || 'unknown'} className="border-b border-gray-200">
-                <td className="sticky left-0 z-10 bg-white border-r border-gray-300 p-2 font-medium text-sm">
+              <tr key={staff?.id || 'unknown'} className="border-b border-border">
+                <td className="sticky left-0 z-10 bg-card border-r border-border p-2 font-medium text-sm">
                   <div>{staff?.name || '不明'}</div>
-                  <div className="text-xs text-gray-500">{staff?.employee_number || ''}</div>
+                  <div className="text-xs text-muted-foreground">{staff?.employee_number || ''}</div>
                 </td>
                 {daysInMonth.map((day) => {
                   const dateStr = format(day, 'yyyy-MM-dd')
@@ -96,7 +96,7 @@ export function RequestsTable({ requests, yearMonth }: RequestsTableProps) {
                   return (
                     <td
                       key={dateStr}
-                      className="border border-gray-200 p-1 text-center"
+                      className="border border-border p-1 text-center"
                     >
                       {requestType && (
                         <div

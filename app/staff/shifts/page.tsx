@@ -17,12 +17,12 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-muted/50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">⚠️</div>
             <h1 className="text-2xl font-bold mb-2">アクセスエラー</h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               有効なアクセストークンが見つかりません。<br />
               メールに記載されているリンクからアクセスしてください。
             </p>
@@ -36,12 +36,12 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 to-muted/50 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
             <div className="text-6xl mb-4">🔒</div>
             <h1 className="text-2xl font-bold mb-2">認証エラー</h1>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               無効なトークンです。<br />
               メールに記載されている正しいリンクからアクセスしてください。
             </p>
@@ -64,24 +64,24 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
   }, {})
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-muted/50 p-4 md:p-8">
       <div className="mx-auto max-w-4xl">
         {/* ヘッダー */}
         <div className="mb-8 text-center">
           {/* アプリロゴ */}
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-blue-600 text-white">
+            <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Calendar className="h-8 w-8" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-gray-900">シフト管理</span>
-              <span className="text-sm text-gray-500">Airport Shift Manager</span>
+              <span className="text-xl font-bold text-foreground">シフト管理</span>
+              <span className="text-sm text-muted-foreground">Airport Shift Manager</span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             確定シフト
           </h1>
-          <p className="text-lg text-gray-600">
+          <p className="text-lg text-muted-foreground">
             {staff.name} さん
           </p>
           <Badge variant="outline" className="mt-2">
@@ -92,8 +92,8 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
         {shifts.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">
+              <Calendar className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg">
                 確定済みのシフトはまだありません
               </p>
             </CardContent>
@@ -102,8 +102,8 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
           <div className="space-y-8">
             {Object.entries(shiftsByMonth).map(([month, monthShifts]: [string, any]) => (
               <div key={month}>
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-blue-600" />
+                <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
                   {month}
                   <Badge variant="outline" className="ml-2">
                     {monthShifts.length}件
@@ -120,7 +120,7 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
                       <Card
                         key={shift.id}
                         className={`transition-shadow hover:shadow-lg ${
-                          isWeekend ? 'bg-blue-50 border-blue-200' : ''
+                          isWeekend ? 'bg-primary/5 border-primary/20' : ''
                         }`}
                       >
                         <CardContent className="p-4">
@@ -128,12 +128,12 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
                             <div className="flex items-center gap-4">
                               {/* 日付 */}
                               <div className="text-center">
-                                <div className="text-2xl font-bold text-gray-900">
+                                <div className="text-2xl font-bold text-foreground">
                                   {format(shiftDate, 'd', { locale: ja })}
                                 </div>
                                 <div
                                   className={`text-sm font-medium ${
-                                    isWeekend ? 'text-blue-600' : 'text-gray-500'
+                                    isWeekend ? 'text-navy-600' : 'text-muted-foreground'
                                   }`}
                                 >
                                   {dayOfWeek}
@@ -143,8 +143,8 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
                               {/* シフト詳細 */}
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <MapPin className="h-4 w-4 text-gray-400" />
-                                  <span className="font-medium text-gray-900">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span className="font-medium text-foreground">
                                     {shift.location.location_name}
                                   </span>
                                   <Badge variant="secondary">
@@ -152,17 +152,39 @@ export default async function StaffShiftsPage({ searchParams }: StaffShiftsPageP
                                   </Badge>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-gray-400" />
-                                  <span className="text-sm text-gray-600">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm text-muted-foreground">
                                     {shift.duty_code.code}
                                   </span>
-                                  <span className="text-sm text-gray-500">
+                                  <span className="text-sm text-muted-foreground">
                                     {shift.duty_code.start_time} - {shift.duty_code.end_time}
                                   </span>
+                                  {shift.duty_code.total_hours && (
+                                    <span className="text-sm text-muted-foreground">
+                                      ({shift.duty_code.total_hours}h)
+                                    </span>
+                                  )}
                                 </div>
                                 {shift.duty_code.category && (
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-muted-foreground">
                                     {shift.duty_code.category}
+                                  </div>
+                                )}
+                                {/* 業務配分 */}
+                                {shift.shift_tasks && shift.shift_tasks.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {shift.shift_tasks
+                                      .filter((task: any) => task.hours > 0)
+                                      .sort((a: any, b: any) => b.hours - a.hours)
+                                      .map((task: any) => (
+                                        <Badge
+                                          key={task.id}
+                                          variant="outline"
+                                          className="text-xs bg-gray-50"
+                                        >
+                                          {task.task_types?.name || task.task_types?.code}: {task.hours}h
+                                        </Badge>
+                                      ))}
                                   </div>
                                 )}
                               </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
   Home,
   Users,
@@ -12,7 +13,8 @@ import {
   Menu,
   X,
   Bell,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getUnreadCount } from '@/lib/actions/notifications'
@@ -20,11 +22,12 @@ import { logout } from '@/lib/actions/auth'
 
 const navigation = [
   { name: 'ホーム', href: '/', icon: Home },
+  { name: 'シフト作成', href: '/shifts/create', icon: Calendar },
   { name: '通知', href: '/notifications', icon: Bell },
   { name: 'スタッフ管理', href: '/staff', icon: Users },
   { name: '配属箇所管理', href: '/locations', icon: MapPin },
   { name: '勤務記号管理', href: '/duty-codes', icon: Hash },
-  { name: 'シフト作成', href: '/shifts/create', icon: Calendar },
+  { name: '設定', href: '/admin/settings', icon: Settings },
 ]
 
 export function MobileNav() {
@@ -53,23 +56,24 @@ export function MobileNav() {
   return (
     <>
       {/* モバイルヘッダー */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-            <Calendar className="h-5 w-5" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-900">シフト管理</span>
-            <span className="text-xs text-gray-500">Airport Shift Manager</span>
-          </div>
+      <header className="md:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between bg-white border-b border-gray-200 px-4">
+        <Link href="/">
+          <Image
+            src="/logo.svg"
+            alt="羽田空港サービス"
+            width={180}
+            height={71}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
 
         <div className="flex items-center gap-2">
           {/* 通知アイコン（モバイルヘッダー用） */}
           <Link href="/notifications" className="relative p-2" aria-label="通知">
-            <Bell className="h-6 w-6 text-gray-600" />
+            <Bell className="h-6 w-6 text-gray-500" />
             {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -77,7 +81,7 @@ export function MobileNav() {
 
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
             aria-label={isOpen ? 'メニューを閉じる' : 'メニューを開く'}
             aria-expanded={isOpen}
           >
@@ -91,22 +95,22 @@ export function MobileNav() {
         <>
           {/* 背景オーバーレイ */}
           <div
-            className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+            className="md:hidden fixed inset-0 z-40 bg-black/50"
             onClick={() => setIsOpen(false)}
           />
 
           {/* サイドバー */}
-          <aside className="md:hidden fixed left-0 top-0 z-50 h-screen w-64 border-r border-gray-200 bg-white">
+          <aside className="md:hidden fixed left-0 top-0 z-50 h-screen w-64 bg-white border-r border-gray-200">
             {/* Logo */}
-            <div className="flex h-16 items-center border-b border-gray-200 px-6">
-              <Link href="/" className="flex items-center gap-3" onClick={() => setIsOpen(false)}>
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-white">
-                  <Calendar className="h-6 w-6" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-base font-bold text-gray-900">シフト管理</span>
-                  <span className="text-xs text-gray-500">Airport Shift Manager</span>
-                </div>
+            <div className="flex h-16 items-center border-b border-gray-200 px-4">
+              <Link href="/" onClick={() => setIsOpen(false)}>
+                <Image
+                  src="/logo.svg"
+                  alt="羽田空港サービス"
+                  width={180}
+                  height={71}
+                  className="h-10 w-auto"
+                />
               </Link>
             </div>
 
@@ -124,19 +128,19 @@ export function MobileNav() {
                     className={cn(
                       'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors relative',
                       isActive
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     )}
                   >
                     <item.icon
                       className={cn(
                         'mr-3 h-5 w-5 flex-shrink-0',
-                        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                        isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'
                       )}
                     />
                     {item.name}
                     {isNotifications && unreadCount > 0 && (
-                      <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                      <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
@@ -152,7 +156,7 @@ export function MobileNav() {
                   setIsOpen(false)
                   logout()
                 }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
               >
                 <LogOut className="h-5 w-5 text-gray-400" />
                 ログアウト

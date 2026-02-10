@@ -56,7 +56,7 @@ export function DutyCodeDialog({
 
             return (
               <div key={category}>
-                <h3 className="text-sm font-semibold mb-3 text-gray-700">{category}</h3>
+                <h3 className="text-sm font-semibold mb-3 text-foreground">{category}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {categoryDutyCodes.map((dutyCode) => {
                     const parsed = parseDutyCode(dutyCode.code)
@@ -68,8 +68,8 @@ export function DutyCodeDialog({
                         onClick={() => setSelectedId(dutyCode.id)}
                         className={`p-3 border rounded-lg text-left transition-all ${
                           isSelected
-                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? 'border-primary bg-primary/5 ring-2 ring-ring/40'
+                            : 'border-border hover:border-border hover:bg-muted/50'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
@@ -82,10 +82,10 @@ export function DutyCodeDialog({
                             </Badge>
                           )}
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-muted-foreground">
                           {parsed.startTime} - {parsed.endTime}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {parsed.durationHours}h{parsed.durationMinutes > 0 && `${parsed.durationMinutes}m`}
                           {dutyCode.break_minutes > 0 && ` (休憩${dutyCode.break_minutes}分)`}
                         </div>

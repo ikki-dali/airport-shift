@@ -3,6 +3,8 @@
 import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { X } from 'lucide-react'
 
+type SlotQuality = 'good' | 'warning' | 'unfilled' | undefined
+
 interface DraggableSlotProps {
   id: string
   slot: {
@@ -16,6 +18,7 @@ interface DraggableSlotProps {
     locationId: string
     dutyCodeId: string
   }
+  quality?: SlotQuality
   onClick: () => void
   onDelete?: (e: React.MouseEvent) => void
 }
@@ -24,6 +27,7 @@ export function DraggableSlot({
   id,
   slot,
   slotData,
+  quality,
   onClick,
   onDelete,
 }: DraggableSlotProps) {
@@ -65,10 +69,12 @@ export function DraggableSlot({
         ${
           slot.isEmpty
             ? 'bg-red-50 border border-dashed border-red-300 text-red-600'
-            : 'bg-blue-50 border border-dashed border-blue-300 text-blue-900 cursor-move'
+            : quality === 'warning'
+              ? 'bg-amber-50 border border-dashed border-amber-300 text-amber-800 cursor-move'
+              : 'bg-primary/5 border border-dashed border-primary/30 text-foreground cursor-move'
         }
         ${isDragging ? 'opacity-50 scale-95' : 'opacity-100 scale-100'}
-        ${isOver && !isDragging ? 'ring-2 ring-blue-500 ring-offset-1' : ''}
+        ${isOver && !isDragging ? 'ring-2 ring-ring ring-offset-1' : ''}
       `}
       onClick={onClick}
     >

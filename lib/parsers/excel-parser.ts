@@ -4,7 +4,7 @@ export interface ParsedRequest {
   staffId: string
   staffName: string
   date: string
-  requestType: '◯' | '休' | '早朝' | '早番' | '遅番' | '夜勤'
+  requestType: '◯' | '休' | '有給' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
 }
 
 export interface ParseResult {

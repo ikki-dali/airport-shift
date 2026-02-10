@@ -36,9 +36,9 @@ function DraggableStaffItem({ staff, compact }: { staff: StaffWithRole; compact:
         style={style}
         {...listeners}
         {...attributes}
-        className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-medium hover:border-blue-300 hover:shadow-sm transition-all cursor-move"
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium hover:border-primary/30 hover:shadow-sm transition-all cursor-move"
       >
-        <div className="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[10px]">
+        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xxs">
           {staff.name.charAt(0)}
         </div>
         {staff.name}
@@ -52,13 +52,13 @@ function DraggableStaffItem({ staff, compact }: { staff: StaffWithRole; compact:
       style={style}
       {...listeners}
       {...attributes}
-      className="p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-move"
+      className="p-3 bg-card border border-border rounded-lg hover:border-primary/30 hover:shadow-md transition-all cursor-move"
     >
       <div className="font-medium text-sm">{staff.name}</div>
-      <div className="text-xs text-gray-500 mt-1">{staff.employee_number}</div>
+      <div className="text-xs text-muted-foreground mt-1">{staff.employee_number}</div>
       {staff.roles && (
         <div className="mt-2">
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+          <span className="text-xs bg-muted text-foreground px-2 py-0.5 rounded">
             {staff.roles.name}
           </span>
         </div>
@@ -66,12 +66,12 @@ function DraggableStaffItem({ staff, compact }: { staff: StaffWithRole; compact:
       {staff.tags && staff.tags.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {staff.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">
+            <span key={tag} className="text-xxs bg-primary/5 text-primary px-1.5 py-0.5 rounded">
               {tag}
             </span>
           ))}
           {staff.tags.length > 3 && (
-            <span className="text-[10px] text-gray-500">+{staff.tags.length - 3}</span>
+            <span className="text-xxs text-muted-foreground">+{staff.tags.length - 3}</span>
           )}
         </div>
       )}
@@ -129,7 +129,7 @@ export function StaffList({ staff, roles = [], allTags = [] }: StaffListProps) {
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
         {filteredStaff.length === 0 ? (
-          <div className="text-center text-gray-500 text-sm py-8">
+          <div className="text-center text-muted-foreground text-sm py-8">
             スタッフが見つかりません
           </div>
         ) : compact ? (
@@ -145,7 +145,7 @@ export function StaffList({ staff, roles = [], allTags = [] }: StaffListProps) {
             ))}
           </div>
         )}
-        <div className="text-xs text-gray-500 mt-4 pt-4 border-t">
+        <div className="text-xs text-muted-foreground mt-4 pt-4 border-t">
           {filteredStaff.length} / {staff.length} 名
         </div>
       </CardContent>
