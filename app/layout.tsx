@@ -12,8 +12,11 @@ const notoSansJP = Noto_Sans_JP({
 })
 
 export const metadata: Metadata = {
-  title: 'シフト管理システム | Airport Shift Manager',
-  description: '空港シフト管理システム - 効率的なシフト作成と管理',
+  title: 'HAS-G シフト管理',
+  description: 'HAS-G 空港シフト管理システム',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export const viewport: Viewport = {
