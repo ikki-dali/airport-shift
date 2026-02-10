@@ -52,9 +52,11 @@ export default async function HomePage() {
     // この日のシフト（今月分のみで統計計算）
     const dayShifts = shiftsThisMonth.filter((s) => s.date === dateStr)
 
-    // この日の必要人数
+    // この日の必要人数（calcLocationShortagesと同じロジック）
     let dayRequiredCount = 0
     locationRequirements.forEach((req) => {
+      // locationやduty_codeが紐づいていないrequirementは無視
+      if (!req.locations || !req.duty_codes) return
       // 特定日指定がある場合
       if (req.specific_date !== null) {
         if (req.specific_date === dateStr) {
@@ -79,7 +81,7 @@ export default async function HomePage() {
   }
 
   const fillRate =
-    totalSlotsNeeded > 0 ? Math.round((totalSlotsFilled / totalSlotsNeeded) * 100) : 0
+    totalSlotsNeeded > 0 ? Math.min(100, Math.round((totalSlotsFilled / totalSlotsNeeded) * 100)) : 0
 
   // エラー表示
   if (error) {

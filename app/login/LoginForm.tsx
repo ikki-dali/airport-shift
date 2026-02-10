@@ -41,9 +41,8 @@ export function LoginForm() {
         <div className="mx-auto mb-4">
           <Image src="/logo.svg" alt="HAS-G" width={200} height={56} priority />
         </div>
-        <CardTitle className="text-2xl">シフト管理</CardTitle>
         <CardDescription>
-          HAS-G シフト管理システムにログイン
+          ログインしてください
         </CardDescription>
       </CardHeader>
       <CardContent>

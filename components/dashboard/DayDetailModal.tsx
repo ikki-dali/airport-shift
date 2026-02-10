@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { sendReinforcementRequest } from '@/lib/actions/notifications'
+import type { LocationShortageInfo } from '@/lib/utils/location-shortages'
 import { toast } from 'sonner'
 
 // 配置箇所ごとの色設定
@@ -78,8 +79,8 @@ interface LocationRequirement {
   duty_codes?: {
     id: string
     code: string
-    start_time: string
-    end_time: string
+    start_time: string | null
+    end_time: string | null
   } | null
 }
 
@@ -118,9 +119,23 @@ export function DayDetailModal({
   const handleSendReinforcementRequest = async () => {
     setIsSending(true)
     try {
+      // 配置箇所別の不足情報を構築
+      const locationShortages: LocationShortageInfo[] = Array.from(locationDutyCodeShortageMap.entries()).map(
+        ([locationName, shortages]) => ({
+          locationName,
+          shortage: locationShortageMap.get(locationName) || shortages.length,
+          dutyDetails: shortages.map((s) => ({
+            dutyCode: s.dutyCode,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            shortage: s.shortage,
+          })),
+        })
+      )
       const result = await sendReinforcementRequest({
         date: dateStr,
         shortage,
+        locationShortages,
       })
       if (result.success) {
         toast.success(`${result.sentCount}人に応援依頼を送信しました`)

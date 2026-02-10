@@ -6,6 +6,7 @@ import { handleSupabaseError } from '@/lib/errors/helpers'
 import { logger } from '@/lib/errors/logger'
 import { requireAuth } from '@/lib/auth'
 import { validateData, notificationCreateSchema } from '@/lib/validators/schemas'
+import type { LocationShortageInfo } from '@/lib/utils/location-shortages'
 
 export interface Notification {
   id: string
@@ -205,6 +206,7 @@ export async function deleteNotification(notificationId: string): Promise<void> 
 export async function sendReinforcementRequest(data: {
   date: string
   shortage: number
+  locationShortages?: LocationShortageInfo[]
 }): Promise<{ success: boolean; sentCount?: number; error?: string }> {
   await requireAuth()
   const supabase = await createClient()
@@ -265,11 +267,19 @@ export async function sendReinforcementRequest(data: {
 
     // 3. アプリ内通知を作成
     const dateFormatted = data.date.replace(/-/g, '/')
+    // 配置箇所情報付きメッセージを構築
+    let messageBody = `${dateFormatted}に${data.shortage}人不足`
+    if (data.locationShortages && data.locationShortages.length > 0) {
+      const details = data.locationShortages.map(ls => `${ls.locationName} ${ls.shortage}人`).join(', ')
+      messageBody += `（${details}）`
+    }
+    messageBody += '出勤できる方はいませんか？'
+
     const notifications = targetStaff.map(staff => ({
       staff_id: staff.id,
       type: 'shift_request' as const,
       title: '応援依頼',
-      message: `${dateFormatted}に${data.shortage}人不足しています。出勤できる方はいませんか？`,
+      message: messageBody,
       related_shift_id: null,
     }))
 
@@ -289,8 +299,13 @@ export async function sendReinforcementRequest(data: {
         staffWithTokens.map(s => s.expo_push_token!),
         {
           title: '応援依頼',
-          body: `${dateFormatted}に${data.shortage}人不足しています。出勤できる方はいませんか？`,
-          data: { type: 'reinforcement_request', date: data.date },
+          body: messageBody,
+          data: {
+            type: 'reinforcement_request',
+            date: data.date,
+            shortage: data.shortage,
+            locationShortages: data.locationShortages || [],
+          },
         }
       )
     }

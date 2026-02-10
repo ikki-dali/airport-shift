@@ -18,6 +18,7 @@ import {
 import { Users, AlertTriangle, CalendarDays, X, Loader2 } from 'lucide-react'
 import { updateShift } from '@/lib/actions/shifts'
 import { sendReinforcementRequest } from '@/lib/actions/notifications'
+import type { LocationShortageInfo } from '@/lib/utils/location-shortages'
 import { toast } from 'sonner'
 
 // デフォルトの1日あたり必要人数（DB設定が取得できない場合のフォールバック）
@@ -321,9 +322,23 @@ export function TodayTab({ shifts, locationRequirements, settings }: TodayTabPro
   const handleSendReinforcement = async () => {
     setIsSendingReinforcement(true)
     try {
+      // 配置箇所別の不足情報を構築
+      const locationShortages: LocationShortageInfo[] = Array.from(locationDutyCodeShortageMap.entries()).map(
+        ([locationName, shortages]) => ({
+          locationName,
+          shortage: locationShortageMap.get(locationName)?.shortage || shortages.length,
+          dutyDetails: shortages.map((s) => ({
+            dutyCode: s.dutyCode,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            shortage: s.shortage,
+          })),
+        })
+      )
       const result = await sendReinforcementRequest({
         date: todayStr,
         shortage: shortage + cancelledShiftIds.size,
+        locationShortages,
       })
       if (result.success) {
         toast.success(`${result.sentCount}人に応援依頼を送信しました`)

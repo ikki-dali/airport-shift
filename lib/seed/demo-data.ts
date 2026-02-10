@@ -320,29 +320,60 @@ export async function seedDemoData() {
   }
   const locationIds = locations?.map((l) => l.id) || []
 
-  // 4. 勤務記号をリセット＆作成 - 実Excelデータに基づく12種類
+  // 4. 勤務記号をリセット＆作成 - 実Excelデータに基づく38種類（既存33 + 新規5）
   console.log('⏰ Resetting duty codes...')
   await supabase.from('duty_codes').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
   const { data: dutyCodes, error: dutyError } = await supabase
     .from('duty_codes')
     .insert([
-      // 深夜・早朝
-      { code: '22A9GY', start_time: '22:00', end_time: '07:00', duration_hours: 9, duration_minutes: 0, break_minutes: 90, category: '深夜' },
-      { code: '03G6AA', start_time: '03:00', end_time: '09:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '早朝' },
-      { code: '04J5JA', start_time: '04:00', end_time: '09:45', duration_hours: 5, duration_minutes: 45, break_minutes: 0, category: '早朝' },
-      // 早番
-      { code: '06A6AA', start_time: '06:00', end_time: '12:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '早番' },
-      { code: '06J0AW', start_time: '06:00', end_time: '14:00', duration_hours: 8, duration_minutes: 0, break_minutes: 120, category: '早番' },
-      // 日勤
-      { code: '09G5AA', start_time: '09:00', end_time: '14:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
-      { code: '10A5AA', start_time: '10:00', end_time: '15:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '日勤' },
-      { code: '11A5AA', start_time: '11:00', end_time: '16:15', duration_hours: 5, duration_minutes: 15, break_minutes: 0, category: '日勤' },
-      // 遅番
-      { code: '14G5AA', start_time: '14:00', end_time: '19:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '遅番' },
-      { code: '16A6AA', start_time: '16:00', end_time: '22:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, category: '遅番' },
-      { code: '18A5AA', start_time: '18:00', end_time: '23:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, category: '遅番' },
-      { code: '19A4AA', start_time: '19:00', end_time: '23:00', duration_hours: 4, duration_minutes: 0, break_minutes: 0, category: '遅番' },
+      // === T3中央 (25コード) ===
+      { code: '04A5GA', start_time: '04:00', end_time: '09:30', duration_hours: 5, duration_minutes: 30, break_minutes: 0, is_overnight: false, category: 'T3中央' },
+      { code: '04G4JA', start_time: '04:30', end_time: '09:30', duration_hours: 4, duration_minutes: 45, break_minutes: 15, is_overnight: false, category: 'T3中央' },
+      { code: '05A7AA', start_time: '05:00', end_time: '11:00', duration_hours: 7, duration_minutes: 0, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '06A9A', start_time: '06:00', end_time: '15:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '06G9AY', start_time: '06:30', end_time: '15:30', duration_hours: 7, duration_minutes: 30, break_minutes: 90, is_overnight: false, category: 'T3中央' },
+      { code: '07A5AA', start_time: '07:00', end_time: '12:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T3中央' },
+      { code: '07A2GY', start_time: '07:00', end_time: '19:30', duration_hours: 11, duration_minutes: 0, break_minutes: 90, is_overnight: false, category: 'T3中央' },
+      { code: '07G2AY', start_time: '07:30', end_time: '18:00', duration_hours: 9, duration_minutes: 0, break_minutes: 90, is_overnight: false, category: 'T3中央' },
+      { code: '12A9A', start_time: '12:00', end_time: '21:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '12A8AY', start_time: '12:00', end_time: '20:00', duration_hours: 6, duration_minutes: 30, break_minutes: 90, is_overnight: false, category: 'T3中央' },
+      { code: '13A9A', start_time: '13:00', end_time: '22:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '13A7GA', start_time: '13:00', end_time: '20:30', duration_hours: 7, duration_minutes: 30, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '13A9AX', start_time: '13:00', end_time: '22:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '13J5DA', start_time: '13:45', end_time: '19:00', duration_hours: 5, duration_minutes: 15, break_minutes: 0, is_overnight: false, category: 'T3中央' },
+      { code: '14A5AA', start_time: '14:00', end_time: '19:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T3中央' },
+      { code: '14A9A', start_time: '14:00', end_time: '23:00', duration_hours: 8, duration_minutes: 0, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '14D7JY', start_time: '14:15', end_time: '22:00', duration_hours: 6, duration_minutes: 15, break_minutes: 90, is_overnight: false, category: 'T3中央' },
+      { code: '14D8G', start_time: '14:15', end_time: '22:45', duration_hours: 7, duration_minutes: 30, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '14J8D', start_time: '14:45', end_time: '23:00', duration_hours: 7, duration_minutes: 15, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '15A5AA', start_time: '15:00', end_time: '20:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T3中央' },
+      { code: '15A7J', start_time: '15:00', end_time: '22:45', duration_hours: 6, duration_minutes: 45, break_minutes: 60, is_overnight: false, category: 'T3中央' },
+      { code: '16G6GG', start_time: '16:30', end_time: '23:00', duration_hours: 6, duration_minutes: 0, break_minutes: 30, is_overnight: false, category: 'T3中央' },
+      { code: '22A0AY', start_time: '22:00', end_time: '08:00', duration_hours: 8, duration_minutes: 30, break_minutes: 90, is_overnight: true, category: 'T3中央' },
+      { code: '22A9GY', start_time: '22:00', end_time: '07:30', duration_hours: 8, duration_minutes: 0, break_minutes: 90, is_overnight: true, category: 'T3中央' },
+      { code: '23A1AO', start_time: '23:00', end_time: '10:00', duration_hours: 7, duration_minutes: 0, break_minutes: 240, is_overnight: true, category: 'T3中央' },
+      // === T3北側 (2コード) ===
+      { code: '06J1JT', start_time: '06:45', end_time: '18:30', duration_hours: 9, duration_minutes: 0, break_minutes: 165, is_overnight: false, category: 'T3北側' },
+      { code: '06J9AW', start_time: '06:45', end_time: '15:45', duration_hours: 7, duration_minutes: 0, break_minutes: 120, is_overnight: false, category: 'T3北側' },
+      // === T2中央検査場 (6コード) ===
+      { code: '06A6AA', start_time: '06:00', end_time: '12:00', duration_hours: 6, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T2中央検査場' },
+      { code: '09G2GY', start_time: '09:30', end_time: '22:00', duration_hours: 11, duration_minutes: 0, break_minutes: 90, is_overnight: false, category: 'T2中央検査場' },
+      { code: '14G4GA', start_time: '14:30', end_time: '19:00', duration_hours: 4, duration_minutes: 30, break_minutes: 0, is_overnight: false, category: 'T2中央検査場' },
+      { code: '19A4AA', start_time: '19:00', end_time: '23:00', duration_hours: 4, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T2中央検査場' },
+      { code: '19A1AO', start_time: '19:00', end_time: '06:00', duration_hours: 7, duration_minutes: 0, break_minutes: 240, is_overnight: true, category: 'T2中央検査場' },
+      { code: '22A8AW', start_time: '22:00', end_time: '06:00', duration_hours: 6, duration_minutes: 0, break_minutes: 120, is_overnight: true, category: 'T2中央検査場' },
+      // === T3クリーンバス (1コード) ===
+      { code: '05G5AA', start_time: '05:30', end_time: '10:30', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T3クリーンバス' },
+      // === T3際際バス (3コード) ===
+      { code: '04J5JA', start_time: '04:45', end_time: '10:30', duration_hours: 5, duration_minutes: 45, break_minutes: 0, is_overnight: false, category: 'T3際際バス' },
+      { code: '10A5AA', start_time: '10:00', end_time: '15:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T3際際バス' },
+      { code: '19A4AA', start_time: '19:00', end_time: '23:00', duration_hours: 4, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T3際際バス' },
+      // === T2クリーンバス (1コード) ===
+      { code: '05D5AA', start_time: '05:15', end_time: '10:15', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T2クリーンバス' },
+      // === T2際際バス (2コード) ===
+      { code: '14A5AA', start_time: '14:00', end_time: '19:00', duration_hours: 5, duration_minutes: 0, break_minutes: 0, is_overnight: false, category: 'T2際際バス' },
+      { code: '18G4GA', start_time: '18:30', end_time: '23:00', duration_hours: 4, duration_minutes: 30, break_minutes: 0, is_overnight: false, category: 'T2際際バス' },
     ])
     .select()
 
@@ -384,7 +415,64 @@ export async function seedDemoData() {
   // 既存要件を削除
   await supabase.from('location_requirements').delete().neq('id', '00000000-0000-0000-0000-000000000000')
 
-  // 新しい要件を作成（各勤務地×勤務記号に均等配分）
+  // Excel実データ通りの43スロット配分を作成
+  // ヘルパー: location_nameからlocation_idを取得
+  const getLocationId = (name: string) => locations?.find(l => l.location_name === name)?.id
+  // ヘルパー: code+categoryからduty_code_idを取得
+  const getDutyCodeId = (code: string, category: string) =>
+    dutyCodes?.find(d => d.code === code && d.category === category)?.id
+
+  // Excel【現状アサイン】シートに基づく43スロット定義
+  const requirementDefs: Array<{ location: string; code: string; category: string; count: number }> = [
+    // T3中央 (26スロット)
+    { location: 'T3中央', code: '12A9A', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '04A5GA', category: 'T3中央', count: 2 },
+    { location: 'T3中央', code: '04G4JA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '22A0AY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '22A9GY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '23A1AO', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '05A7AA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '06A9A', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '06G9AY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '07A5AA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '07A2GY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '07G2AY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '13A7GA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '12A8AY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '13A9A', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '13A9AX', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '13J5DA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '14A9A', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '14A5AA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '14D7JY', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '14D8G', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '14J8D', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '15A7J', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '15A5AA', category: 'T3中央', count: 1 },
+    { location: 'T3中央', code: '16G6GG', category: 'T3中央', count: 1 },
+    // T3北側 (2スロット)
+    { location: 'T3北側', code: '06J1JT', category: 'T3北側', count: 1 },
+    { location: 'T3北側', code: '06J9AW', category: 'T3北側', count: 1 },
+    // T2中央検査場 (8スロット)
+    { location: 'T2中央検査場', code: '06A6AA', category: 'T2中央検査場', count: 3 },
+    { location: 'T2中央検査場', code: '09G2GY', category: 'T2中央検査場', count: 1 },
+    { location: 'T2中央検査場', code: '14G4GA', category: 'T2中央検査場', count: 1 },
+    { location: 'T2中央検査場', code: '19A4AA', category: 'T2中央検査場', count: 1 },
+    { location: 'T2中央検査場', code: '19A1AO', category: 'T2中央検査場', count: 1 },
+    { location: 'T2中央検査場', code: '22A8AW', category: 'T2中央検査場', count: 1 },
+    // T3クリーンバス (1スロット)
+    { location: 'T3クリーンバス', code: '05G5AA', category: 'T3クリーンバス', count: 1 },
+    // T3際際バス (3スロット)
+    { location: 'T3際際バス', code: '04J5JA', category: 'T3際際バス', count: 1 },
+    { location: 'T3際際バス', code: '10A5AA', category: 'T3際際バス', count: 1 },
+    { location: 'T3際際バス', code: '19A4AA', category: 'T3際際バス', count: 1 },
+    // T2クリーンバス (1スロット)
+    { location: 'T2クリーンバス', code: '05D5AA', category: 'T2クリーンバス', count: 1 },
+    // T2際際バス (2スロット)
+    { location: 'T2際際バス', code: '14A5AA', category: 'T2際際バス', count: 1 },
+    { location: 'T2際際バス', code: '18G4GA', category: 'T2際際バス', count: 1 },
+  ]
+
   const requirements: Array<{
     location_id: string
     duty_code_id: string
@@ -392,29 +480,20 @@ export async function seedDemoData() {
     required_responsible_count: number
   }> = []
 
-  // 43人を配分（7勤務地 × 主要4勤務記号 = 28スロット）
-  // 主要な勤務記号: 早番(06A6AA)、日勤(10A5AA)、遅番(14G5AA)、深夜(22A9GY)
-  const mainDutyCodes = ['06A6AA', '10A5AA', '14G5AA', '22A9GY']
-  const mainDutyCodeIds = mainDutyCodes
-    .map(code => dutyCodes?.find(d => d.code === code)?.id)
-    .filter((id): id is string => id !== undefined)
-  const slotsCount = locationIds.length * mainDutyCodeIds.length
-  const baseCount = Math.floor(DAILY_REQUIRED_STAFF / slotsCount)
-  const remainder = DAILY_REQUIRED_STAFF % slotsCount
-  let slotIndex = 0
-
-  locationIds.forEach((locationId) => {
-    mainDutyCodeIds.forEach((dutyCodeId) => {
-      const extraPerson = slotIndex < remainder ? 1 : 0
-      requirements.push({
-        location_id: locationId,
-        duty_code_id: dutyCodeId,
-        required_staff_count: baseCount + extraPerson,
-        required_responsible_count: 0,
-      })
-      slotIndex++
+  for (const def of requirementDefs) {
+    const locationId = getLocationId(def.location)
+    const dutyCodeId = getDutyCodeId(def.code, def.category)
+    if (!locationId || !dutyCodeId) {
+      console.warn(`⚠️ Skipping requirement: location=${def.location}, code=${def.code}, category=${def.category} (locationId=${locationId}, dutyCodeId=${dutyCodeId})`)
+      continue
+    }
+    requirements.push({
+      location_id: locationId,
+      duty_code_id: dutyCodeId,
+      required_staff_count: def.count,
+      required_responsible_count: 0,
     })
-  })
+  }
 
   const { error: reqError } = await supabase.from('location_requirements').insert(requirements)
   if (reqError) {

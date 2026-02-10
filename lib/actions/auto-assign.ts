@@ -242,7 +242,7 @@ export async function previewAutoAssign(
           date: newShift.date,
           location_id: newShift.location_id,
           duty_code_id: newShift.duty_code_id,
-          message: `既存のシフトが存在します（スタッフ: ${existing.staff_id}）`,
+          message: `既存のシフトが存在します（スタッフ: ${allStaff.find((s) => s.id === existing.staff_id)?.name || existing.staff_id}）`,
         })
       }
     }

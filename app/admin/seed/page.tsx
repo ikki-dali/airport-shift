@@ -144,7 +144,7 @@ export default function SeedPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">シフト:</span>
-                  <span className="text-muted-foreground">今月・来月分（1日43人ベース）</span>
+                  <span className="text-muted-foreground">今月・来月分（1日43人/43スロット）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">人手不足日:</span>
@@ -153,12 +153,12 @@ export default function SeedPage() {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">承認待ち:</span>
-                  <span className="text-muted-foreground">あり（バッジ確認用）</span>
+                  <span className="font-medium">勤務記号:</span>
+                  <span className="text-muted-foreground">40件（Excel完全反映）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">勤務地:</span>
-                  <span className="text-muted-foreground">5箇所</span>
+                  <span className="text-muted-foreground">7箇所（T3中央/北側/T2中央/バス4箇所）</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">名前:</span>

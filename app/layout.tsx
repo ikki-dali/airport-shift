@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   title: 'HAS-G シフト管理',
   description: 'HAS-G 空港シフト管理システム',
   icons: {
-    icon: '/icon.svg',
+    icon: '/icon.png',
   },
 }
 
@@ -35,7 +35,7 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#ffffff" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="apple-touch-icon" href="/icon.png" />
       </head>
       <body className="font-sans antialiased">
         <Toaster position="top-center" richColors />

@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { sendReinforcementRequest } from '@/lib/actions/notifications'
+import { calcLocationShortages } from '@/lib/utils/location-shortages'
 import { toast } from 'sonner'
 import { TodayTab } from './TodayTab'
 import { WeekTab, calcWeekStats } from './WeekTab'
@@ -270,9 +271,10 @@ export function DashboardTabs({
     setIsSendingBulk(true)
     try {
       const results = await Promise.all(
-        monthShortageDays.map((d) =>
-          sendReinforcementRequest({ date: d.dateStr, shortage: d.shortage })
-        )
+        monthShortageDays.map((d) => {
+          const locationShortages = calcLocationShortages(d.dateStr, locationRequirements, shifts)
+          return sendReinforcementRequest({ date: d.dateStr, shortage: d.shortage, locationShortages })
+        })
       )
       const totalSent = results.reduce((sum, r) => sum + (r.sentCount || 0), 0)
       const failCount = results.filter((r) => !r.success).length

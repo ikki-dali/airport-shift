@@ -409,14 +409,22 @@ export async function confirmShifts(
   const user = await requireAuth()
   const supabase = await createClient()
 
-  // 対象シフトのバリデーション
-  const { data: targetShifts, error: fetchError } = await supabase
-    .from('shifts')
-    .select('id, status')
-    .in('id', shiftIds)
+  // バッチサイズ（SupabaseのURL長制限回避）
+  const BATCH_SIZE = 200
 
-  if (fetchError) handleSupabaseError(fetchError, { action: 'confirmShifts', entity: 'シフト' })
-  if (!targetShifts || targetShifts.length === 0) {
+  // 対象シフトのバリデーション（バッチで取得）
+  let targetShifts: Array<{ id: string; status: string }> = []
+  for (let i = 0; i < shiftIds.length; i += BATCH_SIZE) {
+    const batch = shiftIds.slice(i, i + BATCH_SIZE)
+    const { data, error: fetchError } = await supabase
+      .from('shifts')
+      .select('id, status')
+      .in('id', batch)
+    if (fetchError) handleSupabaseError(fetchError, { action: 'confirmShifts', entity: 'シフト' })
+    if (data) targetShifts = [...targetShifts, ...data]
+  }
+
+  if (targetShifts.length === 0) {
     throw new ValidationError('確定対象のシフトが見つかりません')
   }
 
@@ -425,22 +433,29 @@ export async function confirmShifts(
     throw new ValidationError(`既に確定済みのシフトが${alreadyConfirmed.length}件含まれています`)
   }
 
-  // 一括更新
-  const { error: updateError } = await supabase
-    .from('shifts')
-    .update({ status: '確定', updated_by: user.id })
-    .in('id', shiftIds)
-    .neq('status', '確定')
-
-  if (updateError) handleSupabaseError(updateError, { action: 'confirmShifts', entity: 'シフト' })
+  // 一括更新（バッチ）
+  for (let i = 0; i < shiftIds.length; i += BATCH_SIZE) {
+    const batch = shiftIds.slice(i, i + BATCH_SIZE)
+    const { error: updateError } = await supabase
+      .from('shifts')
+      .update({ status: '確定', updated_by: user.id })
+      .in('id', batch)
+      .neq('status', '確定')
+    if (updateError) handleSupabaseError(updateError, { action: 'confirmShifts', entity: 'シフト' })
+  }
 
   const confirmedCount = targetShifts.length
 
-  // 確定済みシフトの詳細を取得（通知・メール用、トランザクション外）
-  const { data: shifts } = await supabase
-    .from('shifts')
-    .select('*, location:location_id(*), duty_code:duty_code_id(*), staff:staff_id(*, roles(*))')
-    .in('id', shiftIds)
+  // 確定済みシフトの詳細を取得（通知・メール用、バッチ）
+  let shifts: any[] = []
+  for (let i = 0; i < shiftIds.length; i += BATCH_SIZE) {
+    const batch = shiftIds.slice(i, i + BATCH_SIZE)
+    const { data } = await supabase
+      .from('shifts')
+      .select('*, location:location_id(*), duty_code:duty_code_id(*), staff:staff_id(*, roles(*))')
+      .in('id', batch)
+    if (data) shifts = [...shifts, ...data]
+  }
 
   // 通知を作成（非ブロッキング）
   try {

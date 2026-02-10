@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { DayDetailModal } from './DayDetailModal'
 import { sendReinforcementRequest } from '@/lib/actions/notifications'
+import { calcLocationShortages } from '@/lib/utils/location-shortages'
 import { toast } from 'sonner'
 import type { DayEvent } from './DashboardTabs'
 import { DAY_EVENT_STYLES } from './DashboardTabs'
@@ -54,6 +55,12 @@ interface LocationRequirement {
   locations?: {
     id: string
     location_name: string
+  } | null
+  duty_codes?: {
+    id: string
+    code: string
+    start_time: string | null
+    end_time: string | null
   } | null
 }
 
@@ -172,9 +179,12 @@ export function WeekTab({ shifts, locationRequirements, weekStart, dayEvents = [
     if (!confirmDate) return
     setIsSending(true)
     try {
+      const dateStr = format(confirmDate, 'yyyy-MM-dd')
+      const locationShortages = calcLocationShortages(dateStr, locationRequirements, shifts)
       const result = await sendReinforcementRequest({
-        date: format(confirmDate, 'yyyy-MM-dd'),
+        date: dateStr,
         shortage: confirmShortage,
+        locationShortages,
       })
       if (result.success) {
         toast.success(`${result.sentCount}人に応援依頼を送信しました`)
