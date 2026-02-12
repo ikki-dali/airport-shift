@@ -12,7 +12,7 @@ const PUBLIC_PATHS = ['/login', '/shift-request/', '/api/health']
 /**
  * 静的ファイル等（matcherで除外しきれないもの）
  */
-const STATIC_PREFIXES = ['/_next/', '/favicon.ico', '/icons/', '/manifest']
+const STATIC_PREFIXES = ['/_next/', '/favicon.ico', '/icons/', '/manifest', '/logo.svg', '/logo-white.svg', '/ana-logo.png', '/icon.svg', '/icon.png']
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((path) => pathname.startsWith(path))
@@ -60,6 +60,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - icons/ (PWA icons)
      */
-    '/((?!_next/static|_next/image|favicon.ico|icons/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icons/|logo\\.svg|logo-white\\.svg|ana-logo\\.png|icon\\.svg|icon\\.png).*)',
   ],
 }
