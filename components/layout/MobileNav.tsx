@@ -67,6 +67,7 @@ export function MobileNav() {
             height={71}
             className="h-8 w-auto"
             priority
+            unoptimized
           />
         </Link>
 
@@ -112,6 +113,7 @@ export function MobileNav() {
                   width={180}
                   height={71}
                   className="h-10 w-auto"
+                  unoptimized
                 />
               </Link>
             </div>

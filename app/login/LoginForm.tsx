@@ -39,7 +39,7 @@ export function LoginForm() {
     <Card className="w-full max-w-md hover-lift">
       <CardHeader className="text-center">
         <div className="mx-auto mb-4">
-          <Image src="/logo.svg" alt="HAS-G" width={200} height={56} priority />
+          <Image src="/logo.svg" alt="HAS-G" width={200} height={56} priority unoptimized />
         </div>
         <CardDescription>
           ログインしてください

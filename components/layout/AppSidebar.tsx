@@ -64,6 +64,7 @@ export function AppSidebar() {
             height={71}
             className="h-10 w-auto"
             priority
+            unoptimized
           />
         </Link>
       </div>
