@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   Bell,
+  Megaphone,
   LogOut,
   Settings
 } from 'lucide-react'
@@ -24,6 +25,7 @@ const navigation = [
   { name: 'ホーム', href: '/', icon: Home },
   { name: 'シフト作成', href: '/shifts/create', icon: Calendar },
   { name: '通知', href: '/notifications', icon: Bell },
+  { name: 'お知らせ', href: '/announcements', icon: Megaphone },
   { name: 'スタッフ管理', href: '/staff', icon: Users },
   { name: '配属箇所管理', href: '/locations', icon: MapPin },
   { name: '勤務記号管理', href: '/duty-codes', icon: Hash },

@@ -8,7 +8,7 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   // サイドバーなしのページ（スタッフ専用ページ、ログインページ）
   const isStaffPage = pathname?.startsWith('/staff/shifts') || pathname?.startsWith('/shift-request')
-  const isLoginPage = pathname === '/login'
+  const isLoginPage = pathname?.startsWith('/login')
 
   if (isStaffPage || isLoginPage) {
     // スタッフページ/ログインページ: サイドバーなし

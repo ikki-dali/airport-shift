@@ -65,7 +65,7 @@ export function ShiftCreationBoardV3({
 
   const [currentMonth, setCurrentMonth] = useState<Date>(() => {
     const today = new Date()
-    return new Date(today.getFullYear(), today.getMonth(), 1) // 月の初日
+    return new Date(today.getFullYear(), today.getMonth() + 1, 1) // 来月の初日
   })
 
   const [requestsPanelOpen, setRequestsPanelOpen] = useState(false)
@@ -563,7 +563,7 @@ export function ShiftCreationBoardV3({
                       return (
                         <td
                           key={dateStr}
-                          className="px-2 py-2 border-r align-top"
+                          className="px-2 py-2 border-r align-top group"
                         >
                           <div className="space-y-1">
                             {/* スロット */}
@@ -605,6 +605,26 @@ export function ShiftCreationBoardV3({
                                 />
                               )
                             })}
+                            {/* 臨時枠追加ボタン */}
+                            <button
+                              className="w-full px-2 py-0.5 rounded text-xs text-center text-muted-foreground
+                                         border border-dashed border-muted-foreground/30 hover:bg-muted/50
+                                         hover:border-primary hover:text-primary transition-all opacity-0
+                                         group-hover:opacity-100"
+                              onClick={() =>
+                                handleOpenStaffSelector(
+                                  dateStr,
+                                  row.locationId,
+                                  row.locationName,
+                                  row.dutyCodeId,
+                                  row.dutyCodeDisplay,
+                                  undefined,
+                                  undefined
+                                )
+                              }
+                            >
+                              +
+                            </button>
                             {fillRate < 100 && (
                               <div className="text-center pt-1">
                                 <span className="text-xs font-semibold text-red-600">

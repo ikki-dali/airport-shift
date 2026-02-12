@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DutyCodeFormDialog } from './DutyCodeFormDialog'
 import { DeleteDutyCodeDialog } from './DeleteDutyCodeDialog'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Clock, Hourglass, Coffee, Search } from 'lucide-react'
 
 type DutyCode = Database['public']['Tables']['duty_codes']['Row']
 
@@ -238,8 +238,8 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
       {filteredDutyCodes.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <div className="text-4xl mb-4">🔍</div>
-            <p className="text-gray-500">
+            <Search className="h-8 w-8 text-gray-300 mx-auto mb-3" />
+            <p className="text-sm text-gray-400">
               {searchQuery
                 ? '検索条件に一致する勤務記号が見つかりません'
                 : '勤務記号が見つかりません'}
@@ -247,96 +247,71 @@ export function DutyCodeTable({ dutyCodes }: DutyCodeTableProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredDutyCodes.map((dutyCode) => {
             const parsed = parseDutyCode(dutyCode.code)
             return (
               <Card
                 key={dutyCode.id}
-                className="hover:shadow-lg transition-shadow border-2 hover:border-gray-900"
+                className="group hover:shadow-md transition-all"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <Badge variant="outline" className="mb-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl font-mono font-bold tracking-tight">
+                        {dutyCode.code}
+                      </span>
+                      <Badge variant="outline" className="text-[11px] font-normal">
                         {dutyCode.category}
                       </Badge>
-                      <CardTitle className="text-3xl font-mono font-bold">
-                        {dutyCode.code}
-                      </CardTitle>
-                    </div>
-                    <div className="flex items-center gap-2">
                       {parsed.isOvernight && (
-                        <Badge variant="secondary">日またぎ</Badge>
+                        <Badge variant="secondary" className="text-[11px] font-normal">
+                          日またぎ
+                        </Badge>
                       )}
-                      {/* 編集・削除ボタン */}
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingDutyCode(dutyCode)
-                            setFormDialogOpen(true)
-                          }}
-                          className="h-8 w-8 p-0"
-                          aria-label="勤務記号を編集"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setDeletingDutyCode(dutyCode)
-                            setDeleteDialogOpen(true)
-                          }}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          aria-label="勤務記号を削除"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    </div>
+                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingDutyCode(dutyCode)
+                          setFormDialogOpen(true)
+                        }}
+                        className="h-7 w-7 p-0"
+                        aria-label="勤務記号を編集"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setDeletingDutyCode(dutyCode)
+                          setDeleteDialogOpen(true)
+                        }}
+                        className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        aria-label="勤務記号を削除"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* 勤務時間 */}
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-2xl">🕐</span>
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-500 font-medium mb-1">
-                        勤務時間
-                      </div>
-                      <div className="text-base font-bold text-gray-900">
-                        {parsed.startTime} → {parsed.endTime}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 勤務時間の長さ */}
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-2xl">⏱️</span>
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-500 font-medium mb-1">
-                        勤務時間
-                      </div>
-                      <div className="text-base font-bold text-gray-900">
-                        {formatDuration(parsed.durationHours, parsed.durationMinutes)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 休憩時間 */}
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <span className="text-2xl">☕</span>
-                    <div className="flex-1">
-                      <div className="text-xs text-gray-500 font-medium mb-1">
-                        休憩時間
-                      </div>
-                      <div className="text-base font-bold text-gray-900">
-                        {formatBreak(parsed.breakMinutes)}
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-4 text-[13px] text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      {parsed.startTime} – {parsed.endTime}
+                    </span>
+                    <span className="text-gray-200">|</span>
+                    <span className="flex items-center gap-1.5">
+                      <Hourglass className="h-3.5 w-3.5 shrink-0" />
+                      {formatDuration(parsed.durationHours, parsed.durationMinutes)}
+                    </span>
+                    <span className="text-gray-200">|</span>
+                    <span className="flex items-center gap-1.5">
+                      <Coffee className="h-3.5 w-3.5 shrink-0" />
+                      {formatBreak(parsed.breakMinutes)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
